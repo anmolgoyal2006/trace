@@ -18,3 +18,11 @@ reid:
   quality:
     reject_severe_edge_truncation: true   # reject crops where person is severely cut off at frame edge
     edge_margin_pixels: 5                 # bbox must be within this many pixels of frame boundary to trigger truncation check
+  embedding:
+    storage_format: "json"   # MVP format — consistent with Phase 1–3 JSON-first pipeline
+    model: "osnet_x1_0"      # pretrained OSNet x1_0 weights from torchreid
+    embedding_dim: 512        # experimentally confirmed in Phase 4.1 (Google Colab, Tesla T4)
+                              # NOTE: this is documentation/validation info only.
+                              # The Phase 4.3 generator will determine output dim programmatically
+                              # and validate it against this value — do not hardcode 512 in model inference.
+    batch_size: 32            # crops per forward pass — override with --batch-size CLI flag

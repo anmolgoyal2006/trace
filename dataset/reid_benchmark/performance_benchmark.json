@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-08-27T01:13:18.458057",
+  "environment": {
+    "pytorch_version": "2.8.0+cpu",
+    "cuda_available": false,
+    "device": "cpu",
+    "model": "osnet_x1_0",
+    "embedding_dim": 512,
+    "crop_count": 353,
+    "batch_size": 32,
+    "cpu_processor": "Intel64 Family 6 Model 186 Stepping 3, GenuineIntel",
+    "cpu_logical_cpus": 12
+  },
+  "model_load_time": 3.7363718999549747,
+  "warmup_time": 0.3531689001247287,
+  "runs": [
+    {
+      "run_number": 1,
+      "total_time": 49.38536489987746,
+      "model_load_time": 3.7363718999549747,
+      "warmup_time": 0.3531689001247287,
+      "inference_time": 48.255846600048244,
+      "preprocessing_time": 1.1295182998292148,
+      "crops_processed": 353,
+      "crops_per_second": 7.147866593993232,
+      "ms_per_crop": 139.90188356905796
+    },
+    {
+      "run_number": 2,
+      "total_time": 83.23680930002593,
+      "model_load_time": 3.7363718999549747,
+      "warmup_time": 0.3531689001247287,
+      "inference_time": 74.51528439996764,
+      "preprocessing_time": 8.721524900058284,
+      "crops_processed": 353,
+      "crops_per_second": 4.2409121994046695,
+      "ms_per_crop": 235.79832662896862
+    },
+    {
+      "run_number": 3,
+      "total_time": 96.76138110016473,
+      "model_load_time": 3.7363718999549747,
+      "warmup_time": 0.3531689001247287,
+      "inference_time": 71.80840810015798,
+      "preprocessing_time": 24.95297300000675,
+      "crops_processed": 353,
+      "crops_per_second": 3.648149664529737,
+      "ms_per_crop": 274.11156119026833
+    }
+  ],
+  "summary": {
+    "mean_total_time": 76.4611851000227,
+    "median_total_time": 83.23680930002593,
+    "min_total_time": 49.38536489987746,
+    "max_total_time": 96.76138110016473,
+    "mean_inference_time": 64.85984636672462,
+    "mean_crops_per_second": 5.012309485975879,
+    "mean_ms_per_crop": 216.60392379609831,
+    "total_runs": 3
+  }
+}
