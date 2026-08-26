@@ -30,3 +30,20 @@ Trace is a multi-camera person tracking and re-identification system designed fo
 - FastAPI + SQLAlchemy
 - React
 - SQLite
+
+## Setup
+
+### Local
+
+```bash
+python -m venv venv
+source venv/bin/activate   # or venv\Scripts\activate on Windows
+pip install -r ai_pipeline/requirements.txt
+pip install -r backend/requirements.txt
+```
+
+### Colab
+
+```python
+!pip install ultralytics torchreid
+```
