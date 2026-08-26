@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "notes": "MVP uses C01–C03. C04–C05 are stretch/phase-2 only. Edge weights are estimated average transit times in seconds between camera FOVs under normal walking pace.",
+  "cameras": {
+    "C01": {
+      "location": "Main Entrance",
+      "description": "Wide-angle view of the building entry doors and immediate foyer. High foot traffic, variable lighting (bright outdoors spill vs indoor fluorescent).",
+      "height_m": 3.0,
+      "angle": "overhead-angled",
+      "connects_to": {
+        "C02": {"avg_transit_sec": 20, "notes": "Direct corridor walk from foyer"}
+      },
+      "mvp": true
+    },
+    "C02": {
+      "location": "Main Corridor",
+      "description": "Mid-corridor view covering the primary internal walkway. Connects entrance to stairwell and canteen branch. Moderate occlusion from pillars.",
+      "height_m": 2.8,
+      "angle": "overhead-angled",
+      "connects_to": {
+        "C01": {"avg_transit_sec": 20, "notes": "Return walk to foyer"},
+        "C03": {"avg_transit_sec": 30, "notes": "Corridor continues to canteen"},
+        "C04": {"avg_transit_sec": 45, "notes": "Stairwell branch — stretch only"}
+      },
+      "mvp": true
+    },
+    "C03": {
+      "location": "Canteen / Common Area",
+      "description": "Wide view of the seating and serving area. Crowded during lunch hours, sparse otherwise. Good lighting, minimal occlusion.",
+      "height_m": 3.2,
+      "angle": "overhead-angled",
+      "connects_to": {
+        "C02": {"avg_transit_sec": 30, "notes": "Return to corridor"},
+        "C05": {"avg_transit_sec": 60, "notes": "Exit to outdoor courtyard — stretch only"}
+      },
+      "mvp": true
+    },
+    "C04": {
+      "location": "Stairwell / Second Floor Landing",
+      "description": "Covers the stairwell exit and second-floor hallway junction. Narrower FOV, useful for testing ID persistence across elevation change.",
+      "height_m": 2.6,
+      "angle": "side-mounted",
+      "connects_to": {
+        "C02": {"avg_transit_sec": 45, "notes": "Down stairs to main corridor"}
+      },
+      "mvp": false
+    },
+    "C05": {
+      "location": "Outdoor Courtyard",
+      "description": "Outdoor area. Tests re-ID under daylight, shadow variation, and background clutter.",
+      "height_m": 4.0,
+      "angle": "overhead-angled",
+      "connects_to": {
+        "C03": {"avg_transit_sec": 60, "notes": "Indoor canteen entry"}
+      },
+      "mvp": false
+    }
+  },
+  "mvp_subgraph": ["C01", "C02", "C03"],
+  "stretch_subgraph": ["C01", "C02", "C03", "C04", "C05"]
+}

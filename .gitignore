@@ -7,8 +7,9 @@ build/
 .venv/
 venv/
 
-# SQLite
-db/trace.db
+# SQLite — all .db files (never commit the database)
+*.db
+db/
 
 # Model weights
 *.pt
@@ -29,3 +30,25 @@ Thumbs.db
 
 # Environment
 .env
+*.env.*
+
+# Large dataset files — store in Google Drive, not git
+# See docs/git_workflow.md for the shared Drive link
+dataset/raw_videos/*.mp4
+dataset/raw_videos/*.avi
+dataset/raw_videos/*.mov
+dataset/raw_videos/*.mkv
+
+# Processed / intermediate pipeline outputs (can be regenerated)
+dataset/processed/
+dataset/embeddings/
+dataset/detections/
+
+# Logs
+logs/
+*.log
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage

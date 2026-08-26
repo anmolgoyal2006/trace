@@ -1,0 +1,12 @@
+detection:
+  model: yolov8n.pt      # pretrained COCO weights — no fine-tuning for MVP
+  confidence: 0.6        # threshold chosen after comparing 0.4 / 0.5 / 0.6 in Colab
+  classes: [0]           # COCO class 0 = person only
+
+cameras:
+  C01:
+    start_time: "10:02:00"   # real-world wall-clock time when this clip started recording
+  C02:
+    start_time: "10:05:00"
+  C03:
+    start_time: "10:08:00"
