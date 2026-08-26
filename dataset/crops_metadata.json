@@ -1,0 +1,5140 @@
+[
+  {
+    "crop_path": "dataset/crops/C01_track1_frame0000.jpg",
+    "camera_id": "C01",
+    "track_id": 1,
+    "frame": 0,
+    "timestamp": "10:02:00.00",
+    "bbox": [
+      169.81,
+      270.77,
+      388.37,
+      968.01
+    ],
+    "detection_confidence": 0.9088
+  },
+  {
+    "crop_path": "dataset/crops/C01_track1_frame0096.jpg",
+    "camera_id": "C01",
+    "track_id": 1,
+    "frame": 96,
+    "timestamp": "10:02:03.24",
+    "bbox": [
+      689.29,
+      367.09,
+      850.1,
+      855.49
+    ],
+    "detection_confidence": 0.8474
+  },
+  {
+    "crop_path": "dataset/crops/C01_track1_frame0192.jpg",
+    "camera_id": "C01",
+    "track_id": 1,
+    "frame": 192,
+    "timestamp": "10:02:06.48",
+    "bbox": [
+      896.38,
+      412.38,
+      1024.77,
+      791.85
+    ],
+    "detection_confidence": 0.8648
+  },
+  {
+    "crop_path": "dataset/crops/C01_track1_frame0292.jpg",
+    "camera_id": "C01",
+    "track_id": 1,
+    "frame": 292,
+    "timestamp": "10:02:09.85",
+    "bbox": [
+      1045.76,
+      262.36,
+      1335.58,
+      1019.37
+    ],
+    "detection_confidence": 0.8951
+  },
+  {
+    "crop_path": "dataset/crops/C01_track1_frame0388.jpg",
+    "camera_id": "C01",
+    "track_id": 1,
+    "frame": 388,
+    "timestamp": "10:02:13.09",
+    "bbox": [
+      1732.49,
+      66.67,
+      1920.0,
+      1022.68
+    ],
+    "detection_confidence": 0.7003
+  },
+  {
+    "crop_path": "dataset/crops/C01_track2_frame0000.jpg",
+    "camera_id": "C01",
+    "track_id": 2,
+    "frame": 0,
+    "timestamp": "10:02:00.00",
+    "bbox": [
+      1305.62,
+      408.22,
+      1442.27,
+      819.64
+    ],
+    "detection_confidence": 0.8651
+  },
+  {
+    "crop_path": "dataset/crops/C01_track2_frame0012.jpg",
+    "camera_id": "C01",
+    "track_id": 2,
+    "frame": 12,
+    "timestamp": "10:02:00.40",
+    "bbox": [
+      1335.73,
+      412.16,
+      1481.04,
+      820.05
+    ],
+    "detection_confidence": 0.8345
+  },
+  {
+    "crop_path": "dataset/crops/C01_track2_frame0024.jpg",
+    "camera_id": "C01",
+    "track_id": 2,
+    "frame": 24,
+    "timestamp": "10:02:00.81",
+    "bbox": [
+      1364.82,
+      416.03,
+      1504.15,
+      813.78
+    ],
+    "detection_confidence": 0.868
+  },
+  {
+    "crop_path": "dataset/crops/C01_track2_frame0036.jpg",
+    "camera_id": "C01",
+    "track_id": 2,
+    "frame": 36,
+    "timestamp": "10:02:01.21",
+    "bbox": [
+      1369.47,
+      417.18,
+      1509.98,
+      820.22
+    ],
+    "detection_confidence": 0.8705
+  },
+  {
+    "crop_path": "dataset/crops/C01_track2_frame0048.jpg",
+    "camera_id": "C01",
+    "track_id": 2,
+    "frame": 48,
+    "timestamp": "10:02:01.62",
+    "bbox": [
+      1407.77,
+      417.16,
+      1535.76,
+      795.34
+    ],
+    "detection_confidence": 0.705
+  },
+  {
+    "crop_path": "dataset/crops/C01_track3_frame0000.jpg",
+    "camera_id": "C01",
+    "track_id": 3,
+    "frame": 0,
+    "timestamp": "10:02:00.00",
+    "bbox": [
+      911.55,
+      382.12,
+      1093.1,
+      865.1
+    ],
+    "detection_confidence": 0.8366
+  },
+  {
+    "crop_path": "dataset/crops/C01_track3_frame0040.jpg",
+    "camera_id": "C01",
+    "track_id": 3,
+    "frame": 40,
+    "timestamp": "10:02:01.35",
+    "bbox": [
+      1243.93,
+      407.02,
+      1407.56,
+      837.52
+    ],
+    "detection_confidence": 0.817
+  },
+  {
+    "crop_path": "dataset/crops/C01_track3_frame0080.jpg",
+    "camera_id": "C01",
+    "track_id": 3,
+    "frame": 80,
+    "timestamp": "10:02:02.70",
+    "bbox": [
+      1505.77,
+      431.77,
+      1651.48,
+      810.18
+    ],
+    "detection_confidence": 0.8313
+  },
+  {
+    "crop_path": "dataset/crops/C01_track3_frame0119.jpg",
+    "camera_id": "C01",
+    "track_id": 3,
+    "frame": 119,
+    "timestamp": "10:02:04.01",
+    "bbox": [
+      1622.51,
+      432.97,
+      1763.11,
+      787.81
+    ],
+    "detection_confidence": 0.8845
+  },
+  {
+    "crop_path": "dataset/crops/C01_track3_frame0159.jpg",
+    "camera_id": "C01",
+    "track_id": 3,
+    "frame": 159,
+    "timestamp": "10:02:05.36",
+    "bbox": [
+      1669.5,
+      460.46,
+      1773.68,
+      762.87
+    ],
+    "detection_confidence": 0.6082
+  },
+  {
+    "crop_path": "dataset/crops/C01_track4_frame0000.jpg",
+    "camera_id": "C01",
+    "track_id": 4,
+    "frame": 0,
+    "timestamp": "10:02:00.00",
+    "bbox": [
+      732.08,
+      437.42,
+      905.19,
+      831.08
+    ],
+    "detection_confidence": 0.8253
+  },
+  {
+    "crop_path": "dataset/crops/C01_track4_frame0062.jpg",
+    "camera_id": "C01",
+    "track_id": 4,
+    "frame": 62,
+    "timestamp": "10:02:02.09",
+    "bbox": [
+      888.85,
+      441.48,
+      1040.37,
+      798.89
+    ],
+    "detection_confidence": 0.7208
+  },
+  {
+    "crop_path": "dataset/crops/C01_track4_frame0124.jpg",
+    "camera_id": "C01",
+    "track_id": 4,
+    "frame": 124,
+    "timestamp": "10:02:04.18",
+    "bbox": [
+      1023.6,
+      456.77,
+      1163.54,
+      783.95
+    ],
+    "detection_confidence": 0.837
+  },
+  {
+    "crop_path": "dataset/crops/C01_track4_frame0185.jpg",
+    "camera_id": "C01",
+    "track_id": 4,
+    "frame": 185,
+    "timestamp": "10:02:06.24",
+    "bbox": [
+      1051.82,
+      464.8,
+      1181.16,
+      765.89
+    ],
+    "detection_confidence": 0.8278
+  },
+  {
+    "crop_path": "dataset/crops/C01_track4_frame0247.jpg",
+    "camera_id": "C01",
+    "track_id": 4,
+    "frame": 247,
+    "timestamp": "10:02:08.33",
+    "bbox": [
+      1124.74,
+      495.86,
+      1222.91,
+      745.12
+    ],
+    "detection_confidence": 0.7205
+  },
+  {
+    "crop_path": "dataset/crops/C01_track5_frame0000.jpg",
+    "camera_id": "C01",
+    "track_id": 5,
+    "frame": 0,
+    "timestamp": "10:02:00.00",
+    "bbox": [
+      1506.92,
+      444.9,
+      1622.88,
+      716.62
+    ],
+    "detection_confidence": 0.8082
+  },
+  {
+    "crop_path": "dataset/crops/C01_track5_frame0014.jpg",
+    "camera_id": "C01",
+    "track_id": 5,
+    "frame": 14,
+    "timestamp": "10:02:00.47",
+    "bbox": [
+      1506.75,
+      444.75,
+      1622.09,
+      717.49
+    ],
+    "detection_confidence": 0.8059
+  },
+  {
+    "crop_path": "dataset/crops/C01_track5_frame0028.jpg",
+    "camera_id": "C01",
+    "track_id": 5,
+    "frame": 28,
+    "timestamp": "10:02:00.94",
+    "bbox": [
+      1506.46,
+      451.44,
+      1614.31,
+      715.71
+    ],
+    "detection_confidence": 0.8011
+  },
+  {
+    "crop_path": "dataset/crops/C01_track5_frame0042.jpg",
+    "camera_id": "C01",
+    "track_id": 5,
+    "frame": 42,
+    "timestamp": "10:02:01.41",
+    "bbox": [
+      1510.3,
+      452.09,
+      1620.22,
+      706.83
+    ],
+    "detection_confidence": 0.7508
+  },
+  {
+    "crop_path": "dataset/crops/C01_track5_frame0057.jpg",
+    "camera_id": "C01",
+    "track_id": 5,
+    "frame": 57,
+    "timestamp": "10:02:01.92",
+    "bbox": [
+      1510.65,
+      460.77,
+      1605.42,
+      700.65
+    ],
+    "detection_confidence": 0.628
+  },
+  {
+    "crop_path": "dataset/crops/C01_track6_frame0000.jpg",
+    "camera_id": "C01",
+    "track_id": 6,
+    "frame": 0,
+    "timestamp": "10:02:00.00",
+    "bbox": [
+      1192.51,
+      422.01,
+      1302.14,
+      752.08
+    ],
+    "detection_confidence": 0.7815
+  },
+  {
+    "crop_path": "dataset/crops/C01_track6_frame0006.jpg",
+    "camera_id": "C01",
+    "track_id": 6,
+    "frame": 6,
+    "timestamp": "10:02:00.20",
+    "bbox": [
+      1191.17,
+      422.09,
+      1302.3,
+      754.24
+    ],
+    "detection_confidence": 0.8446
+  },
+  {
+    "crop_path": "dataset/crops/C01_track6_frame0011.jpg",
+    "camera_id": "C01",
+    "track_id": 6,
+    "frame": 11,
+    "timestamp": "10:02:00.37",
+    "bbox": [
+      1195.51,
+      417.74,
+      1308.71,
+      753.68
+    ],
+    "detection_confidence": 0.836
+  },
+  {
+    "crop_path": "dataset/crops/C01_track6_frame0016.jpg",
+    "camera_id": "C01",
+    "track_id": 6,
+    "frame": 16,
+    "timestamp": "10:02:00.54",
+    "bbox": [
+      1201.78,
+      416.59,
+      1315.64,
+      754.15
+    ],
+    "detection_confidence": 0.7883
+  },
+  {
+    "crop_path": "dataset/crops/C01_track6_frame0022.jpg",
+    "camera_id": "C01",
+    "track_id": 6,
+    "frame": 22,
+    "timestamp": "10:02:00.74",
+    "bbox": [
+      1211.44,
+      413.83,
+      1318.43,
+      753.31
+    ],
+    "detection_confidence": 0.6601
+  },
+  {
+    "crop_path": "dataset/crops/C01_track7_frame0002.jpg",
+    "camera_id": "C01",
+    "track_id": 7,
+    "frame": 2,
+    "timestamp": "10:02:00.06",
+    "bbox": [
+      1790.38,
+      539.45,
+      1842.65,
+      674.46
+    ],
+    "detection_confidence": 0.6764
+  },
+  {
+    "crop_path": "dataset/crops/C01_track7_frame0005.jpg",
+    "camera_id": "C01",
+    "track_id": 7,
+    "frame": 5,
+    "timestamp": "10:02:00.16",
+    "bbox": [
+      1794.93,
+      547.85,
+      1845.03,
+      675.98
+    ],
+    "detection_confidence": 0.6703
+  },
+  {
+    "crop_path": "dataset/crops/C01_track7_frame0008.jpg",
+    "camera_id": "C01",
+    "track_id": 7,
+    "frame": 8,
+    "timestamp": "10:02:00.27",
+    "bbox": [
+      1785.71,
+      493.41,
+      1856.19,
+      676.06
+    ],
+    "detection_confidence": 0.6199
+  },
+  {
+    "crop_path": "dataset/crops/C01_track7_frame0013.jpg",
+    "camera_id": "C01",
+    "track_id": 7,
+    "frame": 13,
+    "timestamp": "10:02:00.43",
+    "bbox": [
+      1789.79,
+      482.7,
+      1859.27,
+      672.5
+    ],
+    "detection_confidence": 0.6375
+  },
+  {
+    "crop_path": "dataset/crops/C01_track7_frame0016.jpg",
+    "camera_id": "C01",
+    "track_id": 7,
+    "frame": 16,
+    "timestamp": "10:02:00.54",
+    "bbox": [
+      1794.48,
+      482.86,
+      1860.68,
+      672.2
+    ],
+    "detection_confidence": 0.6627
+  },
+  {
+    "crop_path": "dataset/crops/C01_track8_frame0003.jpg",
+    "camera_id": "C01",
+    "track_id": 8,
+    "frame": 3,
+    "timestamp": "10:02:00.10",
+    "bbox": [
+      603.55,
+      439.94,
+      719.65,
+      802.32
+    ],
+    "detection_confidence": 0.7219
+  },
+  {
+    "crop_path": "dataset/crops/C01_track8_frame0048.jpg",
+    "camera_id": "C01",
+    "track_id": 8,
+    "frame": 48,
+    "timestamp": "10:02:01.62",
+    "bbox": [
+      388.5,
+      432.54,
+      500.91,
+      822.43
+    ],
+    "detection_confidence": 0.6745
+  },
+  {
+    "crop_path": "dataset/crops/C01_track8_frame0084.jpg",
+    "camera_id": "C01",
+    "track_id": 8,
+    "frame": 84,
+    "timestamp": "10:02:02.83",
+    "bbox": [
+      255.61,
+      395.18,
+      409.99,
+      865.94
+    ],
+    "detection_confidence": 0.7858
+  },
+  {
+    "crop_path": "dataset/crops/C01_track8_frame0109.jpg",
+    "camera_id": "C01",
+    "track_id": 8,
+    "frame": 109,
+    "timestamp": "10:02:03.67",
+    "bbox": [
+      118.46,
+      391.73,
+      287.95,
+      894.62
+    ],
+    "detection_confidence": 0.8318
+  },
+  {
+    "crop_path": "dataset/crops/C01_track8_frame0135.jpg",
+    "camera_id": "C01",
+    "track_id": 8,
+    "frame": 135,
+    "timestamp": "10:02:04.55",
+    "bbox": [
+      0.0,
+      351.54,
+      137.11,
+      917.07
+    ],
+    "detection_confidence": 0.6648
+  },
+  {
+    "crop_path": "dataset/crops/C01_track9_frame0009.jpg",
+    "camera_id": "C01",
+    "track_id": 9,
+    "frame": 9,
+    "timestamp": "10:02:00.30",
+    "bbox": [
+      907.58,
+      403.34,
+      1023.19,
+      825.42
+    ],
+    "detection_confidence": 0.7112
+  },
+  {
+    "crop_path": "dataset/crops/C01_track9_frame0075.jpg",
+    "camera_id": "C01",
+    "track_id": 9,
+    "frame": 75,
+    "timestamp": "10:02:02.53",
+    "bbox": [
+      1069.37,
+      430.82,
+      1202.93,
+      800.34
+    ],
+    "detection_confidence": 0.8516
+  },
+  {
+    "crop_path": "dataset/crops/C01_track9_frame0140.jpg",
+    "camera_id": "C01",
+    "track_id": 9,
+    "frame": 140,
+    "timestamp": "10:02:04.72",
+    "bbox": [
+      1147.05,
+      435.04,
+      1257.75,
+      773.51
+    ],
+    "detection_confidence": 0.7811
+  },
+  {
+    "crop_path": "dataset/crops/C01_track9_frame0205.jpg",
+    "camera_id": "C01",
+    "track_id": 9,
+    "frame": 205,
+    "timestamp": "10:02:06.91",
+    "bbox": [
+      1205.56,
+      449.5,
+      1321.7,
+      756.98
+    ],
+    "detection_confidence": 0.7716
+  },
+  {
+    "crop_path": "dataset/crops/C01_track9_frame0274.jpg",
+    "camera_id": "C01",
+    "track_id": 9,
+    "frame": 274,
+    "timestamp": "10:02:09.24",
+    "bbox": [
+      1243.95,
+      465.01,
+      1324.09,
+      733.5
+    ],
+    "detection_confidence": 0.6093
+  },
+  {
+    "crop_path": "dataset/crops/C01_track10_frame0025.jpg",
+    "camera_id": "C01",
+    "track_id": 10,
+    "frame": 25,
+    "timestamp": "10:02:00.84",
+    "bbox": [
+      898.45,
+      392.11,
+      997.23,
+      781.76
+    ],
+    "detection_confidence": 0.6039
+  },
+  {
+    "crop_path": "dataset/crops/C01_track11_frame0031.jpg",
+    "camera_id": "C01",
+    "track_id": 11,
+    "frame": 31,
+    "timestamp": "10:02:01.04",
+    "bbox": [
+      288.5,
+      433.41,
+      394.5,
+      782.54
+    ],
+    "detection_confidence": 0.6387
+  },
+  {
+    "crop_path": "dataset/crops/C01_track11_frame0038.jpg",
+    "camera_id": "C01",
+    "track_id": 11,
+    "frame": 38,
+    "timestamp": "10:02:01.28",
+    "bbox": [
+      299.1,
+      433.6,
+      413.03,
+      781.05
+    ],
+    "detection_confidence": 0.6989
+  },
+  {
+    "crop_path": "dataset/crops/C01_track11_frame0045.jpg",
+    "camera_id": "C01",
+    "track_id": 11,
+    "frame": 45,
+    "timestamp": "10:02:01.51",
+    "bbox": [
+      285.36,
+      435.69,
+      403.2,
+      778.76
+    ],
+    "detection_confidence": 0.7783
+  },
+  {
+    "crop_path": "dataset/crops/C01_track11_frame0052.jpg",
+    "camera_id": "C01",
+    "track_id": 11,
+    "frame": 52,
+    "timestamp": "10:02:01.75",
+    "bbox": [
+      281.73,
+      433.75,
+      402.3,
+      779.88
+    ],
+    "detection_confidence": 0.6629
+  },
+  {
+    "crop_path": "dataset/crops/C01_track11_frame0059.jpg",
+    "camera_id": "C01",
+    "track_id": 11,
+    "frame": 59,
+    "timestamp": "10:02:01.99",
+    "bbox": [
+      281.63,
+      433.19,
+      402.66,
+      776.72
+    ],
+    "detection_confidence": 0.636
+  },
+  {
+    "crop_path": "dataset/crops/C01_track13_frame0035.jpg",
+    "camera_id": "C01",
+    "track_id": 13,
+    "frame": 35,
+    "timestamp": "10:02:01.18",
+    "bbox": [
+      1110.24,
+      411.05,
+      1211.85,
+      758.85
+    ],
+    "detection_confidence": 0.679
+  },
+  {
+    "crop_path": "dataset/crops/C01_track13_frame0096.jpg",
+    "camera_id": "C01",
+    "track_id": 13,
+    "frame": 96,
+    "timestamp": "10:02:03.24",
+    "bbox": [
+      1304.35,
+      384.11,
+      1442.98,
+      808.33
+    ],
+    "detection_confidence": 0.8275
+  },
+  {
+    "crop_path": "dataset/crops/C01_track13_frame0149.jpg",
+    "camera_id": "C01",
+    "track_id": 13,
+    "frame": 149,
+    "timestamp": "10:02:05.02",
+    "bbox": [
+      1480.71,
+      357.27,
+      1673.93,
+      860.11
+    ],
+    "detection_confidence": 0.829
+  },
+  {
+    "crop_path": "dataset/crops/C01_track13_frame0202.jpg",
+    "camera_id": "C01",
+    "track_id": 13,
+    "frame": 202,
+    "timestamp": "10:02:06.81",
+    "bbox": [
+      1682.06,
+      314.41,
+      1920.0,
+      930.44
+    ],
+    "detection_confidence": 0.8599
+  },
+  {
+    "crop_path": "dataset/crops/C01_track13_frame0254.jpg",
+    "camera_id": "C01",
+    "track_id": 13,
+    "frame": 254,
+    "timestamp": "10:02:08.57",
+    "bbox": [
+      1441.84,
+      365.22,
+      1685.8,
+      985.25
+    ],
+    "detection_confidence": 0.7391
+  },
+  {
+    "crop_path": "dataset/crops/C01_track15_frame0047.jpg",
+    "camera_id": "C01",
+    "track_id": 15,
+    "frame": 47,
+    "timestamp": "10:02:01.58",
+    "bbox": [
+      763.94,
+      395.27,
+      882.01,
+      800.12
+    ],
+    "detection_confidence": 0.7191
+  },
+  {
+    "crop_path": "dataset/crops/C01_track15_frame0051.jpg",
+    "camera_id": "C01",
+    "track_id": 15,
+    "frame": 51,
+    "timestamp": "10:02:01.72",
+    "bbox": [
+      750.46,
+      388.01,
+      873.16,
+      801.69
+    ],
+    "detection_confidence": 0.82
+  },
+  {
+    "crop_path": "dataset/crops/C01_track15_frame0056.jpg",
+    "camera_id": "C01",
+    "track_id": 15,
+    "frame": 56,
+    "timestamp": "10:02:01.89",
+    "bbox": [
+      728.86,
+      384.37,
+      855.43,
+      801.74
+    ],
+    "detection_confidence": 0.7711
+  },
+  {
+    "crop_path": "dataset/crops/C01_track15_frame0061.jpg",
+    "camera_id": "C01",
+    "track_id": 15,
+    "frame": 61,
+    "timestamp": "10:02:02.05",
+    "bbox": [
+      681.24,
+      381.79,
+      815.4,
+      804.08
+    ],
+    "detection_confidence": 0.7881
+  },
+  {
+    "crop_path": "dataset/crops/C01_track15_frame0065.jpg",
+    "camera_id": "C01",
+    "track_id": 15,
+    "frame": 65,
+    "timestamp": "10:02:02.19",
+    "bbox": [
+      697.29,
+      385.77,
+      829.83,
+      802.55
+    ],
+    "detection_confidence": 0.6372
+  },
+  {
+    "crop_path": "dataset/crops/C01_track16_frame0071.jpg",
+    "camera_id": "C01",
+    "track_id": 16,
+    "frame": 71,
+    "timestamp": "10:02:02.39",
+    "bbox": [
+      832.6,
+      424.68,
+      943.71,
+      786.22
+    ],
+    "detection_confidence": 0.7982
+  },
+  {
+    "crop_path": "dataset/crops/C01_track16_frame0073.jpg",
+    "camera_id": "C01",
+    "track_id": 16,
+    "frame": 73,
+    "timestamp": "10:02:02.46",
+    "bbox": [
+      828.21,
+      428.39,
+      939.69,
+      790.45
+    ],
+    "detection_confidence": 0.8121
+  },
+  {
+    "crop_path": "dataset/crops/C01_track16_frame0075.jpg",
+    "camera_id": "C01",
+    "track_id": 16,
+    "frame": 75,
+    "timestamp": "10:02:02.53",
+    "bbox": [
+      821.41,
+      432.02,
+      933.35,
+      793.59
+    ],
+    "detection_confidence": 0.7655
+  },
+  {
+    "crop_path": "dataset/crops/C01_track16_frame0076.jpg",
+    "camera_id": "C01",
+    "track_id": 16,
+    "frame": 76,
+    "timestamp": "10:02:02.56",
+    "bbox": [
+      816.58,
+      428.71,
+      929.85,
+      794.02
+    ],
+    "detection_confidence": 0.8024
+  },
+  {
+    "crop_path": "dataset/crops/C01_track16_frame0078.jpg",
+    "camera_id": "C01",
+    "track_id": 16,
+    "frame": 78,
+    "timestamp": "10:02:02.63",
+    "bbox": [
+      806.25,
+      425.35,
+      919.73,
+      793.86
+    ],
+    "detection_confidence": 0.6658
+  },
+  {
+    "crop_path": "dataset/crops/C01_track17_frame0073.jpg",
+    "camera_id": "C01",
+    "track_id": 17,
+    "frame": 73,
+    "timestamp": "10:02:02.46",
+    "bbox": [
+      1416.06,
+      420.73,
+      1509.96,
+      807.8
+    ],
+    "detection_confidence": 0.7419
+  },
+  {
+    "crop_path": "dataset/crops/C01_track17_frame0083.jpg",
+    "camera_id": "C01",
+    "track_id": 17,
+    "frame": 83,
+    "timestamp": "10:02:02.80",
+    "bbox": [
+      1432.57,
+      425.32,
+      1531.34,
+      798.4
+    ],
+    "detection_confidence": 0.8219
+  },
+  {
+    "crop_path": "dataset/crops/C01_track17_frame0092.jpg",
+    "camera_id": "C01",
+    "track_id": 17,
+    "frame": 92,
+    "timestamp": "10:02:03.10",
+    "bbox": [
+      1432.4,
+      422.18,
+      1543.62,
+      791.02
+    ],
+    "detection_confidence": 0.8827
+  },
+  {
+    "crop_path": "dataset/crops/C01_track17_frame0101.jpg",
+    "camera_id": "C01",
+    "track_id": 17,
+    "frame": 101,
+    "timestamp": "10:02:03.40",
+    "bbox": [
+      1441.38,
+      425.46,
+      1559.38,
+      788.37
+    ],
+    "detection_confidence": 0.8451
+  },
+  {
+    "crop_path": "dataset/crops/C01_track17_frame0111.jpg",
+    "camera_id": "C01",
+    "track_id": 17,
+    "frame": 111,
+    "timestamp": "10:02:03.74",
+    "bbox": [
+      1463.84,
+      418.05,
+      1575.19,
+      789.69
+    ],
+    "detection_confidence": 0.657
+  },
+  {
+    "crop_path": "dataset/crops/C01_track18_frame0082.jpg",
+    "camera_id": "C01",
+    "track_id": 18,
+    "frame": 82,
+    "timestamp": "10:02:02.76",
+    "bbox": [
+      870.08,
+      421.07,
+      979.19,
+      771.97
+    ],
+    "detection_confidence": 0.6028
+  },
+  {
+    "crop_path": "dataset/crops/C01_track18_frame0143.jpg",
+    "camera_id": "C01",
+    "track_id": 18,
+    "frame": 143,
+    "timestamp": "10:02:04.82",
+    "bbox": [
+      566.63,
+      411.23,
+      669.17,
+      805.5
+    ],
+    "detection_confidence": 0.6343
+  },
+  {
+    "crop_path": "dataset/crops/C01_track18_frame0178.jpg",
+    "camera_id": "C01",
+    "track_id": 18,
+    "frame": 178,
+    "timestamp": "10:02:06.00",
+    "bbox": [
+      495.18,
+      389.32,
+      621.74,
+      851.24
+    ],
+    "detection_confidence": 0.6044
+  },
+  {
+    "crop_path": "dataset/crops/C01_track18_frame0201.jpg",
+    "camera_id": "C01",
+    "track_id": 18,
+    "frame": 201,
+    "timestamp": "10:02:06.78",
+    "bbox": [
+      444.58,
+      371.29,
+      610.99,
+      871.41
+    ],
+    "detection_confidence": 0.8027
+  },
+  {
+    "crop_path": "dataset/crops/C01_track18_frame0225.jpg",
+    "camera_id": "C01",
+    "track_id": 18,
+    "frame": 225,
+    "timestamp": "10:02:07.59",
+    "bbox": [
+      416.14,
+      342.99,
+      595.85,
+      888.58
+    ],
+    "detection_confidence": 0.6789
+  },
+  {
+    "crop_path": "dataset/crops/C01_track20_frame0085.jpg",
+    "camera_id": "C01",
+    "track_id": 20,
+    "frame": 85,
+    "timestamp": "10:02:02.86",
+    "bbox": [
+      584.66,
+      378.73,
+      686.33,
+      746.22
+    ],
+    "detection_confidence": 0.6677
+  },
+  {
+    "crop_path": "dataset/crops/C01_track20_frame0122.jpg",
+    "camera_id": "C01",
+    "track_id": 20,
+    "frame": 122,
+    "timestamp": "10:02:04.11",
+    "bbox": [
+      480.68,
+      355.21,
+      648.06,
+      848.27
+    ],
+    "detection_confidence": 0.8111
+  },
+  {
+    "crop_path": "dataset/crops/C01_track20_frame0159.jpg",
+    "camera_id": "C01",
+    "track_id": 20,
+    "frame": 159,
+    "timestamp": "10:02:05.36",
+    "bbox": [
+      386.3,
+      338.14,
+      570.68,
+      874.04
+    ],
+    "detection_confidence": 0.7565
+  },
+  {
+    "crop_path": "dataset/crops/C01_track20_frame0195.jpg",
+    "camera_id": "C01",
+    "track_id": 20,
+    "frame": 195,
+    "timestamp": "10:02:06.58",
+    "bbox": [
+      178.47,
+      307.46,
+      373.36,
+      921.15
+    ],
+    "detection_confidence": 0.8293
+  },
+  {
+    "crop_path": "dataset/crops/C01_track20_frame0246.jpg",
+    "camera_id": "C01",
+    "track_id": 20,
+    "frame": 246,
+    "timestamp": "10:02:08.30",
+    "bbox": [
+      52.74,
+      20.0,
+      314.56,
+      1056.64
+    ],
+    "detection_confidence": 0.7817
+  },
+  {
+    "crop_path": "dataset/crops/C01_track22_frame0102.jpg",
+    "camera_id": "C01",
+    "track_id": 22,
+    "frame": 102,
+    "timestamp": "10:02:03.44",
+    "bbox": [
+      849.53,
+      475.61,
+      938.44,
+      708.32
+    ],
+    "detection_confidence": 0.6479
+  },
+  {
+    "crop_path": "dataset/crops/C01_track22_frame0103.jpg",
+    "camera_id": "C01",
+    "track_id": 22,
+    "frame": 103,
+    "timestamp": "10:02:03.47",
+    "bbox": [
+      848.84,
+      476.28,
+      937.51,
+      708.54
+    ],
+    "detection_confidence": 0.6527
+  },
+  {
+    "crop_path": "dataset/crops/C01_track22_frame0104.jpg",
+    "camera_id": "C01",
+    "track_id": 22,
+    "frame": 104,
+    "timestamp": "10:02:03.51",
+    "bbox": [
+      848.49,
+      476.93,
+      937.06,
+      709.24
+    ],
+    "detection_confidence": 0.681
+  },
+  {
+    "crop_path": "dataset/crops/C01_track22_frame0105.jpg",
+    "camera_id": "C01",
+    "track_id": 22,
+    "frame": 105,
+    "timestamp": "10:02:03.54",
+    "bbox": [
+      849.41,
+      478.88,
+      936.9,
+      708.76
+    ],
+    "detection_confidence": 0.6492
+  },
+  {
+    "crop_path": "dataset/crops/C01_track22_frame0106.jpg",
+    "camera_id": "C01",
+    "track_id": 22,
+    "frame": 106,
+    "timestamp": "10:02:03.57",
+    "bbox": [
+      850.26,
+      480.58,
+      936.82,
+      708.18
+    ],
+    "detection_confidence": 0.6115
+  },
+  {
+    "crop_path": "dataset/crops/C01_track23_frame0106.jpg",
+    "camera_id": "C01",
+    "track_id": 23,
+    "frame": 106,
+    "timestamp": "10:02:03.57",
+    "bbox": [
+      297.63,
+      436.33,
+      442.38,
+      776.14
+    ],
+    "detection_confidence": 0.6099
+  },
+  {
+    "crop_path": "dataset/crops/C01_track23_frame0129.jpg",
+    "camera_id": "C01",
+    "track_id": 23,
+    "frame": 129,
+    "timestamp": "10:02:04.35",
+    "bbox": [
+      284.23,
+      435.77,
+      431.38,
+      778.72
+    ],
+    "detection_confidence": 0.7366
+  },
+  {
+    "crop_path": "dataset/crops/C01_track23_frame0152.jpg",
+    "camera_id": "C01",
+    "track_id": 23,
+    "frame": 152,
+    "timestamp": "10:02:05.13",
+    "bbox": [
+      273.94,
+      431.61,
+      411.26,
+      779.39
+    ],
+    "detection_confidence": 0.6758
+  },
+  {
+    "crop_path": "dataset/crops/C01_track23_frame0179.jpg",
+    "camera_id": "C01",
+    "track_id": 23,
+    "frame": 179,
+    "timestamp": "10:02:06.04",
+    "bbox": [
+      170.53,
+      381.16,
+      314.0,
+      840.5
+    ],
+    "detection_confidence": 0.7551
+  },
+  {
+    "crop_path": "dataset/crops/C01_track23_frame0214.jpg",
+    "camera_id": "C01",
+    "track_id": 23,
+    "frame": 214,
+    "timestamp": "10:02:07.22",
+    "bbox": [
+      0.0,
+      340.01,
+      100.03,
+      879.89
+    ],
+    "detection_confidence": 0.6452
+  },
+  {
+    "crop_path": "dataset/crops/C01_track25_frame0150.jpg",
+    "camera_id": "C01",
+    "track_id": 25,
+    "frame": 150,
+    "timestamp": "10:02:05.06",
+    "bbox": [
+      690.81,
+      514.65,
+      814.03,
+      735.06
+    ],
+    "detection_confidence": 0.6112
+  },
+  {
+    "crop_path": "dataset/crops/C01_track25_frame0158.jpg",
+    "camera_id": "C01",
+    "track_id": 25,
+    "frame": 158,
+    "timestamp": "10:02:05.33",
+    "bbox": [
+      691.71,
+      514.98,
+      812.78,
+      732.05
+    ],
+    "detection_confidence": 0.6201
+  },
+  {
+    "crop_path": "dataset/crops/C01_track25_frame0180.jpg",
+    "camera_id": "C01",
+    "track_id": 25,
+    "frame": 180,
+    "timestamp": "10:02:06.07",
+    "bbox": [
+      692.08,
+      514.09,
+      819.57,
+      741.42
+    ],
+    "detection_confidence": 0.6118
+  },
+  {
+    "crop_path": "dataset/crops/C01_track25_frame0209.jpg",
+    "camera_id": "C01",
+    "track_id": 25,
+    "frame": 209,
+    "timestamp": "10:02:07.05",
+    "bbox": [
+      692.01,
+      513.96,
+      819.63,
+      738.09
+    ],
+    "detection_confidence": 0.608
+  },
+  {
+    "crop_path": "dataset/crops/C01_track25_frame0237.jpg",
+    "camera_id": "C01",
+    "track_id": 25,
+    "frame": 237,
+    "timestamp": "10:02:07.99",
+    "bbox": [
+      691.1,
+      513.76,
+      815.69,
+      733.07
+    ],
+    "detection_confidence": 0.6107
+  },
+  {
+    "crop_path": "dataset/crops/C01_track28_frame0154.jpg",
+    "camera_id": "C01",
+    "track_id": 28,
+    "frame": 154,
+    "timestamp": "10:02:05.19",
+    "bbox": [
+      1304.47,
+      501.96,
+      1374.45,
+      690.2
+    ],
+    "detection_confidence": 0.6229
+  },
+  {
+    "crop_path": "dataset/crops/C01_track28_frame0155.jpg",
+    "camera_id": "C01",
+    "track_id": 28,
+    "frame": 155,
+    "timestamp": "10:02:05.23",
+    "bbox": [
+      1302.58,
+      504.32,
+      1372.06,
+      691.46
+    ],
+    "detection_confidence": 0.6302
+  },
+  {
+    "crop_path": "dataset/crops/C01_track28_frame0167.jpg",
+    "camera_id": "C01",
+    "track_id": 28,
+    "frame": 167,
+    "timestamp": "10:02:05.63",
+    "bbox": [
+      1299.41,
+      510.67,
+      1365.42,
+      689.4
+    ],
+    "detection_confidence": 0.6136
+  },
+  {
+    "crop_path": "dataset/crops/C01_track28_frame0168.jpg",
+    "camera_id": "C01",
+    "track_id": 28,
+    "frame": 168,
+    "timestamp": "10:02:05.67",
+    "bbox": [
+      1299.31,
+      510.7,
+      1365.12,
+      689.23
+    ],
+    "detection_confidence": 0.6177
+  },
+  {
+    "crop_path": "dataset/crops/C01_track28_frame0169.jpg",
+    "camera_id": "C01",
+    "track_id": 28,
+    "frame": 169,
+    "timestamp": "10:02:05.70",
+    "bbox": [
+      1299.87,
+      511.01,
+      1365.75,
+      689.68
+    ],
+    "detection_confidence": 0.6062
+  },
+  {
+    "crop_path": "dataset/crops/C01_track29_frame0155.jpg",
+    "camera_id": "C01",
+    "track_id": 29,
+    "frame": 155,
+    "timestamp": "10:02:05.23",
+    "bbox": [
+      1449.69,
+      427.61,
+      1550.44,
+      703.8
+    ],
+    "detection_confidence": 0.6528
+  },
+  {
+    "crop_path": "dataset/crops/C01_track29_frame0185.jpg",
+    "camera_id": "C01",
+    "track_id": 29,
+    "frame": 185,
+    "timestamp": "10:02:06.24",
+    "bbox": [
+      1434.53,
+      425.68,
+      1558.87,
+      788.78
+    ],
+    "detection_confidence": 0.8103
+  },
+  {
+    "crop_path": "dataset/crops/C01_track29_frame0215.jpg",
+    "camera_id": "C01",
+    "track_id": 29,
+    "frame": 215,
+    "timestamp": "10:02:07.25",
+    "bbox": [
+      1441.09,
+      423.63,
+      1556.39,
+      791.81
+    ],
+    "detection_confidence": 0.8033
+  },
+  {
+    "crop_path": "dataset/crops/C01_track29_frame0270.jpg",
+    "camera_id": "C01",
+    "track_id": 29,
+    "frame": 270,
+    "timestamp": "10:02:09.11",
+    "bbox": [
+      1332.86,
+      322.42,
+      1554.54,
+      956.83
+    ],
+    "detection_confidence": 0.8947
+  },
+  {
+    "crop_path": "dataset/crops/C01_track29_frame0300.jpg",
+    "camera_id": "C01",
+    "track_id": 29,
+    "frame": 300,
+    "timestamp": "10:02:10.12",
+    "bbox": [
+      1334.16,
+      361.82,
+      1517.98,
+      927.27
+    ],
+    "detection_confidence": 0.7128
+  },
+  {
+    "crop_path": "dataset/crops/C01_track30_frame0157.jpg",
+    "camera_id": "C01",
+    "track_id": 30,
+    "frame": 157,
+    "timestamp": "10:02:05.29",
+    "bbox": [
+      1403.37,
+      446.35,
+      1480.13,
+      708.3
+    ],
+    "detection_confidence": 0.6188
+  },
+  {
+    "crop_path": "dataset/crops/C01_track30_frame0158.jpg",
+    "camera_id": "C01",
+    "track_id": 30,
+    "frame": 158,
+    "timestamp": "10:02:05.33",
+    "bbox": [
+      1402.33,
+      446.23,
+      1479.47,
+      709.45
+    ],
+    "detection_confidence": 0.6555
+  },
+  {
+    "crop_path": "dataset/crops/C01_track30_frame0159.jpg",
+    "camera_id": "C01",
+    "track_id": 30,
+    "frame": 159,
+    "timestamp": "10:02:05.36",
+    "bbox": [
+      1402.23,
+      444.46,
+      1479.89,
+      709.69
+    ],
+    "detection_confidence": 0.6167
+  },
+  {
+    "crop_path": "dataset/crops/C01_track32_frame0165.jpg",
+    "camera_id": "C01",
+    "track_id": 32,
+    "frame": 165,
+    "timestamp": "10:02:05.56",
+    "bbox": [
+      976.31,
+      488.05,
+      1061.35,
+      711.2
+    ],
+    "detection_confidence": 0.6388
+  },
+  {
+    "crop_path": "dataset/crops/C01_track32_frame0166.jpg",
+    "camera_id": "C01",
+    "track_id": 32,
+    "frame": 166,
+    "timestamp": "10:02:05.60",
+    "bbox": [
+      976.84,
+      488.3,
+      1061.79,
+      711.07
+    ],
+    "detection_confidence": 0.6514
+  },
+  {
+    "crop_path": "dataset/crops/C01_track32_frame0167.jpg",
+    "camera_id": "C01",
+    "track_id": 32,
+    "frame": 167,
+    "timestamp": "10:02:05.63",
+    "bbox": [
+      975.83,
+      484.32,
+      1062.45,
+      711.35
+    ],
+    "detection_confidence": 0.6544
+  },
+  {
+    "crop_path": "dataset/crops/C01_track32_frame0168.jpg",
+    "camera_id": "C01",
+    "track_id": 32,
+    "frame": 168,
+    "timestamp": "10:02:05.67",
+    "bbox": [
+      975.8,
+      484.25,
+      1062.42,
+      711.11
+    ],
+    "detection_confidence": 0.6355
+  },
+  {
+    "crop_path": "dataset/crops/C01_track32_frame0169.jpg",
+    "camera_id": "C01",
+    "track_id": 32,
+    "frame": 169,
+    "timestamp": "10:02:05.70",
+    "bbox": [
+      975.03,
+      478.78,
+      1063.65,
+      711.07
+    ],
+    "detection_confidence": 0.6072
+  },
+  {
+    "crop_path": "dataset/crops/C01_track34_frame0178.jpg",
+    "camera_id": "C01",
+    "track_id": 34,
+    "frame": 178,
+    "timestamp": "10:02:06.00",
+    "bbox": [
+      1537.47,
+      468.73,
+      1612.92,
+      680.1
+    ],
+    "detection_confidence": 0.6701
+  },
+  {
+    "crop_path": "dataset/crops/C01_track34_frame0180.jpg",
+    "camera_id": "C01",
+    "track_id": 34,
+    "frame": 180,
+    "timestamp": "10:02:06.07",
+    "bbox": [
+      1539.03,
+      476.91,
+      1611.43,
+      679.68
+    ],
+    "detection_confidence": 0.6959
+  },
+  {
+    "crop_path": "dataset/crops/C01_track34_frame0182.jpg",
+    "camera_id": "C01",
+    "track_id": 34,
+    "frame": 182,
+    "timestamp": "10:02:06.14",
+    "bbox": [
+      1537.69,
+      478.72,
+      1610.35,
+      681.19
+    ],
+    "detection_confidence": 0.7167
+  },
+  {
+    "crop_path": "dataset/crops/C01_track34_frame0185.jpg",
+    "camera_id": "C01",
+    "track_id": 34,
+    "frame": 185,
+    "timestamp": "10:02:06.24",
+    "bbox": [
+      1538.23,
+      477.22,
+      1611.68,
+      681.47
+    ],
+    "detection_confidence": 0.6019
+  },
+  {
+    "crop_path": "dataset/crops/C01_track34_frame0187.jpg",
+    "camera_id": "C01",
+    "track_id": 34,
+    "frame": 187,
+    "timestamp": "10:02:06.31",
+    "bbox": [
+      1538.94,
+      475.14,
+      1612.63,
+      680.17
+    ],
+    "detection_confidence": 0.6363
+  },
+  {
+    "crop_path": "dataset/crops/C01_track35_frame0187.jpg",
+    "camera_id": "C01",
+    "track_id": 35,
+    "frame": 187,
+    "timestamp": "10:02:06.31",
+    "bbox": [
+      1611.49,
+      446.05,
+      1711.78,
+      700.62
+    ],
+    "detection_confidence": 0.8147
+  },
+  {
+    "crop_path": "dataset/crops/C01_track35_frame0194.jpg",
+    "camera_id": "C01",
+    "track_id": 35,
+    "frame": 194,
+    "timestamp": "10:02:06.54",
+    "bbox": [
+      1602.94,
+      451.27,
+      1712.34,
+      726.73
+    ],
+    "detection_confidence": 0.7057
+  },
+  {
+    "crop_path": "dataset/crops/C01_track35_frame0201.jpg",
+    "camera_id": "C01",
+    "track_id": 35,
+    "frame": 201,
+    "timestamp": "10:02:06.78",
+    "bbox": [
+      1604.96,
+      451.94,
+      1705.19,
+      697.95
+    ],
+    "detection_confidence": 0.8175
+  },
+  {
+    "crop_path": "dataset/crops/C01_track35_frame0209.jpg",
+    "camera_id": "C01",
+    "track_id": 35,
+    "frame": 209,
+    "timestamp": "10:02:07.05",
+    "bbox": [
+      1595.16,
+      456.72,
+      1695.59,
+      713.04
+    ],
+    "detection_confidence": 0.8122
+  },
+  {
+    "crop_path": "dataset/crops/C01_track35_frame0216.jpg",
+    "camera_id": "C01",
+    "track_id": 35,
+    "frame": 216,
+    "timestamp": "10:02:07.29",
+    "bbox": [
+      1579.94,
+      458.01,
+      1673.08,
+      707.78
+    ],
+    "detection_confidence": 0.6818
+  },
+  {
+    "crop_path": "dataset/crops/C01_track37_frame0195.jpg",
+    "camera_id": "C01",
+    "track_id": 37,
+    "frame": 195,
+    "timestamp": "10:02:06.58",
+    "bbox": [
+      3.27,
+      262.29,
+      105.5,
+      1075.71
+    ],
+    "detection_confidence": 0.8099
+  },
+  {
+    "crop_path": "dataset/crops/C01_track37_frame0300.jpg",
+    "camera_id": "C01",
+    "track_id": 37,
+    "frame": 300,
+    "timestamp": "10:02:10.12",
+    "bbox": [
+      632.57,
+      274.52,
+      951.44,
+      1072.36
+    ],
+    "detection_confidence": 0.8816
+  },
+  {
+    "crop_path": "dataset/crops/C01_track37_frame0405.jpg",
+    "camera_id": "C01",
+    "track_id": 37,
+    "frame": 405,
+    "timestamp": "10:02:13.67",
+    "bbox": [
+      1551.15,
+      55.7,
+      1920.0,
+      1056.88
+    ],
+    "detection_confidence": 0.7878
+  },
+  {
+    "crop_path": "dataset/crops/C01_track37_frame0511.jpg",
+    "camera_id": "C01",
+    "track_id": 37,
+    "frame": 511,
+    "timestamp": "10:02:17.24",
+    "bbox": [
+      1421.4,
+      423.74,
+      1568.77,
+      852.68
+    ],
+    "detection_confidence": 0.852
+  },
+  {
+    "crop_path": "dataset/crops/C01_track37_frame0632.jpg",
+    "camera_id": "C01",
+    "track_id": 37,
+    "frame": 632,
+    "timestamp": "10:02:21.33",
+    "bbox": [
+      927.79,
+      361.46,
+      1057.4,
+      775.26
+    ],
+    "detection_confidence": 0.7944
+  },
+  {
+    "crop_path": "dataset/crops/C01_track39_frame0195.jpg",
+    "camera_id": "C01",
+    "track_id": 39,
+    "frame": 195,
+    "timestamp": "10:02:06.58",
+    "bbox": [
+      1607.31,
+      447.94,
+      1724.11,
+      835.51
+    ],
+    "detection_confidence": 0.6276
+  },
+  {
+    "crop_path": "dataset/crops/C01_track40_frame0207.jpg",
+    "camera_id": "C01",
+    "track_id": 40,
+    "frame": 207,
+    "timestamp": "10:02:06.98",
+    "bbox": [
+      284.57,
+      434.86,
+      421.86,
+      780.0
+    ],
+    "detection_confidence": 0.6188
+  },
+  {
+    "crop_path": "dataset/crops/C01_track40_frame0210.jpg",
+    "camera_id": "C01",
+    "track_id": 40,
+    "frame": 210,
+    "timestamp": "10:02:07.08",
+    "bbox": [
+      287.79,
+      429.98,
+      425.84,
+      780.1
+    ],
+    "detection_confidence": 0.613
+  },
+  {
+    "crop_path": "dataset/crops/C01_track40_frame0239.jpg",
+    "camera_id": "C01",
+    "track_id": 40,
+    "frame": 239,
+    "timestamp": "10:02:08.06",
+    "bbox": [
+      283.95,
+      341.99,
+      487.81,
+      900.84
+    ],
+    "detection_confidence": 0.7007
+  },
+  {
+    "crop_path": "dataset/crops/C01_track40_frame0242.jpg",
+    "camera_id": "C01",
+    "track_id": 40,
+    "frame": 242,
+    "timestamp": "10:02:08.16",
+    "bbox": [
+      281.12,
+      421.73,
+      461.6,
+      923.1
+    ],
+    "detection_confidence": 0.7433
+  },
+  {
+    "crop_path": "dataset/crops/C01_track40_frame0244.jpg",
+    "camera_id": "C01",
+    "track_id": 40,
+    "frame": 244,
+    "timestamp": "10:02:08.23",
+    "bbox": [
+      287.15,
+      418.53,
+      460.79,
+      923.53
+    ],
+    "detection_confidence": 0.7262
+  },
+  {
+    "crop_path": "dataset/crops/C01_track42_frame0220.jpg",
+    "camera_id": "C01",
+    "track_id": 42,
+    "frame": 220,
+    "timestamp": "10:02:07.42",
+    "bbox": [
+      1403.04,
+      515.02,
+      1450.51,
+      667.2
+    ],
+    "detection_confidence": 0.6494
+  },
+  {
+    "crop_path": "dataset/crops/C01_track42_frame0222.jpg",
+    "camera_id": "C01",
+    "track_id": 42,
+    "frame": 222,
+    "timestamp": "10:02:07.49",
+    "bbox": [
+      1402.83,
+      515.3,
+      1450.84,
+      669.02
+    ],
+    "detection_confidence": 0.6675
+  },
+  {
+    "crop_path": "dataset/crops/C01_track42_frame0223.jpg",
+    "camera_id": "C01",
+    "track_id": 42,
+    "frame": 223,
+    "timestamp": "10:02:07.52",
+    "bbox": [
+      1403.27,
+      515.85,
+      1451.17,
+      669.04
+    ],
+    "detection_confidence": 0.6453
+  },
+  {
+    "crop_path": "dataset/crops/C01_track42_frame0224.jpg",
+    "camera_id": "C01",
+    "track_id": 42,
+    "frame": 224,
+    "timestamp": "10:02:07.56",
+    "bbox": [
+      1403.03,
+      515.99,
+      1450.96,
+      669.15
+    ],
+    "detection_confidence": 0.6356
+  },
+  {
+    "crop_path": "dataset/crops/C01_track42_frame0226.jpg",
+    "camera_id": "C01",
+    "track_id": 42,
+    "frame": 226,
+    "timestamp": "10:02:07.62",
+    "bbox": [
+      1403.43,
+      515.09,
+      1451.46,
+      668.5
+    ],
+    "detection_confidence": 0.6222
+  },
+  {
+    "crop_path": "dataset/crops/C01_track44_frame0256.jpg",
+    "camera_id": "C01",
+    "track_id": 44,
+    "frame": 256,
+    "timestamp": "10:02:08.64",
+    "bbox": [
+      753.39,
+      459.83,
+      860.69,
+      753.32
+    ],
+    "detection_confidence": 0.7161
+  },
+  {
+    "crop_path": "dataset/crops/C01_track44_frame0260.jpg",
+    "camera_id": "C01",
+    "track_id": 44,
+    "frame": 260,
+    "timestamp": "10:02:08.77",
+    "bbox": [
+      745.48,
+      462.28,
+      855.23,
+      765.41
+    ],
+    "detection_confidence": 0.824
+  },
+  {
+    "crop_path": "dataset/crops/C01_track44_frame0264.jpg",
+    "camera_id": "C01",
+    "track_id": 44,
+    "frame": 264,
+    "timestamp": "10:02:08.91",
+    "bbox": [
+      742.37,
+      469.24,
+      846.62,
+      763.55
+    ],
+    "detection_confidence": 0.8164
+  },
+  {
+    "crop_path": "dataset/crops/C01_track44_frame0267.jpg",
+    "camera_id": "C01",
+    "track_id": 44,
+    "frame": 267,
+    "timestamp": "10:02:09.01",
+    "bbox": [
+      741.13,
+      472.26,
+      841.4,
+      762.82
+    ],
+    "detection_confidence": 0.8149
+  },
+  {
+    "crop_path": "dataset/crops/C01_track44_frame0271.jpg",
+    "camera_id": "C01",
+    "track_id": 44,
+    "frame": 271,
+    "timestamp": "10:02:09.14",
+    "bbox": [
+      745.38,
+      477.36,
+      836.67,
+      755.93
+    ],
+    "detection_confidence": 0.6599
+  },
+  {
+    "crop_path": "dataset/crops/C01_track45_frame0257.jpg",
+    "camera_id": "C01",
+    "track_id": 45,
+    "frame": 257,
+    "timestamp": "10:02:08.67",
+    "bbox": [
+      1784.43,
+      389.1,
+      1915.76,
+      972.67
+    ],
+    "detection_confidence": 0.7427
+  },
+  {
+    "crop_path": "dataset/crops/C01_track45_frame0276.jpg",
+    "camera_id": "C01",
+    "track_id": 45,
+    "frame": 276,
+    "timestamp": "10:02:09.31",
+    "bbox": [
+      1711.65,
+      394.7,
+      1884.29,
+      950.64
+    ],
+    "detection_confidence": 0.8405
+  },
+  {
+    "crop_path": "dataset/crops/C01_track45_frame0295.jpg",
+    "camera_id": "C01",
+    "track_id": 45,
+    "frame": 295,
+    "timestamp": "10:02:09.95",
+    "bbox": [
+      1629.27,
+      411.3,
+      1821.68,
+      925.63
+    ],
+    "detection_confidence": 0.8973
+  },
+  {
+    "crop_path": "dataset/crops/C01_track45_frame0315.jpg",
+    "camera_id": "C01",
+    "track_id": 45,
+    "frame": 315,
+    "timestamp": "10:02:10.63",
+    "bbox": [
+      1551.33,
+      409.11,
+      1724.15,
+      905.82
+    ],
+    "detection_confidence": 0.8473
+  },
+  {
+    "crop_path": "dataset/crops/C01_track45_frame0334.jpg",
+    "camera_id": "C01",
+    "track_id": 45,
+    "frame": 334,
+    "timestamp": "10:02:11.27",
+    "bbox": [
+      1564.16,
+      423.3,
+      1666.78,
+      749.91
+    ],
+    "detection_confidence": 0.6029
+  },
+  {
+    "crop_path": "dataset/crops/C01_track46_frame0257.jpg",
+    "camera_id": "C01",
+    "track_id": 46,
+    "frame": 257,
+    "timestamp": "10:02:08.67",
+    "bbox": [
+      1657.83,
+      341.82,
+      1854.51,
+      805.78
+    ],
+    "detection_confidence": 0.6981
+  },
+  {
+    "crop_path": "dataset/crops/C01_track46_frame0272.jpg",
+    "camera_id": "C01",
+    "track_id": 46,
+    "frame": 272,
+    "timestamp": "10:02:09.18",
+    "bbox": [
+      1571.41,
+      356.34,
+      1776.62,
+      903.53
+    ],
+    "detection_confidence": 0.8878
+  },
+  {
+    "crop_path": "dataset/crops/C01_track46_frame0287.jpg",
+    "camera_id": "C01",
+    "track_id": 46,
+    "frame": 287,
+    "timestamp": "10:02:09.68",
+    "bbox": [
+      1526.03,
+      369.82,
+      1704.9,
+      875.26
+    ],
+    "detection_confidence": 0.8182
+  },
+  {
+    "crop_path": "dataset/crops/C01_track46_frame0303.jpg",
+    "camera_id": "C01",
+    "track_id": 46,
+    "frame": 303,
+    "timestamp": "10:02:10.22",
+    "bbox": [
+      1455.68,
+      381.09,
+      1630.06,
+      879.7
+    ],
+    "detection_confidence": 0.8085
+  },
+  {
+    "crop_path": "dataset/crops/C01_track46_frame0318.jpg",
+    "camera_id": "C01",
+    "track_id": 46,
+    "frame": 318,
+    "timestamp": "10:02:10.73",
+    "bbox": [
+      1443.31,
+      397.24,
+      1590.13,
+      866.3
+    ],
+    "detection_confidence": 0.6879
+  },
+  {
+    "crop_path": "dataset/crops/C01_track47_frame0257.jpg",
+    "camera_id": "C01",
+    "track_id": 47,
+    "frame": 257,
+    "timestamp": "10:02:08.67",
+    "bbox": [
+      891.55,
+      497.79,
+      969.04,
+      760.75
+    ],
+    "detection_confidence": 0.7144
+  },
+  {
+    "crop_path": "dataset/crops/C01_track47_frame0265.jpg",
+    "camera_id": "C01",
+    "track_id": 47,
+    "frame": 265,
+    "timestamp": "10:02:08.94",
+    "bbox": [
+      883.77,
+      484.81,
+      966.84,
+      760.34
+    ],
+    "detection_confidence": 0.7505
+  },
+  {
+    "crop_path": "dataset/crops/C01_track47_frame0273.jpg",
+    "camera_id": "C01",
+    "track_id": 47,
+    "frame": 273,
+    "timestamp": "10:02:09.21",
+    "bbox": [
+      870.16,
+      492.9,
+      954.62,
+      759.33
+    ],
+    "detection_confidence": 0.8157
+  },
+  {
+    "crop_path": "dataset/crops/C01_track47_frame0280.jpg",
+    "camera_id": "C01",
+    "track_id": 47,
+    "frame": 280,
+    "timestamp": "10:02:09.45",
+    "bbox": [
+      855.54,
+      488.14,
+      941.32,
+      756.8
+    ],
+    "detection_confidence": 0.7993
+  },
+  {
+    "crop_path": "dataset/crops/C01_track47_frame0288.jpg",
+    "camera_id": "C01",
+    "track_id": 47,
+    "frame": 288,
+    "timestamp": "10:02:09.72",
+    "bbox": [
+      851.44,
+      488.57,
+      939.56,
+      754.16
+    ],
+    "detection_confidence": 0.6613
+  },
+  {
+    "crop_path": "dataset/crops/C01_track48_frame0263.jpg",
+    "camera_id": "C01",
+    "track_id": 48,
+    "frame": 263,
+    "timestamp": "10:02:08.87",
+    "bbox": [
+      829.8,
+      507.55,
+      882.69,
+      709.02
+    ],
+    "detection_confidence": 0.6244
+  },
+  {
+    "crop_path": "dataset/crops/C01_track48_frame0268.jpg",
+    "camera_id": "C01",
+    "track_id": 48,
+    "frame": 268,
+    "timestamp": "10:02:09.04",
+    "bbox": [
+      824.93,
+      519.99,
+      874.78,
+      708.71
+    ],
+    "detection_confidence": 0.6442
+  },
+  {
+    "crop_path": "dataset/crops/C01_track48_frame0271.jpg",
+    "camera_id": "C01",
+    "track_id": 48,
+    "frame": 271,
+    "timestamp": "10:02:09.14",
+    "bbox": [
+      825.23,
+      532.92,
+      873.66,
+      708.04
+    ],
+    "detection_confidence": 0.7422
+  },
+  {
+    "crop_path": "dataset/crops/C01_track48_frame0273.jpg",
+    "camera_id": "C01",
+    "track_id": 48,
+    "frame": 273,
+    "timestamp": "10:02:09.21",
+    "bbox": [
+      824.43,
+      539.0,
+      872.77,
+      707.21
+    ],
+    "detection_confidence": 0.6167
+  },
+  {
+    "crop_path": "dataset/crops/C01_track48_frame0276.jpg",
+    "camera_id": "C01",
+    "track_id": 48,
+    "frame": 276,
+    "timestamp": "10:02:09.31",
+    "bbox": [
+      822.38,
+      537.12,
+      872.99,
+      707.13
+    ],
+    "detection_confidence": 0.6311
+  },
+  {
+    "crop_path": "dataset/crops/C01_track49_frame0264.jpg",
+    "camera_id": "C01",
+    "track_id": 49,
+    "frame": 264,
+    "timestamp": "10:02:08.91",
+    "bbox": [
+      396.43,
+      549.33,
+      450.65,
+      708.96
+    ],
+    "detection_confidence": 0.6362
+  },
+  {
+    "crop_path": "dataset/crops/C01_track49_frame0271.jpg",
+    "camera_id": "C01",
+    "track_id": 49,
+    "frame": 271,
+    "timestamp": "10:02:09.14",
+    "bbox": [
+      394.71,
+      548.51,
+      448.07,
+      706.75
+    ],
+    "detection_confidence": 0.6837
+  },
+  {
+    "crop_path": "dataset/crops/C01_track49_frame0278.jpg",
+    "camera_id": "C01",
+    "track_id": 49,
+    "frame": 278,
+    "timestamp": "10:02:09.38",
+    "bbox": [
+      395.65,
+      546.35,
+      450.43,
+      705.81
+    ],
+    "detection_confidence": 0.6529
+  },
+  {
+    "crop_path": "dataset/crops/C01_track49_frame0285.jpg",
+    "camera_id": "C01",
+    "track_id": 49,
+    "frame": 285,
+    "timestamp": "10:02:09.62",
+    "bbox": [
+      395.3,
+      544.49,
+      452.8,
+      706.22
+    ],
+    "detection_confidence": 0.6766
+  },
+  {
+    "crop_path": "dataset/crops/C01_track49_frame0295.jpg",
+    "camera_id": "C01",
+    "track_id": 49,
+    "frame": 295,
+    "timestamp": "10:02:09.95",
+    "bbox": [
+      395.12,
+      544.83,
+      455.11,
+      707.87
+    ],
+    "detection_confidence": 0.6635
+  },
+  {
+    "crop_path": "dataset/crops/C01_track51_frame0268.jpg",
+    "camera_id": "C01",
+    "track_id": 51,
+    "frame": 268,
+    "timestamp": "10:02:09.04",
+    "bbox": [
+      458.9,
+      557.54,
+      517.43,
+      707.56
+    ],
+    "detection_confidence": 0.641
+  },
+  {
+    "crop_path": "dataset/crops/C01_track51_frame0382.jpg",
+    "camera_id": "C01",
+    "track_id": 51,
+    "frame": 382,
+    "timestamp": "10:02:12.89",
+    "bbox": [
+      394.92,
+      554.87,
+      449.53,
+      715.18
+    ],
+    "detection_confidence": 0.6194
+  },
+  {
+    "crop_path": "dataset/crops/C01_track51_frame0412.jpg",
+    "camera_id": "C01",
+    "track_id": 51,
+    "frame": 412,
+    "timestamp": "10:02:13.90",
+    "bbox": [
+      393.18,
+      545.27,
+      460.01,
+      713.02
+    ],
+    "detection_confidence": 0.7104
+  },
+  {
+    "crop_path": "dataset/crops/C01_track51_frame0439.jpg",
+    "camera_id": "C01",
+    "track_id": 51,
+    "frame": 439,
+    "timestamp": "10:02:14.81",
+    "bbox": [
+      380.6,
+      546.26,
+      451.76,
+      713.55
+    ],
+    "detection_confidence": 0.7099
+  },
+  {
+    "crop_path": "dataset/crops/C01_track51_frame0478.jpg",
+    "camera_id": "C01",
+    "track_id": 51,
+    "frame": 478,
+    "timestamp": "10:02:16.13",
+    "bbox": [
+      358.51,
+      536.75,
+      426.21,
+      715.4
+    ],
+    "detection_confidence": 0.6182
+  },
+  {
+    "crop_path": "dataset/crops/C01_track52_frame0270.jpg",
+    "camera_id": "C01",
+    "track_id": 52,
+    "frame": 270,
+    "timestamp": "10:02:09.11",
+    "bbox": [
+      89.49,
+      562.08,
+      133.62,
+      704.45
+    ],
+    "detection_confidence": 0.6132
+  },
+  {
+    "crop_path": "dataset/crops/C01_track52_frame0277.jpg",
+    "camera_id": "C01",
+    "track_id": 52,
+    "frame": 277,
+    "timestamp": "10:02:09.35",
+    "bbox": [
+      82.23,
+      559.67,
+      126.92,
+      697.2
+    ],
+    "detection_confidence": 0.6807
+  },
+  {
+    "crop_path": "dataset/crops/C01_track52_frame0282.jpg",
+    "camera_id": "C01",
+    "track_id": 52,
+    "frame": 282,
+    "timestamp": "10:02:09.51",
+    "bbox": [
+      78.39,
+      555.71,
+      126.64,
+      697.41
+    ],
+    "detection_confidence": 0.6857
+  },
+  {
+    "crop_path": "dataset/crops/C01_track52_frame0286.jpg",
+    "camera_id": "C01",
+    "track_id": 52,
+    "frame": 286,
+    "timestamp": "10:02:09.65",
+    "bbox": [
+      77.58,
+      554.95,
+      126.34,
+      694.99
+    ],
+    "detection_confidence": 0.6538
+  },
+  {
+    "crop_path": "dataset/crops/C01_track52_frame0291.jpg",
+    "camera_id": "C01",
+    "track_id": 52,
+    "frame": 291,
+    "timestamp": "10:02:09.82",
+    "bbox": [
+      74.76,
+      558.46,
+      123.75,
+      699.98
+    ],
+    "detection_confidence": 0.6109
+  },
+  {
+    "crop_path": "dataset/crops/C01_track53_frame0276.jpg",
+    "camera_id": "C01",
+    "track_id": 53,
+    "frame": 276,
+    "timestamp": "10:02:09.31",
+    "bbox": [
+      510.67,
+      553.2,
+      583.87,
+      742.52
+    ],
+    "detection_confidence": 0.6665
+  },
+  {
+    "crop_path": "dataset/crops/C01_track53_frame0335.jpg",
+    "camera_id": "C01",
+    "track_id": 53,
+    "frame": 335,
+    "timestamp": "10:02:11.30",
+    "bbox": [
+      469.37,
+      542.71,
+      541.23,
+      738.79
+    ],
+    "detection_confidence": 0.7354
+  },
+  {
+    "crop_path": "dataset/crops/C01_track53_frame0428.jpg",
+    "camera_id": "C01",
+    "track_id": 53,
+    "frame": 428,
+    "timestamp": "10:02:14.44",
+    "bbox": [
+      464.55,
+      553.21,
+      529.52,
+      722.51
+    ],
+    "detection_confidence": 0.6113
+  },
+  {
+    "crop_path": "dataset/crops/C01_track53_frame0538.jpg",
+    "camera_id": "C01",
+    "track_id": 53,
+    "frame": 538,
+    "timestamp": "10:02:18.16",
+    "bbox": [
+      493.66,
+      535.61,
+      551.58,
+      717.08
+    ],
+    "detection_confidence": 0.7303
+  },
+  {
+    "crop_path": "dataset/crops/C01_track53_frame0598.jpg",
+    "camera_id": "C01",
+    "track_id": 53,
+    "frame": 598,
+    "timestamp": "10:02:20.18",
+    "bbox": [
+      457.33,
+      526.13,
+      524.24,
+      724.07
+    ],
+    "detection_confidence": 0.6527
+  },
+  {
+    "crop_path": "dataset/crops/C01_track54_frame0289.jpg",
+    "camera_id": "C01",
+    "track_id": 54,
+    "frame": 289,
+    "timestamp": "10:02:09.75",
+    "bbox": [
+      963.42,
+      502.91,
+      1051.8,
+      727.05
+    ],
+    "detection_confidence": 0.7408
+  },
+  {
+    "crop_path": "dataset/crops/C01_track54_frame0294.jpg",
+    "camera_id": "C01",
+    "track_id": 54,
+    "frame": 294,
+    "timestamp": "10:02:09.92",
+    "bbox": [
+      961.57,
+      506.18,
+      1049.25,
+      726.37
+    ],
+    "detection_confidence": 0.7185
+  },
+  {
+    "crop_path": "dataset/crops/C01_track54_frame0299.jpg",
+    "camera_id": "C01",
+    "track_id": 54,
+    "frame": 299,
+    "timestamp": "10:02:10.09",
+    "bbox": [
+      957.06,
+      508.44,
+      1045.48,
+      723.51
+    ],
+    "detection_confidence": 0.6726
+  },
+  {
+    "crop_path": "dataset/crops/C01_track54_frame0304.jpg",
+    "camera_id": "C01",
+    "track_id": 54,
+    "frame": 304,
+    "timestamp": "10:02:10.26",
+    "bbox": [
+      959.6,
+      506.59,
+      1049.79,
+      725.45
+    ],
+    "detection_confidence": 0.7839
+  },
+  {
+    "crop_path": "dataset/crops/C01_track54_frame0309.jpg",
+    "camera_id": "C01",
+    "track_id": 54,
+    "frame": 309,
+    "timestamp": "10:02:10.43",
+    "bbox": [
+      978.86,
+      505.82,
+      1057.11,
+      714.43
+    ],
+    "detection_confidence": 0.6737
+  },
+  {
+    "crop_path": "dataset/crops/C01_track55_frame0296.jpg",
+    "camera_id": "C01",
+    "track_id": 55,
+    "frame": 296,
+    "timestamp": "10:02:09.99",
+    "bbox": [
+      1776.64,
+      437.42,
+      1870.66,
+      801.71
+    ],
+    "detection_confidence": 0.7382
+  },
+  {
+    "crop_path": "dataset/crops/C01_track55_frame0300.jpg",
+    "camera_id": "C01",
+    "track_id": 55,
+    "frame": 300,
+    "timestamp": "10:02:10.12",
+    "bbox": [
+      1774.38,
+      439.64,
+      1868.38,
+      800.11
+    ],
+    "detection_confidence": 0.756
+  },
+  {
+    "crop_path": "dataset/crops/C01_track55_frame0303.jpg",
+    "camera_id": "C01",
+    "track_id": 55,
+    "frame": 303,
+    "timestamp": "10:02:10.22",
+    "bbox": [
+      1767.14,
+      441.74,
+      1862.76,
+      801.24
+    ],
+    "detection_confidence": 0.6879
+  },
+  {
+    "crop_path": "dataset/crops/C01_track55_frame0306.jpg",
+    "camera_id": "C01",
+    "track_id": 55,
+    "frame": 306,
+    "timestamp": "10:02:10.32",
+    "bbox": [
+      1761.85,
+      442.49,
+      1855.59,
+      794.81
+    ],
+    "detection_confidence": 0.6285
+  },
+  {
+    "crop_path": "dataset/crops/C01_track55_frame0310.jpg",
+    "camera_id": "C01",
+    "track_id": 55,
+    "frame": 310,
+    "timestamp": "10:02:10.46",
+    "bbox": [
+      1756.03,
+      443.8,
+      1846.43,
+      795.78
+    ],
+    "detection_confidence": 0.6181
+  },
+  {
+    "crop_path": "dataset/crops/C01_track56_frame0303.jpg",
+    "camera_id": "C01",
+    "track_id": 56,
+    "frame": 303,
+    "timestamp": "10:02:10.22",
+    "bbox": [
+      588.97,
+      495.0,
+      676.09,
+      738.76
+    ],
+    "detection_confidence": 0.7226
+  },
+  {
+    "crop_path": "dataset/crops/C01_track56_frame0373.jpg",
+    "camera_id": "C01",
+    "track_id": 56,
+    "frame": 373,
+    "timestamp": "10:02:12.59",
+    "bbox": [
+      559.3,
+      506.1,
+      646.75,
+      728.25
+    ],
+    "detection_confidence": 0.7139
+  },
+  {
+    "crop_path": "dataset/crops/C01_track56_frame0442.jpg",
+    "camera_id": "C01",
+    "track_id": 56,
+    "frame": 442,
+    "timestamp": "10:02:14.91",
+    "bbox": [
+      540.99,
+      512.12,
+      619.4,
+      713.89
+    ],
+    "detection_confidence": 0.7438
+  },
+  {
+    "crop_path": "dataset/crops/C01_track56_frame0516.jpg",
+    "camera_id": "C01",
+    "track_id": 56,
+    "frame": 516,
+    "timestamp": "10:02:17.41",
+    "bbox": [
+      545.43,
+      526.64,
+      607.71,
+      716.38
+    ],
+    "detection_confidence": 0.6682
+  },
+  {
+    "crop_path": "dataset/crops/C01_track56_frame0632.jpg",
+    "camera_id": "C01",
+    "track_id": 56,
+    "frame": 632,
+    "timestamp": "10:02:21.33",
+    "bbox": [
+      603.22,
+      408.06,
+      778.64,
+      821.96
+    ],
+    "detection_confidence": 0.7524
+  },
+  {
+    "crop_path": "dataset/crops/C01_track57_frame0303.jpg",
+    "camera_id": "C01",
+    "track_id": 57,
+    "frame": 303,
+    "timestamp": "10:02:10.22",
+    "bbox": [
+      1859.45,
+      451.72,
+      1919.4,
+      887.25
+    ],
+    "detection_confidence": 0.697
+  },
+  {
+    "crop_path": "dataset/crops/C01_track57_frame0314.jpg",
+    "camera_id": "C01",
+    "track_id": 57,
+    "frame": 314,
+    "timestamp": "10:02:10.59",
+    "bbox": [
+      1808.01,
+      418.38,
+      1895.58,
+      883.41
+    ],
+    "detection_confidence": 0.8338
+  },
+  {
+    "crop_path": "dataset/crops/C01_track57_frame0325.jpg",
+    "camera_id": "C01",
+    "track_id": 57,
+    "frame": 325,
+    "timestamp": "10:02:10.97",
+    "bbox": [
+      1764.29,
+      416.59,
+      1898.42,
+      875.76
+    ],
+    "detection_confidence": 0.8869
+  },
+  {
+    "crop_path": "dataset/crops/C01_track57_frame0336.jpg",
+    "camera_id": "C01",
+    "track_id": 57,
+    "frame": 336,
+    "timestamp": "10:02:11.34",
+    "bbox": [
+      1709.62,
+      428.9,
+      1857.01,
+      868.38
+    ],
+    "detection_confidence": 0.8526
+  },
+  {
+    "crop_path": "dataset/crops/C01_track57_frame0347.jpg",
+    "camera_id": "C01",
+    "track_id": 57,
+    "frame": 347,
+    "timestamp": "10:02:11.71",
+    "bbox": [
+      1648.23,
+      439.27,
+      1793.02,
+      861.96
+    ],
+    "detection_confidence": 0.7072
+  },
+  {
+    "crop_path": "dataset/crops/C01_track60_frame0322.jpg",
+    "camera_id": "C01",
+    "track_id": 60,
+    "frame": 322,
+    "timestamp": "10:02:10.86",
+    "bbox": [
+      683.58,
+      494.69,
+      759.61,
+      744.22
+    ],
+    "detection_confidence": 0.7879
+  },
+  {
+    "crop_path": "dataset/crops/C01_track60_frame0378.jpg",
+    "camera_id": "C01",
+    "track_id": 60,
+    "frame": 378,
+    "timestamp": "10:02:12.75",
+    "bbox": [
+      652.67,
+      493.71,
+      737.75,
+      743.0
+    ],
+    "detection_confidence": 0.7917
+  },
+  {
+    "crop_path": "dataset/crops/C01_track60_frame0433.jpg",
+    "camera_id": "C01",
+    "track_id": 60,
+    "frame": 433,
+    "timestamp": "10:02:14.61",
+    "bbox": [
+      624.71,
+      503.49,
+      705.06,
+      736.87
+    ],
+    "detection_confidence": 0.7373
+  },
+  {
+    "crop_path": "dataset/crops/C01_track60_frame0488.jpg",
+    "camera_id": "C01",
+    "track_id": 60,
+    "frame": 488,
+    "timestamp": "10:02:16.47",
+    "bbox": [
+      614.74,
+      512.23,
+      688.45,
+      727.34
+    ],
+    "detection_confidence": 0.7688
+  },
+  {
+    "crop_path": "dataset/crops/C01_track60_frame0544.jpg",
+    "camera_id": "C01",
+    "track_id": 60,
+    "frame": 544,
+    "timestamp": "10:02:18.36",
+    "bbox": [
+      636.56,
+      503.2,
+      707.95,
+      720.58
+    ],
+    "detection_confidence": 0.675
+  },
+  {
+    "crop_path": "dataset/crops/C01_track61_frame0335.jpg",
+    "camera_id": "C01",
+    "track_id": 61,
+    "frame": 335,
+    "timestamp": "10:02:11.30",
+    "bbox": [
+      751.82,
+      530.61,
+      813.31,
+      708.57
+    ],
+    "detection_confidence": 0.6188
+  },
+  {
+    "crop_path": "dataset/crops/C01_track61_frame0338.jpg",
+    "camera_id": "C01",
+    "track_id": 61,
+    "frame": 338,
+    "timestamp": "10:02:11.40",
+    "bbox": [
+      754.68,
+      535.2,
+      814.29,
+      707.71
+    ],
+    "detection_confidence": 0.6997
+  },
+  {
+    "crop_path": "dataset/crops/C01_track61_frame0341.jpg",
+    "camera_id": "C01",
+    "track_id": 61,
+    "frame": 341,
+    "timestamp": "10:02:11.51",
+    "bbox": [
+      753.17,
+      535.17,
+      813.01,
+      707.05
+    ],
+    "detection_confidence": 0.6463
+  },
+  {
+    "crop_path": "dataset/crops/C01_track61_frame0343.jpg",
+    "camera_id": "C01",
+    "track_id": 61,
+    "frame": 343,
+    "timestamp": "10:02:11.57",
+    "bbox": [
+      749.59,
+      536.39,
+      809.13,
+      708.97
+    ],
+    "detection_confidence": 0.6436
+  },
+  {
+    "crop_path": "dataset/crops/C01_track61_frame0347.jpg",
+    "camera_id": "C01",
+    "track_id": 61,
+    "frame": 347,
+    "timestamp": "10:02:11.71",
+    "bbox": [
+      746.39,
+      540.2,
+      803.7,
+      708.07
+    ],
+    "detection_confidence": 0.6115
+  },
+  {
+    "crop_path": "dataset/crops/C01_track62_frame0339.jpg",
+    "camera_id": "C01",
+    "track_id": 62,
+    "frame": 339,
+    "timestamp": "10:02:11.44",
+    "bbox": [
+      803.98,
+      504.33,
+      871.63,
+      749.22
+    ],
+    "detection_confidence": 0.6576
+  },
+  {
+    "crop_path": "dataset/crops/C01_track62_frame0379.jpg",
+    "camera_id": "C01",
+    "track_id": 62,
+    "frame": 379,
+    "timestamp": "10:02:12.79",
+    "bbox": [
+      752.94,
+      501.1,
+      852.83,
+      740.98
+    ],
+    "detection_confidence": 0.7724
+  },
+  {
+    "crop_path": "dataset/crops/C01_track62_frame0419.jpg",
+    "camera_id": "C01",
+    "track_id": 62,
+    "frame": 419,
+    "timestamp": "10:02:14.14",
+    "bbox": [
+      766.88,
+      509.59,
+      846.65,
+      738.95
+    ],
+    "detection_confidence": 0.7254
+  },
+  {
+    "crop_path": "dataset/crops/C01_track62_frame0459.jpg",
+    "camera_id": "C01",
+    "track_id": 62,
+    "frame": 459,
+    "timestamp": "10:02:15.49",
+    "bbox": [
+      762.56,
+      512.26,
+      850.73,
+      725.56
+    ],
+    "detection_confidence": 0.6807
+  },
+  {
+    "crop_path": "dataset/crops/C01_track62_frame0505.jpg",
+    "camera_id": "C01",
+    "track_id": 62,
+    "frame": 505,
+    "timestamp": "10:02:17.04",
+    "bbox": [
+      757.11,
+      507.17,
+      817.07,
+      723.87
+    ],
+    "detection_confidence": 0.6313
+  },
+  {
+    "crop_path": "dataset/crops/C01_track64_frame0345.jpg",
+    "camera_id": "C01",
+    "track_id": 64,
+    "frame": 345,
+    "timestamp": "10:02:11.64",
+    "bbox": [
+      1780.8,
+      216.39,
+      1913.24,
+      1080.0
+    ],
+    "detection_confidence": 0.8431
+  },
+  {
+    "crop_path": "dataset/crops/C01_track64_frame0351.jpg",
+    "camera_id": "C01",
+    "track_id": 64,
+    "frame": 351,
+    "timestamp": "10:02:11.84",
+    "bbox": [
+      1734.89,
+      223.98,
+      1882.37,
+      1077.37
+    ],
+    "detection_confidence": 0.8844
+  },
+  {
+    "crop_path": "dataset/crops/C01_track64_frame0356.jpg",
+    "camera_id": "C01",
+    "track_id": 64,
+    "frame": 356,
+    "timestamp": "10:02:12.01",
+    "bbox": [
+      1732.88,
+      261.43,
+      1892.78,
+      1067.54
+    ],
+    "detection_confidence": 0.8872
+  },
+  {
+    "crop_path": "dataset/crops/C01_track64_frame0362.jpg",
+    "camera_id": "C01",
+    "track_id": 64,
+    "frame": 362,
+    "timestamp": "10:02:12.21",
+    "bbox": [
+      1761.86,
+      234.73,
+      1920.0,
+      1053.35
+    ],
+    "detection_confidence": 0.6469
+  },
+  {
+    "crop_path": "dataset/crops/C01_track64_frame0368.jpg",
+    "camera_id": "C01",
+    "track_id": 64,
+    "frame": 368,
+    "timestamp": "10:02:12.42",
+    "bbox": [
+      1827.93,
+      196.96,
+      1920.0,
+      781.08
+    ],
+    "detection_confidence": 0.6105
+  },
+  {
+    "crop_path": "dataset/crops/C01_track65_frame0361.jpg",
+    "camera_id": "C01",
+    "track_id": 65,
+    "frame": 361,
+    "timestamp": "10:02:12.18",
+    "bbox": [
+      964.9,
+      511.25,
+      1042.96,
+      716.44
+    ],
+    "detection_confidence": 0.727
+  },
+  {
+    "crop_path": "dataset/crops/C01_track65_frame0369.jpg",
+    "camera_id": "C01",
+    "track_id": 65,
+    "frame": 369,
+    "timestamp": "10:02:12.45",
+    "bbox": [
+      969.04,
+      511.01,
+      1047.62,
+      719.31
+    ],
+    "detection_confidence": 0.7699
+  },
+  {
+    "crop_path": "dataset/crops/C01_track65_frame0377.jpg",
+    "camera_id": "C01",
+    "track_id": 65,
+    "frame": 377,
+    "timestamp": "10:02:12.72",
+    "bbox": [
+      974.58,
+      514.94,
+      1051.11,
+      718.96
+    ],
+    "detection_confidence": 0.8031
+  },
+  {
+    "crop_path": "dataset/crops/C01_track65_frame0385.jpg",
+    "camera_id": "C01",
+    "track_id": 65,
+    "frame": 385,
+    "timestamp": "10:02:12.99",
+    "bbox": [
+      980.19,
+      509.55,
+      1060.16,
+      716.68
+    ],
+    "detection_confidence": 0.7869
+  },
+  {
+    "crop_path": "dataset/crops/C01_track65_frame0393.jpg",
+    "camera_id": "C01",
+    "track_id": 65,
+    "frame": 393,
+    "timestamp": "10:02:13.26",
+    "bbox": [
+      984.9,
+      515.49,
+      1059.99,
+      717.25
+    ],
+    "detection_confidence": 0.6168
+  },
+  {
+    "crop_path": "dataset/crops/C01_track66_frame0383.jpg",
+    "camera_id": "C01",
+    "track_id": 66,
+    "frame": 383,
+    "timestamp": "10:02:12.92",
+    "bbox": [
+      1102.88,
+      398.8,
+      1245.54,
+      839.2
+    ],
+    "detection_confidence": 0.8016
+  },
+  {
+    "crop_path": "dataset/crops/C01_track66_frame0395.jpg",
+    "camera_id": "C01",
+    "track_id": 66,
+    "frame": 395,
+    "timestamp": "10:02:13.33",
+    "bbox": [
+      1075.04,
+      418.53,
+      1227.91,
+      864.23
+    ],
+    "detection_confidence": 0.7812
+  },
+  {
+    "crop_path": "dataset/crops/C01_track66_frame0407.jpg",
+    "camera_id": "C01",
+    "track_id": 66,
+    "frame": 407,
+    "timestamp": "10:02:13.73",
+    "bbox": [
+      1046.95,
+      414.6,
+      1201.6,
+      854.02
+    ],
+    "detection_confidence": 0.7959
+  },
+  {
+    "crop_path": "dataset/crops/C01_track66_frame0418.jpg",
+    "camera_id": "C01",
+    "track_id": 66,
+    "frame": 418,
+    "timestamp": "10:02:14.10",
+    "bbox": [
+      1017.14,
+      418.97,
+      1158.39,
+      845.31
+    ],
+    "detection_confidence": 0.8154
+  },
+  {
+    "crop_path": "dataset/crops/C01_track66_frame0430.jpg",
+    "camera_id": "C01",
+    "track_id": 66,
+    "frame": 430,
+    "timestamp": "10:02:14.51",
+    "bbox": [
+      1004.15,
+      431.63,
+      1124.34,
+      838.45
+    ],
+    "detection_confidence": 0.6258
+  },
+  {
+    "crop_path": "dataset/crops/C01_track67_frame0387.jpg",
+    "camera_id": "C01",
+    "track_id": 67,
+    "frame": 387,
+    "timestamp": "10:02:13.06",
+    "bbox": [
+      1231.4,
+      416.67,
+      1332.51,
+      823.27
+    ],
+    "detection_confidence": 0.8236
+  },
+  {
+    "crop_path": "dataset/crops/C01_track67_frame0392.jpg",
+    "camera_id": "C01",
+    "track_id": 67,
+    "frame": 392,
+    "timestamp": "10:02:13.23",
+    "bbox": [
+      1223.0,
+      429.3,
+      1320.88,
+      812.77
+    ],
+    "detection_confidence": 0.8046
+  },
+  {
+    "crop_path": "dataset/crops/C01_track67_frame0397.jpg",
+    "camera_id": "C01",
+    "track_id": 67,
+    "frame": 397,
+    "timestamp": "10:02:13.40",
+    "bbox": [
+      1203.98,
+      426.48,
+      1306.81,
+      814.23
+    ],
+    "detection_confidence": 0.6088
+  },
+  {
+    "crop_path": "dataset/crops/C01_track67_frame0402.jpg",
+    "camera_id": "C01",
+    "track_id": 67,
+    "frame": 402,
+    "timestamp": "10:02:13.56",
+    "bbox": [
+      1186.08,
+      420.92,
+      1292.18,
+      815.55
+    ],
+    "detection_confidence": 0.7724
+  },
+  {
+    "crop_path": "dataset/crops/C01_track67_frame0407.jpg",
+    "camera_id": "C01",
+    "track_id": 67,
+    "frame": 407,
+    "timestamp": "10:02:13.73",
+    "bbox": [
+      1167.84,
+      431.55,
+      1270.1,
+      822.14
+    ],
+    "detection_confidence": 0.7133
+  },
+  {
+    "crop_path": "dataset/crops/C01_track69_frame0394.jpg",
+    "camera_id": "C01",
+    "track_id": 69,
+    "frame": 394,
+    "timestamp": "10:02:13.29",
+    "bbox": [
+      1317.23,
+      308.62,
+      1534.05,
+      1010.25
+    ],
+    "detection_confidence": 0.8402
+  },
+  {
+    "crop_path": "dataset/crops/C01_track69_frame0452.jpg",
+    "camera_id": "C01",
+    "track_id": 69,
+    "frame": 452,
+    "timestamp": "10:02:15.25",
+    "bbox": [
+      936.74,
+      352.86,
+      1172.22,
+      937.97
+    ],
+    "detection_confidence": 0.8516
+  },
+  {
+    "crop_path": "dataset/crops/C01_track69_frame0510.jpg",
+    "camera_id": "C01",
+    "track_id": 69,
+    "frame": 510,
+    "timestamp": "10:02:17.21",
+    "bbox": [
+      775.16,
+      396.91,
+      963.19,
+      881.24
+    ],
+    "detection_confidence": 0.8014
+  },
+  {
+    "crop_path": "dataset/crops/C01_track69_frame0568.jpg",
+    "camera_id": "C01",
+    "track_id": 69,
+    "frame": 568,
+    "timestamp": "10:02:19.17",
+    "bbox": [
+      642.23,
+      434.48,
+      815.58,
+      842.04
+    ],
+    "detection_confidence": 0.8156
+  },
+  {
+    "crop_path": "dataset/crops/C01_track69_frame0632.jpg",
+    "camera_id": "C01",
+    "track_id": 69,
+    "frame": 632,
+    "timestamp": "10:02:21.33",
+    "bbox": [
+      782.44,
+      431.35,
+      923.8,
+      793.73
+    ],
+    "detection_confidence": 0.8766
+  },
+  {
+    "crop_path": "dataset/crops/C01_track70_frame0394.jpg",
+    "camera_id": "C01",
+    "track_id": 70,
+    "frame": 394,
+    "timestamp": "10:02:13.29",
+    "bbox": [
+      724.86,
+      543.59,
+      780.69,
+      706.43
+    ],
+    "detection_confidence": 0.6588
+  },
+  {
+    "crop_path": "dataset/crops/C01_track70_frame0417.jpg",
+    "camera_id": "C01",
+    "track_id": 70,
+    "frame": 417,
+    "timestamp": "10:02:14.07",
+    "bbox": [
+      708.79,
+      538.39,
+      765.44,
+      709.8
+    ],
+    "detection_confidence": 0.6329
+  },
+  {
+    "crop_path": "dataset/crops/C01_track70_frame0437.jpg",
+    "camera_id": "C01",
+    "track_id": 70,
+    "frame": 437,
+    "timestamp": "10:02:14.75",
+    "bbox": [
+      691.46,
+      537.43,
+      751.94,
+      712.03
+    ],
+    "detection_confidence": 0.6208
+  },
+  {
+    "crop_path": "dataset/crops/C01_track70_frame0456.jpg",
+    "camera_id": "C01",
+    "track_id": 70,
+    "frame": 456,
+    "timestamp": "10:02:15.39",
+    "bbox": [
+      687.75,
+      539.23,
+      747.89,
+      710.94
+    ],
+    "detection_confidence": 0.6125
+  },
+  {
+    "crop_path": "dataset/crops/C01_track70_frame0480.jpg",
+    "camera_id": "C01",
+    "track_id": 70,
+    "frame": 480,
+    "timestamp": "10:02:16.20",
+    "bbox": [
+      670.72,
+      540.18,
+      732.18,
+      714.62
+    ],
+    "detection_confidence": 0.6282
+  },
+  {
+    "crop_path": "dataset/crops/C01_track71_frame0402.jpg",
+    "camera_id": "C01",
+    "track_id": 71,
+    "frame": 402,
+    "timestamp": "10:02:13.56",
+    "bbox": [
+      1501.75,
+      253.09,
+      1633.88,
+      914.01
+    ],
+    "detection_confidence": 0.7103
+  },
+  {
+    "crop_path": "dataset/crops/C01_track71_frame0451.jpg",
+    "camera_id": "C01",
+    "track_id": 71,
+    "frame": 451,
+    "timestamp": "10:02:15.22",
+    "bbox": [
+      1191.24,
+      310.87,
+      1383.68,
+      928.53
+    ],
+    "detection_confidence": 0.8629
+  },
+  {
+    "crop_path": "dataset/crops/C01_track71_frame0500.jpg",
+    "camera_id": "C01",
+    "track_id": 71,
+    "frame": 500,
+    "timestamp": "10:02:16.87",
+    "bbox": [
+      976.77,
+      349.8,
+      1144.89,
+      880.01
+    ],
+    "detection_confidence": 0.8278
+  },
+  {
+    "crop_path": "dataset/crops/C01_track71_frame0548.jpg",
+    "camera_id": "C01",
+    "track_id": 71,
+    "frame": 548,
+    "timestamp": "10:02:18.49",
+    "bbox": [
+      846.66,
+      382.09,
+      994.9,
+      846.71
+    ],
+    "detection_confidence": 0.8241
+  },
+  {
+    "crop_path": "dataset/crops/C01_track71_frame0597.jpg",
+    "camera_id": "C01",
+    "track_id": 71,
+    "frame": 597,
+    "timestamp": "10:02:20.15",
+    "bbox": [
+      797.07,
+      412.87,
+      929.87,
+      827.09
+    ],
+    "detection_confidence": 0.7589
+  },
+  {
+    "crop_path": "dataset/crops/C01_track73_frame0412.jpg",
+    "camera_id": "C01",
+    "track_id": 73,
+    "frame": 412,
+    "timestamp": "10:02:13.90",
+    "bbox": [
+      1578.58,
+      316.85,
+      1710.27,
+      932.72
+    ],
+    "detection_confidence": 0.8049
+  },
+  {
+    "crop_path": "dataset/crops/C01_track73_frame0458.jpg",
+    "camera_id": "C01",
+    "track_id": 73,
+    "frame": 458,
+    "timestamp": "10:02:15.45",
+    "bbox": [
+      1378.83,
+      357.12,
+      1534.63,
+      885.33
+    ],
+    "detection_confidence": 0.8595
+  },
+  {
+    "crop_path": "dataset/crops/C01_track73_frame0504.jpg",
+    "camera_id": "C01",
+    "track_id": 73,
+    "frame": 504,
+    "timestamp": "10:02:17.01",
+    "bbox": [
+      1274.22,
+      378.8,
+      1420.32,
+      861.53
+    ],
+    "detection_confidence": 0.8709
+  },
+  {
+    "crop_path": "dataset/crops/C01_track73_frame0550.jpg",
+    "camera_id": "C01",
+    "track_id": 73,
+    "frame": 550,
+    "timestamp": "10:02:18.56",
+    "bbox": [
+      1179.95,
+      395.57,
+      1314.75,
+      837.6
+    ],
+    "detection_confidence": 0.8463
+  },
+  {
+    "crop_path": "dataset/crops/C01_track73_frame0597.jpg",
+    "camera_id": "C01",
+    "track_id": 73,
+    "frame": 597,
+    "timestamp": "10:02:20.15",
+    "bbox": [
+      1103.4,
+      417.97,
+      1280.88,
+      994.29
+    ],
+    "detection_confidence": 0.6349
+  },
+  {
+    "crop_path": "dataset/crops/C01_track74_frame0427.jpg",
+    "camera_id": "C01",
+    "track_id": 74,
+    "frame": 427,
+    "timestamp": "10:02:14.41",
+    "bbox": [
+      76.72,
+      544.81,
+      120.29,
+      713.51
+    ],
+    "detection_confidence": 0.6296
+  },
+  {
+    "crop_path": "dataset/crops/C01_track74_frame0452.jpg",
+    "camera_id": "C01",
+    "track_id": 74,
+    "frame": 452,
+    "timestamp": "10:02:15.25",
+    "bbox": [
+      86.59,
+      538.54,
+      146.11,
+      720.76
+    ],
+    "detection_confidence": 0.7441
+  },
+  {
+    "crop_path": "dataset/crops/C01_track74_frame0475.jpg",
+    "camera_id": "C01",
+    "track_id": 74,
+    "frame": 475,
+    "timestamp": "10:02:16.03",
+    "bbox": [
+      94.53,
+      543.95,
+      158.62,
+      727.91
+    ],
+    "detection_confidence": 0.751
+  },
+  {
+    "crop_path": "dataset/crops/C01_track74_frame0499.jpg",
+    "camera_id": "C01",
+    "track_id": 74,
+    "frame": 499,
+    "timestamp": "10:02:16.84",
+    "bbox": [
+      99.73,
+      541.88,
+      165.65,
+      731.03
+    ],
+    "detection_confidence": 0.7325
+  },
+  {
+    "crop_path": "dataset/crops/C01_track74_frame0559.jpg",
+    "camera_id": "C01",
+    "track_id": 74,
+    "frame": 559,
+    "timestamp": "10:02:18.86",
+    "bbox": [
+      70.97,
+      510.45,
+      143.34,
+      759.78
+    ],
+    "detection_confidence": 0.6107
+  },
+  {
+    "crop_path": "dataset/crops/C01_track75_frame0438.jpg",
+    "camera_id": "C01",
+    "track_id": 75,
+    "frame": 438,
+    "timestamp": "10:02:14.78",
+    "bbox": [
+      1778.92,
+      439.35,
+      1874.22,
+      803.89
+    ],
+    "detection_confidence": 0.6094
+  },
+  {
+    "crop_path": "dataset/crops/C01_track75_frame0460.jpg",
+    "camera_id": "C01",
+    "track_id": 75,
+    "frame": 460,
+    "timestamp": "10:02:15.52",
+    "bbox": [
+      1772.43,
+      437.43,
+      1873.12,
+      803.95
+    ],
+    "detection_confidence": 0.8135
+  },
+  {
+    "crop_path": "dataset/crops/C01_track75_frame0481.jpg",
+    "camera_id": "C01",
+    "track_id": 75,
+    "frame": 481,
+    "timestamp": "10:02:16.23",
+    "bbox": [
+      1774.11,
+      438.44,
+      1882.39,
+      804.38
+    ],
+    "detection_confidence": 0.8147
+  },
+  {
+    "crop_path": "dataset/crops/C01_track75_frame0502.jpg",
+    "camera_id": "C01",
+    "track_id": 75,
+    "frame": 502,
+    "timestamp": "10:02:16.94",
+    "bbox": [
+      1778.9,
+      437.61,
+      1878.98,
+      802.87
+    ],
+    "detection_confidence": 0.8084
+  },
+  {
+    "crop_path": "dataset/crops/C01_track75_frame0522.jpg",
+    "camera_id": "C01",
+    "track_id": 75,
+    "frame": 522,
+    "timestamp": "10:02:17.62",
+    "bbox": [
+      1780.37,
+      436.68,
+      1875.48,
+      803.51
+    ],
+    "detection_confidence": 0.6621
+  },
+  {
+    "crop_path": "dataset/crops/C01_track76_frame0454.jpg",
+    "camera_id": "C01",
+    "track_id": 76,
+    "frame": 454,
+    "timestamp": "10:02:15.32",
+    "bbox": [
+      1337.09,
+      468.7,
+      1422.08,
+      793.65
+    ],
+    "detection_confidence": 0.659
+  },
+  {
+    "crop_path": "dataset/crops/C01_track76_frame0458.jpg",
+    "camera_id": "C01",
+    "track_id": 76,
+    "frame": 458,
+    "timestamp": "10:02:15.45",
+    "bbox": [
+      1328.29,
+      470.94,
+      1413.92,
+      799.62
+    ],
+    "detection_confidence": 0.7253
+  },
+  {
+    "crop_path": "dataset/crops/C01_track76_frame0463.jpg",
+    "camera_id": "C01",
+    "track_id": 76,
+    "frame": 463,
+    "timestamp": "10:02:15.62",
+    "bbox": [
+      1309.59,
+      477.41,
+      1394.03,
+      796.12
+    ],
+    "detection_confidence": 0.733
+  },
+  {
+    "crop_path": "dataset/crops/C01_track76_frame0478.jpg",
+    "camera_id": "C01",
+    "track_id": 76,
+    "frame": 478,
+    "timestamp": "10:02:16.13",
+    "bbox": [
+      1285.9,
+      523.07,
+      1363.67,
+      785.69
+    ],
+    "detection_confidence": 0.6715
+  },
+  {
+    "crop_path": "dataset/crops/C01_track76_frame0482.jpg",
+    "camera_id": "C01",
+    "track_id": 76,
+    "frame": 482,
+    "timestamp": "10:02:16.26",
+    "bbox": [
+      1277.52,
+      509.77,
+      1362.51,
+      784.59
+    ],
+    "detection_confidence": 0.6012
+  },
+  {
+    "crop_path": "dataset/crops/C01_track79_frame0468.jpg",
+    "camera_id": "C01",
+    "track_id": 79,
+    "frame": 468,
+    "timestamp": "10:02:15.79",
+    "bbox": [
+      416.36,
+      535.23,
+      471.01,
+      713.08
+    ],
+    "detection_confidence": 0.6806
+  },
+  {
+    "crop_path": "dataset/crops/C01_track79_frame0476.jpg",
+    "camera_id": "C01",
+    "track_id": 79,
+    "frame": 476,
+    "timestamp": "10:02:16.06",
+    "bbox": [
+      411.66,
+      535.51,
+      464.85,
+      708.0
+    ],
+    "detection_confidence": 0.6077
+  },
+  {
+    "crop_path": "dataset/crops/C01_track79_frame0477.jpg",
+    "camera_id": "C01",
+    "track_id": 79,
+    "frame": 477,
+    "timestamp": "10:02:16.10",
+    "bbox": [
+      411.14,
+      535.19,
+      464.95,
+      709.38
+    ],
+    "detection_confidence": 0.6132
+  },
+  {
+    "crop_path": "dataset/crops/C01_track79_frame0478.jpg",
+    "camera_id": "C01",
+    "track_id": 79,
+    "frame": 478,
+    "timestamp": "10:02:16.13",
+    "bbox": [
+      410.88,
+      534.72,
+      465.5,
+      711.01
+    ],
+    "detection_confidence": 0.6119
+  },
+  {
+    "crop_path": "dataset/crops/C01_track80_frame0472.jpg",
+    "camera_id": "C01",
+    "track_id": 80,
+    "frame": 472,
+    "timestamp": "10:02:15.93",
+    "bbox": [
+      1468.13,
+      504.85,
+      1543.1,
+      767.26
+    ],
+    "detection_confidence": 0.6637
+  },
+  {
+    "crop_path": "dataset/crops/C01_track80_frame0476.jpg",
+    "camera_id": "C01",
+    "track_id": 80,
+    "frame": 476,
+    "timestamp": "10:02:16.06",
+    "bbox": [
+      1458.93,
+      500.68,
+      1538.77,
+      773.84
+    ],
+    "detection_confidence": 0.7562
+  },
+  {
+    "crop_path": "dataset/crops/C01_track80_frame0479.jpg",
+    "camera_id": "C01",
+    "track_id": 80,
+    "frame": 479,
+    "timestamp": "10:02:16.16",
+    "bbox": [
+      1458.2,
+      503.72,
+      1539.68,
+      772.68
+    ],
+    "detection_confidence": 0.7609
+  },
+  {
+    "crop_path": "dataset/crops/C01_track80_frame0482.jpg",
+    "camera_id": "C01",
+    "track_id": 80,
+    "frame": 482,
+    "timestamp": "10:02:16.26",
+    "bbox": [
+      1458.28,
+      504.64,
+      1542.72,
+      773.33
+    ],
+    "detection_confidence": 0.7186
+  },
+  {
+    "crop_path": "dataset/crops/C01_track80_frame0486.jpg",
+    "camera_id": "C01",
+    "track_id": 80,
+    "frame": 486,
+    "timestamp": "10:02:16.40",
+    "bbox": [
+      1454.12,
+      503.88,
+      1540.89,
+      771.42
+    ],
+    "detection_confidence": 0.6157
+  },
+  {
+    "crop_path": "dataset/crops/C01_track82_frame0493.jpg",
+    "camera_id": "C01",
+    "track_id": 82,
+    "frame": 493,
+    "timestamp": "10:02:16.64",
+    "bbox": [
+      447.07,
+      550.52,
+      494.56,
+      712.97
+    ],
+    "detection_confidence": 0.6315
+  },
+  {
+    "crop_path": "dataset/crops/C01_track82_frame0515.jpg",
+    "camera_id": "C01",
+    "track_id": 82,
+    "frame": 515,
+    "timestamp": "10:02:17.38",
+    "bbox": [
+      442.81,
+      551.32,
+      500.1,
+      716.61
+    ],
+    "detection_confidence": 0.6557
+  },
+  {
+    "crop_path": "dataset/crops/C01_track82_frame0526.jpg",
+    "camera_id": "C01",
+    "track_id": 82,
+    "frame": 526,
+    "timestamp": "10:02:17.75",
+    "bbox": [
+      447.34,
+      549.71,
+      506.97,
+      718.61
+    ],
+    "detection_confidence": 0.6565
+  },
+  {
+    "crop_path": "dataset/crops/C01_track82_frame0535.jpg",
+    "camera_id": "C01",
+    "track_id": 82,
+    "frame": 535,
+    "timestamp": "10:02:18.05",
+    "bbox": [
+      445.91,
+      544.37,
+      506.16,
+      717.03
+    ],
+    "detection_confidence": 0.695
+  },
+  {
+    "crop_path": "dataset/crops/C01_track82_frame0546.jpg",
+    "camera_id": "C01",
+    "track_id": 82,
+    "frame": 546,
+    "timestamp": "10:02:18.43",
+    "bbox": [
+      448.22,
+      552.08,
+      500.78,
+      718.12
+    ],
+    "detection_confidence": 0.608
+  },
+  {
+    "crop_path": "dataset/crops/C01_track83_frame0502.jpg",
+    "camera_id": "C01",
+    "track_id": 83,
+    "frame": 502,
+    "timestamp": "10:02:16.94",
+    "bbox": [
+      716.07,
+      537.15,
+      774.69,
+      714.43
+    ],
+    "detection_confidence": 0.6372
+  },
+  {
+    "crop_path": "dataset/crops/C01_track83_frame0506.jpg",
+    "camera_id": "C01",
+    "track_id": 83,
+    "frame": 506,
+    "timestamp": "10:02:17.08",
+    "bbox": [
+      701.55,
+      533.78,
+      762.02,
+      713.24
+    ],
+    "detection_confidence": 0.6824
+  },
+  {
+    "crop_path": "dataset/crops/C01_track83_frame0510.jpg",
+    "camera_id": "C01",
+    "track_id": 83,
+    "frame": 510,
+    "timestamp": "10:02:17.21",
+    "bbox": [
+      698.39,
+      535.45,
+      759.95,
+      712.0
+    ],
+    "detection_confidence": 0.725
+  },
+  {
+    "crop_path": "dataset/crops/C01_track83_frame0515.jpg",
+    "camera_id": "C01",
+    "track_id": 83,
+    "frame": 515,
+    "timestamp": "10:02:17.38",
+    "bbox": [
+      697.15,
+      534.94,
+      759.48,
+      712.78
+    ],
+    "detection_confidence": 0.7421
+  },
+  {
+    "crop_path": "dataset/crops/C01_track83_frame0519.jpg",
+    "camera_id": "C01",
+    "track_id": 83,
+    "frame": 519,
+    "timestamp": "10:02:17.51",
+    "bbox": [
+      692.62,
+      538.66,
+      750.47,
+      709.77
+    ],
+    "detection_confidence": 0.6013
+  },
+  {
+    "crop_path": "dataset/crops/C01_track85_frame0521.jpg",
+    "camera_id": "C01",
+    "track_id": 85,
+    "frame": 521,
+    "timestamp": "10:02:17.58",
+    "bbox": [
+      1055.42,
+      483.23,
+      1146.03,
+      797.89
+    ],
+    "detection_confidence": 0.7069
+  },
+  {
+    "crop_path": "dataset/crops/C01_track85_frame0548.jpg",
+    "camera_id": "C01",
+    "track_id": 85,
+    "frame": 548,
+    "timestamp": "10:02:18.49",
+    "bbox": [
+      1022.13,
+      484.88,
+      1125.19,
+      789.25
+    ],
+    "detection_confidence": 0.8383
+  },
+  {
+    "crop_path": "dataset/crops/C01_track85_frame0575.jpg",
+    "camera_id": "C01",
+    "track_id": 85,
+    "frame": 575,
+    "timestamp": "10:02:19.40",
+    "bbox": [
+      998.31,
+      490.94,
+      1096.77,
+      781.96
+    ],
+    "detection_confidence": 0.8355
+  },
+  {
+    "crop_path": "dataset/crops/C01_track85_frame0605.jpg",
+    "camera_id": "C01",
+    "track_id": 85,
+    "frame": 605,
+    "timestamp": "10:02:20.42",
+    "bbox": [
+      913.7,
+      321.95,
+      1115.18,
+      860.4
+    ],
+    "detection_confidence": 0.8593
+  },
+  {
+    "crop_path": "dataset/crops/C01_track85_frame0632.jpg",
+    "camera_id": "C01",
+    "track_id": 85,
+    "frame": 632,
+    "timestamp": "10:02:21.33",
+    "bbox": [
+      1164.69,
+      265.11,
+      1457.38,
+      953.71
+    ],
+    "detection_confidence": 0.8937
+  },
+  {
+    "crop_path": "dataset/crops/C01_track86_frame0524.jpg",
+    "camera_id": "C01",
+    "track_id": 86,
+    "frame": 524,
+    "timestamp": "10:02:17.68",
+    "bbox": [
+      1834.27,
+      353.84,
+      1917.74,
+      938.49
+    ],
+    "detection_confidence": 0.7277
+  },
+  {
+    "crop_path": "dataset/crops/C01_track86_frame0544.jpg",
+    "camera_id": "C01",
+    "track_id": 86,
+    "frame": 544,
+    "timestamp": "10:02:18.36",
+    "bbox": [
+      1769.76,
+      361.08,
+      1902.42,
+      936.04
+    ],
+    "detection_confidence": 0.8779
+  },
+  {
+    "crop_path": "dataset/crops/C01_track86_frame0564.jpg",
+    "camera_id": "C01",
+    "track_id": 86,
+    "frame": 564,
+    "timestamp": "10:02:19.03",
+    "bbox": [
+      1679.71,
+      367.6,
+      1864.37,
+      927.73
+    ],
+    "detection_confidence": 0.8973
+  },
+  {
+    "crop_path": "dataset/crops/C01_track86_frame0583.jpg",
+    "camera_id": "C01",
+    "track_id": 86,
+    "frame": 583,
+    "timestamp": "10:02:19.67",
+    "bbox": [
+      1598.52,
+      378.31,
+      1784.11,
+      909.76
+    ],
+    "detection_confidence": 0.8552
+  },
+  {
+    "crop_path": "dataset/crops/C01_track86_frame0619.jpg",
+    "camera_id": "C01",
+    "track_id": 86,
+    "frame": 619,
+    "timestamp": "10:02:20.89",
+    "bbox": [
+      1650.92,
+      148.1,
+      1920.0,
+      1042.82
+    ],
+    "detection_confidence": 0.638
+  },
+  {
+    "crop_path": "dataset/crops/C01_track87_frame0527.jpg",
+    "camera_id": "C01",
+    "track_id": 87,
+    "frame": 527,
+    "timestamp": "10:02:17.78",
+    "bbox": [
+      369.79,
+      531.16,
+      426.69,
+      719.38
+    ],
+    "detection_confidence": 0.6047
+  },
+  {
+    "crop_path": "dataset/crops/C01_track87_frame0529.jpg",
+    "camera_id": "C01",
+    "track_id": 87,
+    "frame": 529,
+    "timestamp": "10:02:17.85",
+    "bbox": [
+      371.18,
+      531.39,
+      427.85,
+      718.7
+    ],
+    "detection_confidence": 0.6035
+  },
+  {
+    "crop_path": "dataset/crops/C01_track87_frame0533.jpg",
+    "camera_id": "C01",
+    "track_id": 87,
+    "frame": 533,
+    "timestamp": "10:02:17.99",
+    "bbox": [
+      374.35,
+      530.69,
+      431.32,
+      718.01
+    ],
+    "detection_confidence": 0.6025
+  },
+  {
+    "crop_path": "dataset/crops/C01_track87_frame0534.jpg",
+    "camera_id": "C01",
+    "track_id": 87,
+    "frame": 534,
+    "timestamp": "10:02:18.02",
+    "bbox": [
+      374.45,
+      530.23,
+      432.16,
+      718.6
+    ],
+    "detection_confidence": 0.6058
+  },
+  {
+    "crop_path": "dataset/crops/C01_track87_frame0535.jpg",
+    "camera_id": "C01",
+    "track_id": 87,
+    "frame": 535,
+    "timestamp": "10:02:18.05",
+    "bbox": [
+      375.27,
+      531.8,
+      432.77,
+      717.12
+    ],
+    "detection_confidence": 0.6051
+  },
+  {
+    "crop_path": "dataset/crops/C01_track88_frame0534.jpg",
+    "camera_id": "C01",
+    "track_id": 88,
+    "frame": 534,
+    "timestamp": "10:02:18.02",
+    "bbox": [
+      1467.55,
+      504.1,
+      1536.08,
+      764.68
+    ],
+    "detection_confidence": 0.6958
+  },
+  {
+    "crop_path": "dataset/crops/C01_track88_frame0555.jpg",
+    "camera_id": "C01",
+    "track_id": 88,
+    "frame": 555,
+    "timestamp": "10:02:18.73",
+    "bbox": [
+      1426.22,
+      497.18,
+      1504.82,
+      760.26
+    ],
+    "detection_confidence": 0.8351
+  },
+  {
+    "crop_path": "dataset/crops/C01_track88_frame0576.jpg",
+    "camera_id": "C01",
+    "track_id": 88,
+    "frame": 576,
+    "timestamp": "10:02:19.44",
+    "bbox": [
+      1383.26,
+      498.58,
+      1468.32,
+      755.55
+    ],
+    "detection_confidence": 0.7778
+  },
+  {
+    "crop_path": "dataset/crops/C01_track88_frame0611.jpg",
+    "camera_id": "C01",
+    "track_id": 88,
+    "frame": 611,
+    "timestamp": "10:02:20.62",
+    "bbox": [
+      1273.27,
+      435.13,
+      1391.65,
+      755.05
+    ],
+    "detection_confidence": 0.7829
+  },
+  {
+    "crop_path": "dataset/crops/C01_track88_frame0632.jpg",
+    "camera_id": "C01",
+    "track_id": 88,
+    "frame": 632,
+    "timestamp": "10:02:21.33",
+    "bbox": [
+      1456.63,
+      419.56,
+      1643.7,
+      785.63
+    ],
+    "detection_confidence": 0.8651
+  },
+  {
+    "crop_path": "dataset/crops/C01_track89_frame0557.jpg",
+    "camera_id": "C01",
+    "track_id": 89,
+    "frame": 557,
+    "timestamp": "10:02:18.80",
+    "bbox": [
+      949.78,
+      470.84,
+      1044.38,
+      758.77
+    ],
+    "detection_confidence": 0.6562
+  },
+  {
+    "crop_path": "dataset/crops/C01_track89_frame0563.jpg",
+    "camera_id": "C01",
+    "track_id": 89,
+    "frame": 563,
+    "timestamp": "10:02:19.00",
+    "bbox": [
+      943.12,
+      465.26,
+      1037.55,
+      757.71
+    ],
+    "detection_confidence": 0.687
+  },
+  {
+    "crop_path": "dataset/crops/C01_track89_frame0570.jpg",
+    "camera_id": "C01",
+    "track_id": 89,
+    "frame": 570,
+    "timestamp": "10:02:19.24",
+    "bbox": [
+      942.29,
+      474.5,
+      1028.69,
+      753.26
+    ],
+    "detection_confidence": 0.7397
+  },
+  {
+    "crop_path": "dataset/crops/C01_track89_frame0589.jpg",
+    "camera_id": "C01",
+    "track_id": 89,
+    "frame": 589,
+    "timestamp": "10:02:19.88",
+    "bbox": [
+      923.56,
+      482.57,
+      1006.26,
+      751.88
+    ],
+    "detection_confidence": 0.6322
+  },
+  {
+    "crop_path": "dataset/crops/C01_track89_frame0627.jpg",
+    "camera_id": "C01",
+    "track_id": 89,
+    "frame": 627,
+    "timestamp": "10:02:21.16",
+    "bbox": [
+      893.8,
+      447.35,
+      967.05,
+      690.61
+    ],
+    "detection_confidence": 0.6845
+  },
+  {
+    "crop_path": "dataset/crops/C01_track91_frame0566.jpg",
+    "camera_id": "C01",
+    "track_id": 91,
+    "frame": 566,
+    "timestamp": "10:02:19.10",
+    "bbox": [
+      585.94,
+      556.25,
+      645.26,
+      710.35
+    ],
+    "detection_confidence": 0.6559
+  },
+  {
+    "crop_path": "dataset/crops/C01_track91_frame0569.jpg",
+    "camera_id": "C01",
+    "track_id": 91,
+    "frame": 569,
+    "timestamp": "10:02:19.20",
+    "bbox": [
+      583.19,
+      554.66,
+      643.01,
+      709.89
+    ],
+    "detection_confidence": 0.7283
+  },
+  {
+    "crop_path": "dataset/crops/C01_track91_frame0572.jpg",
+    "camera_id": "C01",
+    "track_id": 91,
+    "frame": 572,
+    "timestamp": "10:02:19.30",
+    "bbox": [
+      579.71,
+      549.91,
+      641.85,
+      711.09
+    ],
+    "detection_confidence": 0.7224
+  },
+  {
+    "crop_path": "dataset/crops/C01_track91_frame0576.jpg",
+    "camera_id": "C01",
+    "track_id": 91,
+    "frame": 576,
+    "timestamp": "10:02:19.44",
+    "bbox": [
+      580.82,
+      559.44,
+      635.8,
+      706.73
+    ],
+    "detection_confidence": 0.6494
+  },
+  {
+    "crop_path": "dataset/crops/C01_track91_frame0579.jpg",
+    "camera_id": "C01",
+    "track_id": 91,
+    "frame": 579,
+    "timestamp": "10:02:19.54",
+    "bbox": [
+      575.52,
+      559.98,
+      628.41,
+      706.91
+    ],
+    "detection_confidence": 0.6225
+  },
+  {
+    "crop_path": "dataset/crops/C01_track92_frame0567.jpg",
+    "camera_id": "C01",
+    "track_id": 92,
+    "frame": 567,
+    "timestamp": "10:02:19.13",
+    "bbox": [
+      1853.02,
+      393.51,
+      1918.51,
+      954.71
+    ],
+    "detection_confidence": 0.6827
+  },
+  {
+    "crop_path": "dataset/crops/C01_track92_frame0574.jpg",
+    "camera_id": "C01",
+    "track_id": 92,
+    "frame": 574,
+    "timestamp": "10:02:19.37",
+    "bbox": [
+      1822.14,
+      399.15,
+      1897.54,
+      945.81
+    ],
+    "detection_confidence": 0.8733
+  },
+  {
+    "crop_path": "dataset/crops/C01_track92_frame0581.jpg",
+    "camera_id": "C01",
+    "track_id": 92,
+    "frame": 581,
+    "timestamp": "10:02:19.61",
+    "bbox": [
+      1784.76,
+      396.75,
+      1890.33,
+      948.21
+    ],
+    "detection_confidence": 0.8767
+  },
+  {
+    "crop_path": "dataset/crops/C01_track92_frame0587.jpg",
+    "camera_id": "C01",
+    "track_id": 92,
+    "frame": 587,
+    "timestamp": "10:02:19.81",
+    "bbox": [
+      1754.41,
+      402.94,
+      1891.66,
+      945.58
+    ],
+    "detection_confidence": 0.8901
+  },
+  {
+    "crop_path": "dataset/crops/C01_track92_frame0594.jpg",
+    "camera_id": "C01",
+    "track_id": 92,
+    "frame": 594,
+    "timestamp": "10:02:20.05",
+    "bbox": [
+      1750.09,
+      407.99,
+      1907.72,
+      938.33
+    ],
+    "detection_confidence": 0.692
+  },
+  {
+    "crop_path": "dataset/crops/C01_track93_frame0586.jpg",
+    "camera_id": "C01",
+    "track_id": 93,
+    "frame": 586,
+    "timestamp": "10:02:19.78",
+    "bbox": [
+      119.23,
+      531.58,
+      191.09,
+      725.32
+    ],
+    "detection_confidence": 0.6074
+  },
+  {
+    "crop_path": "dataset/crops/C01_track93_frame0587.jpg",
+    "camera_id": "C01",
+    "track_id": 93,
+    "frame": 587,
+    "timestamp": "10:02:19.81",
+    "bbox": [
+      119.16,
+      530.08,
+      191.88,
+      726.19
+    ],
+    "detection_confidence": 0.6346
+  },
+  {
+    "crop_path": "dataset/crops/C01_track93_frame0588.jpg",
+    "camera_id": "C01",
+    "track_id": 93,
+    "frame": 588,
+    "timestamp": "10:02:19.84",
+    "bbox": [
+      117.05,
+      528.57,
+      190.18,
+      725.45
+    ],
+    "detection_confidence": 0.6093
+  },
+  {
+    "crop_path": "dataset/crops/C01_track94_frame0595.jpg",
+    "camera_id": "C01",
+    "track_id": 94,
+    "frame": 595,
+    "timestamp": "10:02:20.08",
+    "bbox": [
+      396.58,
+      535.21,
+      448.08,
+      718.74
+    ],
+    "detection_confidence": 0.6202
+  },
+  {
+    "crop_path": "dataset/crops/C01_track94_frame0616.jpg",
+    "camera_id": "C01",
+    "track_id": 94,
+    "frame": 616,
+    "timestamp": "10:02:20.79",
+    "bbox": [
+      399.95,
+      484.15,
+      448.11,
+      631.02
+    ],
+    "detection_confidence": 0.6738
+  },
+  {
+    "crop_path": "dataset/crops/C01_track94_frame0620.jpg",
+    "camera_id": "C01",
+    "track_id": 94,
+    "frame": 620,
+    "timestamp": "10:02:20.92",
+    "bbox": [
+      393.27,
+      482.23,
+      446.06,
+      631.01
+    ],
+    "detection_confidence": 0.6748
+  },
+  {
+    "crop_path": "dataset/crops/C01_track94_frame0624.jpg",
+    "camera_id": "C01",
+    "track_id": 94,
+    "frame": 624,
+    "timestamp": "10:02:21.06",
+    "bbox": [
+      390.47,
+      485.53,
+      443.29,
+      630.19
+    ],
+    "detection_confidence": 0.6399
+  },
+  {
+    "crop_path": "dataset/crops/C01_track94_frame0628.jpg",
+    "camera_id": "C01",
+    "track_id": 94,
+    "frame": 628,
+    "timestamp": "10:02:21.19",
+    "bbox": [
+      388.97,
+      484.17,
+      442.55,
+      629.68
+    ],
+    "detection_confidence": 0.6254
+  },
+  {
+    "crop_path": "dataset/crops/C01_track96_frame0603.jpg",
+    "camera_id": "C01",
+    "track_id": 96,
+    "frame": 603,
+    "timestamp": "10:02:20.35",
+    "bbox": [
+      161.26,
+      458.81,
+      233.8,
+      674.05
+    ],
+    "detection_confidence": 0.7313
+  },
+  {
+    "crop_path": "dataset/crops/C01_track96_frame0610.jpg",
+    "camera_id": "C01",
+    "track_id": 96,
+    "frame": 610,
+    "timestamp": "10:02:20.59",
+    "bbox": [
+      167.43,
+      452.45,
+      245.6,
+      680.55
+    ],
+    "detection_confidence": 0.7664
+  },
+  {
+    "crop_path": "dataset/crops/C01_track96_frame0617.jpg",
+    "camera_id": "C01",
+    "track_id": 96,
+    "frame": 617,
+    "timestamp": "10:02:20.82",
+    "bbox": [
+      173.73,
+      446.71,
+      257.27,
+      679.23
+    ],
+    "detection_confidence": 0.8249
+  },
+  {
+    "crop_path": "dataset/crops/C01_track96_frame0625.jpg",
+    "camera_id": "C01",
+    "track_id": 96,
+    "frame": 625,
+    "timestamp": "10:02:21.09",
+    "bbox": [
+      172.67,
+      449.25,
+      261.66,
+      686.66
+    ],
+    "detection_confidence": 0.7861
+  },
+  {
+    "crop_path": "dataset/crops/C01_track96_frame0632.jpg",
+    "camera_id": "C01",
+    "track_id": 96,
+    "frame": 632,
+    "timestamp": "10:02:21.33",
+    "bbox": [
+      170.33,
+      447.13,
+      263.05,
+      689.15
+    ],
+    "detection_confidence": 0.7964
+  },
+  {
+    "crop_path": "dataset/crops/C01_track100_frame0607.jpg",
+    "camera_id": "C01",
+    "track_id": 100,
+    "frame": 607,
+    "timestamp": "10:02:20.48",
+    "bbox": [
+      1382.17,
+      220.9,
+      1581.45,
+      688.39
+    ],
+    "detection_confidence": 0.6183
+  },
+  {
+    "crop_path": "dataset/crops/C01_track100_frame0609.jpg",
+    "camera_id": "C01",
+    "track_id": 100,
+    "frame": 609,
+    "timestamp": "10:02:20.55",
+    "bbox": [
+      1363.5,
+      226.57,
+      1682.69,
+      979.2
+    ],
+    "detection_confidence": 0.6212
+  },
+  {
+    "crop_path": "dataset/crops/C01_track100_frame0613.jpg",
+    "camera_id": "C01",
+    "track_id": 100,
+    "frame": 613,
+    "timestamp": "10:02:20.69",
+    "bbox": [
+      1431.21,
+      224.67,
+      1798.07,
+      1080.0
+    ],
+    "detection_confidence": 0.6415
+  },
+  {
+    "crop_path": "dataset/crops/C01_track100_frame0617.jpg",
+    "camera_id": "C01",
+    "track_id": 100,
+    "frame": 617,
+    "timestamp": "10:02:20.82",
+    "bbox": [
+      1607.15,
+      192.64,
+      1871.82,
+      831.49
+    ],
+    "detection_confidence": 0.6215
+  },
+  {
+    "crop_path": "dataset/crops/C01_track100_frame0620.jpg",
+    "camera_id": "C01",
+    "track_id": 100,
+    "frame": 620,
+    "timestamp": "10:02:20.92",
+    "bbox": [
+      1677.82,
+      127.41,
+      1920.0,
+      753.22
+    ],
+    "detection_confidence": 0.6238
+  },
+  {
+    "crop_path": "dataset/crops/C01_track102_frame0610.jpg",
+    "camera_id": "C01",
+    "track_id": 102,
+    "frame": 610,
+    "timestamp": "10:02:20.59",
+    "bbox": [
+      259.79,
+      463.96,
+      324.87,
+      668.96
+    ],
+    "detection_confidence": 0.6202
+  },
+  {
+    "crop_path": "dataset/crops/C01_track102_frame0616.jpg",
+    "camera_id": "C01",
+    "track_id": 102,
+    "frame": 616,
+    "timestamp": "10:02:20.79",
+    "bbox": [
+      253.61,
+      454.2,
+      321.11,
+      669.23
+    ],
+    "detection_confidence": 0.7401
+  },
+  {
+    "crop_path": "dataset/crops/C01_track102_frame0621.jpg",
+    "camera_id": "C01",
+    "track_id": 102,
+    "frame": 621,
+    "timestamp": "10:02:20.96",
+    "bbox": [
+      255.82,
+      451.14,
+      326.82,
+      672.27
+    ],
+    "detection_confidence": 0.7757
+  },
+  {
+    "crop_path": "dataset/crops/C01_track102_frame0626.jpg",
+    "camera_id": "C01",
+    "track_id": 102,
+    "frame": 626,
+    "timestamp": "10:02:21.13",
+    "bbox": [
+      265.57,
+      454.5,
+      336.45,
+      673.2
+    ],
+    "detection_confidence": 0.7538
+  },
+  {
+    "crop_path": "dataset/crops/C01_track102_frame0632.jpg",
+    "camera_id": "C01",
+    "track_id": 102,
+    "frame": 632,
+    "timestamp": "10:02:21.33",
+    "bbox": [
+      270.84,
+      444.25,
+      348.63,
+      678.43
+    ],
+    "detection_confidence": 0.693
+  },
+  {
+    "crop_path": "dataset/crops/C01_track105_frame0617.jpg",
+    "camera_id": "C01",
+    "track_id": 105,
+    "frame": 617,
+    "timestamp": "10:02:20.82",
+    "bbox": [
+      1277.99,
+      455.78,
+      1351.45,
+      701.44
+    ],
+    "detection_confidence": 0.6543
+  },
+  {
+    "crop_path": "dataset/crops/C01_track105_frame0619.jpg",
+    "camera_id": "C01",
+    "track_id": 105,
+    "frame": 619,
+    "timestamp": "10:02:20.89",
+    "bbox": [
+      1291.35,
+      476.22,
+      1359.24,
+      699.43
+    ],
+    "detection_confidence": 0.6693
+  },
+  {
+    "crop_path": "dataset/crops/C01_track105_frame0623.jpg",
+    "camera_id": "C01",
+    "track_id": 105,
+    "frame": 623,
+    "timestamp": "10:02:21.02",
+    "bbox": [
+      1314.43,
+      467.75,
+      1388.12,
+      703.83
+    ],
+    "detection_confidence": 0.6127
+  },
+  {
+    "crop_path": "dataset/crops/C01_track105_frame0624.jpg",
+    "camera_id": "C01",
+    "track_id": 105,
+    "frame": 624,
+    "timestamp": "10:02:21.06",
+    "bbox": [
+      1326.07,
+      457.8,
+      1403.3,
+      704.86
+    ],
+    "detection_confidence": 0.6602
+  },
+  {
+    "crop_path": "dataset/crops/C01_track105_frame0626.jpg",
+    "camera_id": "C01",
+    "track_id": 105,
+    "frame": 626,
+    "timestamp": "10:02:21.13",
+    "bbox": [
+      1336.53,
+      457.75,
+      1413.73,
+      705.2
+    ],
+    "detection_confidence": 0.6558
+  },
+  {
+    "crop_path": "dataset/crops/C01_track107_frame0623.jpg",
+    "camera_id": "C01",
+    "track_id": 107,
+    "frame": 623,
+    "timestamp": "10:02:21.02",
+    "bbox": [
+      1557.48,
+      441.96,
+      1678.44,
+      710.71
+    ],
+    "detection_confidence": 0.6588
+  },
+  {
+    "crop_path": "dataset/crops/C01_track107_frame0625.jpg",
+    "camera_id": "C01",
+    "track_id": 107,
+    "frame": 625,
+    "timestamp": "10:02:21.09",
+    "bbox": [
+      1553.62,
+      441.87,
+      1675.37,
+      713.61
+    ],
+    "detection_confidence": 0.744
+  },
+  {
+    "crop_path": "dataset/crops/C01_track107_frame0626.jpg",
+    "camera_id": "C01",
+    "track_id": 107,
+    "frame": 626,
+    "timestamp": "10:02:21.13",
+    "bbox": [
+      1559.01,
+      442.5,
+      1679.25,
+      712.93
+    ],
+    "detection_confidence": 0.7514
+  },
+  {
+    "crop_path": "dataset/crops/C01_track107_frame0627.jpg",
+    "camera_id": "C01",
+    "track_id": 107,
+    "frame": 627,
+    "timestamp": "10:02:21.16",
+    "bbox": [
+      1562.21,
+      441.96,
+      1682.1,
+      714.02
+    ],
+    "detection_confidence": 0.7104
+  },
+  {
+    "crop_path": "dataset/crops/C01_track107_frame0629.jpg",
+    "camera_id": "C01",
+    "track_id": 107,
+    "frame": 629,
+    "timestamp": "10:02:21.23",
+    "bbox": [
+      1566.33,
+      443.74,
+      1680.29,
+      707.44
+    ],
+    "detection_confidence": 0.6759
+  },
+  {
+    "crop_path": "dataset/crops/C01_track110_frame0626.jpg",
+    "camera_id": "C01",
+    "track_id": 110,
+    "frame": 626,
+    "timestamp": "10:02:21.13",
+    "bbox": [
+      523.77,
+      455.49,
+      597.02,
+      682.14
+    ],
+    "detection_confidence": 0.6286
+  },
+  {
+    "crop_path": "dataset/crops/C01_track110_frame0628.jpg",
+    "camera_id": "C01",
+    "track_id": 110,
+    "frame": 628,
+    "timestamp": "10:02:21.19",
+    "bbox": [
+      517.18,
+      452.89,
+      587.8,
+      669.81
+    ],
+    "detection_confidence": 0.7993
+  },
+  {
+    "crop_path": "dataset/crops/C01_track110_frame0629.jpg",
+    "camera_id": "C01",
+    "track_id": 110,
+    "frame": 629,
+    "timestamp": "10:02:21.23",
+    "bbox": [
+      513.88,
+      452.33,
+      585.72,
+      671.85
+    ],
+    "detection_confidence": 0.8171
+  },
+  {
+    "crop_path": "dataset/crops/C01_track110_frame0630.jpg",
+    "camera_id": "C01",
+    "track_id": 110,
+    "frame": 630,
+    "timestamp": "10:02:21.26",
+    "bbox": [
+      511.78,
+      453.11,
+      583.11,
+      669.56
+    ],
+    "detection_confidence": 0.8321
+  },
+  {
+    "crop_path": "dataset/crops/C01_track110_frame0632.jpg",
+    "camera_id": "C01",
+    "track_id": 110,
+    "frame": 632,
+    "timestamp": "10:02:21.33",
+    "bbox": [
+      503.81,
+      454.96,
+      576.62,
+      673.56
+    ],
+    "detection_confidence": 0.8117
+  }
+]

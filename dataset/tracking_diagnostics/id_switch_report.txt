@@ -1,0 +1,128 @@
+================================================================
+TRACE — ByteTrack ID Switch Analysis Report
+================================================================
+Tracks file       : dataset\tracks_C01.json
+Total track IDs   : 76
+Total records     : 5428
+Jump threshold    : 0.5 × bbox diagonal (scaled by sqrt(gap))
+Size threshold    : 1.8 × area ratio (gap ≤ 3)
+Proximity         : 120.0 px (gap-nearby heuristic)
+Min track length  : 10 frames
+
+── HIGH (0 tracks) ────────────────────────────────────
+  (none)
+
+── MEDIUM (6 tracks) ──────────────────────────────────
+  Track   13  len= 210  span= 220  fr   35– 254  3 nearby track(s) at gap boundary, 5 gap(s) totalling 15 frames
+              NEARBY  other_ends_at_gap_start  gap_at_frame=57  other_tid=5  dist=69.3px
+              NEARBY  other_starts_at_gap_end  gap_at_frame=71  other_tid=17  dist=117.8px
+              NEARBY  other_ends_at_gap_start  gap_at_frame=110  other_tid=17  dist=70.2px
+  Track   53  len= 216  span= 323  fr  276– 598  3 nearby track(s) at gap boundary, 20 gap(s) totalling 127 frames
+              NEARBY  other_starts_at_gap_end  gap_at_frame=493  other_tid=82  dist=21.0px
+              NEARBY  other_starts_at_gap_end  gap_at_frame=526  other_tid=87  dist=92.5px
+              NEARBY  other_ends_at_gap_start  gap_at_frame=548  other_tid=82  dist=17.5px
+  Track   56  len= 279  span= 330  fr  303– 632  4 nearby track(s) at gap boundary, 7 gap(s) totalling 58 frames
+              NEARBY  other_starts_at_gap_end  gap_at_frame=502  other_tid=83  dist=55.5px
+              NEARBY  other_ends_at_gap_start  gap_at_frame=516  other_tid=83  dist=44.1px
+              NEARBY  other_ends_at_gap_start  gap_at_frame=547  other_tid=60  dist=7.1px
+              NEARBY  other_ends_at_gap_start  gap_at_frame=576  other_tid=91  dist=78.4px
+  Track   86  len=  80  span=  96  fr  524– 619  2 nearby track(s) at gap boundary, 3 gap(s) totalling 19 frames
+              NEARBY  other_ends_at_gap_start  gap_at_frame=592  other_tid=92  dist=66.9px
+              NEARBY  other_ends_at_gap_start  gap_at_frame=594  other_tid=92  dist=66.9px
+  Track   89  len=  27  span=  71  fr  557– 627  2 nearby track(s) at gap boundary, 5 gap(s) totalling 49 frames
+              NEARBY  other_ends_at_gap_start  gap_at_frame=594  other_tid=71  dist=92.6px
+              NEARBY  other_ends_at_gap_start  gap_at_frame=596  other_tid=71  dist=92.6px
+  Track  100  len=  10  span=  14  fr  607– 620  2 sudden size change(s), 3 gap(s) totalling 7 frames
+              SIZE  frame=609  gap=1  area_ratio=2.59  92722→240232px²
+              SIZE  frame=614  gap=1  area_ratio=1.83  313786→171430px²
+
+── LOW (30 tracks) ─────────────────────────────────────
+  Track    1  len= 386  span= 389  fr    0– 388  1 nearby track(s) at gap boundary, 1 gap(s) totalling 4 frames
+  Track    5  len=  57  span=  58  fr    0–  57  1 gap(s) totalling 2 frames
+  Track    7  len=  14  span=  15  fr    2–  16  1 gap(s) totalling 2 frames
+  Track    8  len= 104  span= 133  fr    3– 135  2 gap(s) totalling 31 frames
+  Track    9  len= 263  span= 266  fr    9– 274  1 nearby track(s) at gap boundary, 1 gap(s) totalling 4 frames
+  Track   18  len=  95  span= 144  fr   82– 225  9 gap(s) totalling 58 frames
+  Track   20  len= 148  span= 162  fr   85– 246  3 gap(s) totalling 17 frames
+  Track   23  len=  92  span= 109  fr  106– 214  2 gap(s) totalling 19 frames
+  Track   25  len=  26  span=  88  fr  150– 237  7 gap(s) totalling 69 frames
+  Track   29  len= 121  span= 146  fr  155– 300  1 nearby track(s) at gap boundary, 2 gap(s) totalling 27 frames
+  Track   37  len= 421  span= 438  fr  195– 632  1 sudden size change(s), 3 gap(s) totalling 20 frames
+  Track   40  len=  11  span=  38  fr  207– 244  2 gap(s) totalling 29 frames
+  Track   48  len=  12  span=  14  fr  263– 276  1 gap(s) totalling 3 frames
+  Track   49  len=  29  span=  32  fr  264– 295  1 gap(s) totalling 4 frames
+  Track   51  len= 112  span= 211  fr  268– 478  12 gap(s) totalling 111 frames
+  Track   52  len=  20  span=  22  fr  270– 291  1 gap(s) totalling 3 frames
+  Track   61  len=  12  span=  13  fr  335– 347  1 gap(s) totalling 2 frames
+  Track   62  len= 161  span= 167  fr  339– 505  1 gap(s) totalling 7 frames
+  Track   64  len=  23  span=  24  fr  345– 368  1 gap(s) totalling 2 frames
+  Track   69  len= 233  span= 239  fr  394– 632  1 nearby track(s) at gap boundary, 3 gap(s) totalling 9 frames
+  Track   70  len=  42  span=  87  fr  394– 480  10 gap(s) totalling 55 frames
+  Track   73  len= 185  span= 186  fr  412– 597  1 sudden size change(s), 1 gap(s) totalling 2 frames
+  Track   74  len=  93  span= 133  fr  427– 559  6 gap(s) totalling 46 frames
+  Track   75  len=  83  span=  85  fr  438– 522  1 gap(s) totalling 3 frames
+  Track   76  len=  19  span=  29  fr  454– 482  2 gap(s) totalling 12 frames
+  Track   82  len=  40  span=  54  fr  493– 546  1 nearby track(s) at gap boundary, 6 gap(s) totalling 20 frames
+  Track   85  len= 110  span= 112  fr  521– 632  1 sudden size change(s), 1 gap(s) totalling 3 frames
+  Track   88  len=  85  span=  99  fr  534– 632  1 gap(s) totalling 15 frames
+  Track   91  len=  13  span=  14  fr  566– 579  1 gap(s) totalling 2 frames
+  Track   94  len=  17  span=  34  fr  595– 628  1 nearby track(s) at gap boundary, 1 gap(s) totalling 18 frames
+
+── CLEAN (25 tracks) ───────────────────────────────────
+  Track    2  len=  49  span=  49  fr    0–  48  no anomalies detected
+  Track    3  len= 160  span= 160  fr    0– 159  no anomalies detected
+  Track    4  len= 248  span= 248  fr    0– 247  no anomalies detected
+  Track    6  len=  23  span=  23  fr    0–  22  no anomalies detected
+  Track   11  len=  29  span=  29  fr   31–  59  no anomalies detected
+  Track   15  len=  19  span=  19  fr   47–  65  no anomalies detected
+  Track   17  len=  39  span=  39  fr   73– 111  no anomalies detected
+  Track   35  len=  30  span=  30  fr  187– 216  no anomalies detected
+  Track   44  len=  16  span=  16  fr  256– 271  no anomalies detected
+  Track   45  len=  78  span=  78  fr  257– 334  no anomalies detected
+  Track   46  len=  62  span=  62  fr  257– 318  no anomalies detected
+  Track   47  len=  32  span=  32  fr  257– 288  no anomalies detected
+  Track   54  len=  21  span=  21  fr  289– 309  no anomalies detected
+  Track   55  len=  15  span=  15  fr  296– 310  no anomalies detected
+  Track   57  len=  45  span=  45  fr  303– 347  no anomalies detected
+  Track   60  len= 223  span= 223  fr  322– 544  no anomalies detected
+  Track   65  len=  33  span=  33  fr  361– 393  no anomalies detected
+  Track   66  len=  48  span=  48  fr  383– 430  no anomalies detected
+  Track   67  len=  21  span=  21  fr  387– 407  no anomalies detected
+  Track   71  len= 196  span= 196  fr  402– 597  no anomalies detected
+  Track   80  len=  15  span=  15  fr  472– 486  no anomalies detected
+  Track   83  len=  18  span=  18  fr  502– 519  no anomalies detected
+  Track   92  len=  28  span=  28  fr  567– 594  no anomalies detected
+  Track   96  len=  30  span=  30  fr  603– 632  no anomalies detected
+  Track  102  len=  23  span=  23  fr  610– 632  no anomalies detected
+
+── GHOST (15 tracks) ───────────────────────────────────
+  Track   10  len=   1  span=   1  fr   25–  25  Short track (1 frames) — likely ghost/edge detection
+  Track   16  len=   8  span=   8  fr   71–  78  Short track (8 frames) — likely ghost/edge detection
+  Track   22  len=   5  span=   5  fr  102– 106  Short track (5 frames) — likely ghost/edge detection
+  Track   28  len=   5  span=  16  fr  154– 169  Short track (5 frames) — likely ghost/edge detection
+  Track   30  len=   3  span=   3  fr  157– 159  Short track (3 frames) — likely ghost/edge detection
+  Track   32  len=   5  span=   5  fr  165– 169  Short track (5 frames) — likely ghost/edge detection
+  Track   34  len=   9  span=  10  fr  178– 187  Short track (9 frames) — likely ghost/edge detection
+  Track   39  len=   1  span=   1  fr  195– 195  Short track (1 frames) — likely ghost/edge detection
+  Track   42  len=   7  span=   7  fr  220– 226  Short track (7 frames) — likely ghost/edge detection
+  Track   79  len=   4  span=  11  fr  468– 478  Short track (4 frames) — likely ghost/edge detection
+  Track   87  len=   5  span=   9  fr  527– 535  Short track (5 frames) — likely ghost/edge detection
+  Track   93  len=   3  span=   3  fr  586– 588  Short track (3 frames) — likely ghost/edge detection
+  Track  105  len=   8  span=  10  fr  617– 626  Short track (8 frames) — likely ghost/edge detection
+  Track  107  len=   7  span=   7  fr  623– 629  Short track (7 frames) — likely ghost/edge detection
+  Track  110  len=   7  span=   7  fr  626– 632  Short track (7 frames) — likely ghost/edge detection
+
+================================================================
+SUMMARY
+================================================================
+  HIGH    : 0
+  MEDIUM  : 6
+  LOW     : 30
+  CLEAN   : 25
+  GHOST   : 15
+
+NOTE: These are heuristic signals, NOT confirmed ID switches.
+      Each HIGH/MEDIUM track requires human visual inspection.
+      LOW/CLEAN tracks are unlikely to have genuine switches.
+      GHOST tracks are too short for meaningful analysis.
+================================================================

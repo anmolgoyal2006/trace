@@ -1,0 +1,12 @@
+{
+  "config": "baseline",
+  "tracker_yaml": "dataset\\tracking_diagnostics\\tracker_baseline.yaml",
+  "records": 5428,
+  "unique_ids": 76,
+  "ghost_tracks": 15,
+  "substantive_tracks": 61,
+  "total_gaps": 134,
+  "max_gap": 31,
+  "mean_gap": 6.8,
+  "elapsed_s": 107.42
+}

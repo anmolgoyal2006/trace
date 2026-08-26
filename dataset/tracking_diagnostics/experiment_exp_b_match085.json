@@ -1,0 +1,12 @@
+{
+  "config": "exp_b_match085",
+  "tracker_yaml": "dataset\\tracking_diagnostics\\tracker_exp_b_match085.yaml",
+  "records": 5438,
+  "unique_ids": 72,
+  "ghost_tracks": 15,
+  "substantive_tracks": 57,
+  "total_gaps": 141,
+  "max_gap": 28,
+  "mean_gap": 6.9,
+  "elapsed_s": 97.8
+}

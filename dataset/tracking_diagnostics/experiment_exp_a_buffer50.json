@@ -1,0 +1,12 @@
+{
+  "config": "exp_a_buffer50",
+  "tracker_yaml": "dataset\\tracking_diagnostics\\tracker_exp_a_buffer50.yaml",
+  "records": 5437,
+  "unique_ids": 67,
+  "ghost_tracks": 10,
+  "substantive_tracks": 57,
+  "total_gaps": 143,
+  "max_gap": 50,
+  "mean_gap": 9.3,
+  "elapsed_s": 101.21
+}

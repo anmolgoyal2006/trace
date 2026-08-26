@@ -10,3 +10,11 @@ cameras:
     start_time: "10:05:00"
   C03:
     start_time: "10:08:00"
+
+reid:
+  crops_per_track: 5         # number of frames sampled per track for Re-ID embedding
+  min_crop_width: 40         # skip crops narrower than this (pixels) — Phase 3.5 raised from 30
+  min_crop_height: 100       # skip crops shorter than this (pixels) — Phase 3.5 raised from 60
+  quality:
+    reject_severe_edge_truncation: true   # reject crops where person is severely cut off at frame edge
+    edge_margin_pixels: 5                 # bbox must be within this many pixels of frame boundary to trigger truncation check
