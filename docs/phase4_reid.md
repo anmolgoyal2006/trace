@@ -897,7 +897,7 @@ All edge-case tests run without GPU via a mock model (`unittest.mock.patch`).
 
 ## 4.7 Performance Benchmark
 
-**Status: CPU benchmark COMPLETE — GPU benchmark PENDING (requires Colab run)**
+**Status: PASS / COMPLETE**
 
 Phase 4.7 measures the actual time required for OSNet to process the complete 353-crop TRACE dataset on both GPU and CPU.
 
@@ -1006,77 +1006,90 @@ elapsed = time.perf_counter() - start
 
 ### GPU Benchmark Results
 
-**Status: PENDING — requires running `phase4_7_gpu_benchmark.ipynb` in Google Colab**
-
-To complete the GPU benchmark:
-
-1. Open `ai_pipeline/reid/phase4_7_gpu_benchmark.ipynb` in Google Colab
-2. Ensure GPU runtime is selected (`Runtime → Change runtime type → GPU`)
-3. Update `TRACE_ROOT` to point to your TRACE dataset in Google Drive
-4. Run all cells
-5. Copy the results from `dataset/reid_benchmark/performance_benchmark_gpu.json` to this section
-
-#### Expected Results Template
+**Status: COMPLETE — measured on Google Colab Tesla T4**
 
 | Property | Value |
 |----------|-------|
 | Environment | Google Colab |
 | GPU | Tesla T4 |
-| CUDA version | _to be filled_ |
-| GPU memory | _to be filled_ GB |
-| PyTorch version | _to be filled_ |
+| GPU memory | 14.6 GB |
+| PyTorch version | _from Colab runtime_ |
 | Device | cuda |
 | Crops | 353 |
 | Batch size | 32 |
 | Model | osnet_x1_0 |
 | Embedding dim | 512 |
-| Model load time | _to be filled_ |
-| Warm-up time | _to be filled_ |
+| Model load time | 0.332s |
+| Warm-up time | 0.073s |
 
-#### Run Results Template
+#### Raw Run Results
 
 | Run | Total time | Preprocessing | Inference | Crops/sec | ms/crop |
 |-----|------------|---------------|------------|------------|---------|
-| 1 | _to be filled_ | _to be filled_ | _to be filled_ | _to be filled_ | _to be filled_ |
-| 2 | _to be filled_ | _to be filled_ | _to be filled_ | _to be filled_ | _to be filled_ |
-| 3 | _to be filled_ | _to be filled_ | _to be filled_ | _to be filled_ | _to be filled_ |
+| 1 | 67.121 s | 66.473 s | 0.649 s | 5.3 | 190.15 |
+| 2 | 1.631 s | 1.048 s | 0.582 s | 216.5 | 4.62 |
+| 3 | 1.848 s | 1.268 s | 0.580 s | 191.0 | 5.23 |
 
-#### Summary Statistics Template
+#### Script-Reported Summary Statistics (All Runs)
 
 | Metric | Value |
 |--------|-------|
-| Mean total time | _to be filled_ |
-| Median total time | _to be filled_ |
-| Min total time | _to be filled_ |
-| Max total time | _to be filled_ |
-| Mean inference time | _to be filled_ |
-| Mean crops/sec | _to be filled_ |
-| Mean ms/crop | _to be filled_ |
+| Mean total time | 23.533 s |
+| Median total time | 1.848 s |
+| Min total time | 1.631 s |
+| Max total time | 67.121 s |
+| Mean inference time | 0.604 s |
+| Mean crops/sec | 137.6 |
+| Mean ms/crop | 66.67 |
+
+#### Steady-State Analysis (Runs 2–3)
+
+The first GPU run was a substantial preprocessing outlier. Its 66.473 s preprocessing time dominated the total 67.121 s runtime, while GPU inference itself remained only 0.649 s. Runs 2 and 3 were much faster, suggesting a cold-start/storage/I/O/cache effect, but the exact cause was not isolated.
+
+For representative steady-state performance, we consider Runs 2 and 3:
+
+| Metric | Calculation | Value |
+|--------|-------------|-------|
+| Steady-state mean total time | (1.631 + 1.848) / 2 | 1.7395 s |
+| Steady-state throughput | 353 / 1.7395 | 202.9 crops/sec |
+| Steady-state ms/crop | 1.7395 / 353 × 1000 | 4.93 ms/crop |
+| Steady-state mean inference time | (0.582 + 0.580) / 2 | 0.581 s |
+
+#### Interpretation
+
+- **GPU inference is very fast**: OSNet forward pass takes only ~0.58–0.65 s for all 353 crops
+- **Preprocessing dominates end-to-end time**: In steady state, preprocessing (~1.1–1.3 s) is roughly 2× the inference time (~0.58 s)
+- **First run outlier**: The 66.473 s preprocessing in Run 1 is ~50× longer than steady-state preprocessing
+- **Cold-start effect**: The dramatic difference between Run 1 and Runs 2–3 suggests a storage/cache cold-start effect, though the exact cause was not isolated
+- **Optimization implication**: For this MVP, optimizing image loading/preprocessing may matter more than optimizing OSNet inference
 
 ---
 
-### Comparison (After GPU Benchmark)
+### Comparison
 
-**Status: PENDING — requires GPU benchmark results**
+**Status: COMPLETE**
 
-After completing the GPU benchmark, calculate:
+#### Detailed Comparison Table
 
-```
-GPU speedup = CPU mean time / GPU mean time
-```
+| Environment | Run | Total Time | Preprocessing | Inference | Crops/sec | ms/crop |
+|-------------|-----|------------|---------------|------------|------------|---------|
+| GPU T4      | 1   | 67.121 s   | 66.473 s      | 0.649 s    | 5.3        | 190.15  |
+| GPU T4      | 2   | 1.631 s    | 1.048 s       | 0.582 s    | 216.5      | 4.62    |
+| GPU T4      | 3   | 1.848 s    | 1.268 s       | 0.580 s    | 191.0      | 5.23    |
+| Local CPU   | Mean | 76.461 s   | —             | 64.860 s   | 5.0        | 216.60  |
 
-#### Comparison Table Template
+#### Steady-State Comparison (GPU Runs 2–3 vs CPU Mean)
 
-| Environment | Crops | Batch | Mean Time | Crops/sec | ms/crop |
-|-------------|-------|-------|-----------|-----------|---------|
-| Colab T4    | 353   | 32    | _to fill_ | _to fill_ | _to fill_ |
-| Local CPU   | 353   | 32    | 76.461s   | 5.0       | 216.60  |
+| Metric | GPU Steady-State (Runs 2–3) | CPU Mean | Speedup |
+|--------|------------------------------|----------|---------|
+| Mean total time | 1.7395 s | 76.461 s | 43.96× |
+| Throughput | 202.9 crops/sec | 5.0 crops/sec | 40.58× |
+| Latency | 4.93 ms/crop | 216.60 ms/crop | 43.89× |
+| Mean inference time | 0.581 s | 64.860 s | 111.7× |
 
-#### GPU Speedup Template
+**CPU / GPU steady-state speedup: 43.96×**
 
-```
-GPU speedup: _to be filled_ ×
-```
+This is a comparison between the CPU mean and the GPU steady-state mean excluding the cold/outlier first GPU run. This is not a formal real-time speedup guarantee.
 
 ---
 
@@ -1145,16 +1158,16 @@ The benchmark script **does not modify** `dataset/embeddings_C01.json`. Embeddin
 
 ### Completion Criteria
 
-Phase 4.7 is COMPLETE only after:
+Phase 4.7 is COMPLETE:
 
 1. ✅ Benchmark code implemented
 2. ✅ Tests pass (25/25)
 3. ✅ All 353 real crops benchmarked on CPU
-4. ⏳ Real Colab GPU timing recorded
+4. ✅ Real Colab GPU timing recorded (Tesla T4)
 5. ✅ Same model/preprocessing/batch size used for both
 6. ✅ GPU timing uses CUDA synchronization (in notebook)
-7. ✅ Actual crops/sec and ms/crop calculated (CPU)
-8. ⏳ GPU vs CPU speedup calculated (requires GPU results)
-9. ✅ Results saved (CPU)
-10. ⏳ Documentation contains real measurements (GPU pending)
+7. ✅ Actual crops/sec and ms/crop calculated (CPU and GPU)
+8. ✅ GPU vs CPU speedup calculated (43.96× steady-state)
+9. ✅ Results saved (CPU and GPU)
+10. ✅ Documentation contains real measurements
 11. ✅ Production embeddings unchanged
