@@ -1,0 +1,32 @@
+[
+  {
+    "camera_id": "C01",
+    "timestamp": "10:02:03.24",
+    "confidence": 75.3,
+    "crop_path": "dataset/crops_phase3_final/C01_track13_frame0096.jpg"
+  },
+  {
+    "camera_id": "C01",
+    "timestamp": "10:02:00.00",
+    "confidence": 64.9,
+    "crop_path": "dataset/crops_phase3_final/C01_track2_frame0000.jpg"
+  },
+  {
+    "camera_id": "C01",
+    "timestamp": "10:02:18.49",
+    "confidence": 62.1,
+    "crop_path": "dataset/crops_phase3_final/C01_track85_frame0548.jpg"
+  },
+  {
+    "camera_id": "C01",
+    "timestamp": "10:02:03.10",
+    "confidence": 61.2,
+    "crop_path": "dataset/crops_phase3_final/C01_track17_frame0092.jpg"
+  },
+  {
+    "camera_id": "C01",
+    "timestamp": "10:02:01.21",
+    "confidence": 60.7,
+    "crop_path": "dataset/crops_phase3_final/C01_track2_frame0036.jpg"
+  }
+]

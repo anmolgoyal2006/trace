@@ -26,3 +26,15 @@ reid:
                               # The Phase 4.3 generator will determine output dim programmatically
                               # and validate it against this value — do not hardcode 512 in model inference.
     batch_size: 32            # crops per forward pass — override with --batch-size CLI flag
+  search:
+    no_match_similarity_threshold: 0.74  # MVP threshold for Phase 5.7 no-match handling
+                                        # Updated from 0.70 after Phase 5.7 real-world test showed
+                                        # unknown person (sim=0.7267) incorrectly accepted at 0.70.
+                                        # 0.74 is evidence-based on this small validation set only:
+                                        #   - Rejects tested unknown: 0.7267 < 0.74 ✓
+                                        #   - Retains Track 13 original: 0.8148 >= 0.74 ✓
+                                        #   - Retains Track 13 rotated:  0.7974 >= 0.74 ✓
+                                        #   - Retains Track 16 original: 0.8878 >= 0.74 ✓
+                                        # Corresponds to ~63.7 scaled confidence score.
+                                        # NOT a calibrated probability or universally valid Re-ID threshold.
+                                        # If best candidate similarity < threshold, return no_confident_match.

@@ -1,0 +1,107 @@
+[
+  {
+    "query_id": "track13_original",
+    "query_path": "dataset/query_photos/query_track13/test_query.jpg",
+    "source_crop_path": "dataset/crops_phase3_final/C01_track13_frame0149.jpg",
+    "source_track_id": 13,
+    "source_frame": 149,
+    "source_camera_id": "C01",
+    "transformation": "original_quality",
+    "transformation_description": "High-quality re-save of source crop at JPEG quality=95. No geometric or photometric change.",
+    "original_dimensions": [
+      193,
+      503
+    ],
+    "query_dimensions": [
+      193,
+      503
+    ],
+    "external_validation": false,
+    "derived_from_c01_crop": true,
+    "source_crop_excluded_from_gallery": true
+  },
+  {
+    "query_id": "track13_rotated",
+    "query_path": "dataset/query_photos/query_track13/test_query_rotated.jpg",
+    "source_crop_path": "dataset/crops_phase3_final/C01_track13_frame0149.jpg",
+    "source_track_id": 13,
+    "source_frame": 149,
+    "source_camera_id": "C01",
+    "transformation": "rotation",
+    "transformation_description": "Clockwise 5-degree rotation with bicubic resampling. Simulates slight camera tilt.",
+    "original_dimensions": [
+      193,
+      503
+    ],
+    "query_dimensions": [
+      193,
+      503
+    ],
+    "external_validation": false,
+    "derived_from_c01_crop": true,
+    "source_crop_excluded_from_gallery": true
+  },
+  {
+    "query_id": "track13_lighting",
+    "query_path": "dataset/query_photos/query_track13/test_query_lighting.jpg",
+    "source_crop_path": "dataset/crops_phase3_final/C01_track13_frame0149.jpg",
+    "source_track_id": 13,
+    "source_frame": 149,
+    "source_camera_id": "C01",
+    "transformation": "brightness_contrast",
+    "transformation_description": "Brightness +14%, contrast +10%. Simulates different ambient lighting conditions.",
+    "original_dimensions": [
+      193,
+      503
+    ],
+    "query_dimensions": [
+      193,
+      503
+    ],
+    "external_validation": false,
+    "derived_from_c01_crop": true,
+    "source_crop_excluded_from_gallery": true
+  },
+  {
+    "query_id": "track13_scaled",
+    "query_path": "dataset/query_photos/query_track13/test_query_scaled.jpg",
+    "source_crop_path": "dataset/crops_phase3_final/C01_track13_frame0149.jpg",
+    "source_track_id": 13,
+    "source_frame": 149,
+    "source_camera_id": "C01",
+    "transformation": "crop_scale",
+    "transformation_description": "Centre-crop to 90% of original extent, resized back to original dimensions with Lanczos. Simulates slight zoom/framing difference.",
+    "original_dimensions": [
+      193,
+      503
+    ],
+    "query_dimensions": [
+      193,
+      503
+    ],
+    "external_validation": false,
+    "derived_from_c01_crop": true,
+    "source_crop_excluded_from_gallery": true
+  },
+  {
+    "query_id": "track13_blur",
+    "query_path": "dataset/query_photos/query_track13/test_query_blur.jpg",
+    "source_crop_path": "dataset/crops_phase3_final/C01_track13_frame0149.jpg",
+    "source_track_id": 13,
+    "source_frame": 149,
+    "source_camera_id": "C01",
+    "transformation": "blur_compression",
+    "transformation_description": "Gaussian blur radius=0.8 + JPEG quality=70. Simulates lower-resolution or heavily compressed query image.",
+    "original_dimensions": [
+      193,
+      503
+    ],
+    "query_dimensions": [
+      193,
+      503
+    ],
+    "external_validation": false,
+    "derived_from_c01_crop": true,
+    "source_crop_excluded_from_gallery": true
+  }
+]
