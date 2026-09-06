@@ -1,0 +1,660 @@
+[
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track1_frame0014.jpg",
+    "camera_id": "C02",
+    "track_id": 1,
+    "frame": 14,
+    "timestamp": "10:05:00.46",
+    "bbox": [
+      6.21,
+      283.15,
+      110.47,
+      565.8
+    ],
+    "detection_confidence": 0.9292
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track2_frame0000.jpg",
+    "camera_id": "C02",
+    "track_id": 2,
+    "frame": 0,
+    "timestamp": "10:05:00.00",
+    "bbox": [
+      348.66,
+      268.22,
+      453.0,
+      564.75
+    ],
+    "detection_confidence": 0.892
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track2_frame0056.jpg",
+    "camera_id": "C02",
+    "track_id": 2,
+    "frame": 56,
+    "timestamp": "10:05:01.86",
+    "bbox": [
+      238.39,
+      288.62,
+      361.29,
+      683.35
+    ],
+    "detection_confidence": 0.8411
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track2_frame0205.jpg",
+    "camera_id": "C02",
+    "track_id": 2,
+    "frame": 205,
+    "timestamp": "10:05:06.83",
+    "bbox": [
+      227.7,
+      314.34,
+      436.81,
+      830.76
+    ],
+    "detection_confidence": 0.768
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track3_frame0000.jpg",
+    "camera_id": "C02",
+    "track_id": 3,
+    "frame": 0,
+    "timestamp": "10:05:00.00",
+    "bbox": [
+      128.63,
+      245.89,
+      247.46,
+      612.24
+    ],
+    "detection_confidence": 0.8808
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track3_frame0032.jpg",
+    "camera_id": "C02",
+    "track_id": 3,
+    "frame": 32,
+    "timestamp": "10:05:01.06",
+    "bbox": [
+      33.08,
+      242.59,
+      175.21,
+      652.56
+    ],
+    "detection_confidence": 0.9338
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track3_frame0064.jpg",
+    "camera_id": "C02",
+    "track_id": 3,
+    "frame": 64,
+    "timestamp": "10:05:02.13",
+    "bbox": [
+      11.16,
+      245.97,
+      235.36,
+      832.0
+    ],
+    "detection_confidence": 0.8889
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track3_frame0096.jpg",
+    "camera_id": "C02",
+    "track_id": 3,
+    "frame": 96,
+    "timestamp": "10:05:03.19",
+    "bbox": [
+      167.07,
+      254.1,
+      423.1,
+      830.26
+    ],
+    "detection_confidence": 0.8625
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track4_frame0000.jpg",
+    "camera_id": "C02",
+    "track_id": 4,
+    "frame": 0,
+    "timestamp": "10:05:00.00",
+    "bbox": [
+      280.12,
+      271.62,
+      361.02,
+      561.26
+    ],
+    "detection_confidence": 0.8773
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track4_frame0018.jpg",
+    "camera_id": "C02",
+    "track_id": 4,
+    "frame": 18,
+    "timestamp": "10:05:00.59",
+    "bbox": [
+      232.96,
+      305.19,
+      298.0,
+      533.96
+    ],
+    "detection_confidence": 0.869
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track4_frame0036.jpg",
+    "camera_id": "C02",
+    "track_id": 4,
+    "frame": 36,
+    "timestamp": "10:05:01.19",
+    "bbox": [
+      145.57,
+      266.35,
+      253.02,
+      603.45
+    ],
+    "detection_confidence": 0.8625
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track4_frame0055.jpg",
+    "camera_id": "C02",
+    "track_id": 4,
+    "frame": 55,
+    "timestamp": "10:05:01.83",
+    "bbox": [
+      159.89,
+      290.5,
+      257.36,
+      674.55
+    ],
+    "detection_confidence": 0.7152
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track4_frame0076.jpg",
+    "camera_id": "C02",
+    "track_id": 4,
+    "frame": 76,
+    "timestamp": "10:05:02.53",
+    "bbox": [
+      203.89,
+      282.62,
+      307.33,
+      762.95
+    ],
+    "detection_confidence": 0.6338
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track5_frame0000.jpg",
+    "camera_id": "C02",
+    "track_id": 5,
+    "frame": 0,
+    "timestamp": "10:05:00.00",
+    "bbox": [
+      215.11,
+      251.55,
+      280.87,
+      550.21
+    ],
+    "detection_confidence": 0.7933
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track5_frame0002.jpg",
+    "camera_id": "C02",
+    "track_id": 5,
+    "frame": 2,
+    "timestamp": "10:05:00.06",
+    "bbox": [
+      207.91,
+      254.14,
+      272.23,
+      545.68
+    ],
+    "detection_confidence": 0.7498
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track5_frame0003.jpg",
+    "camera_id": "C02",
+    "track_id": 5,
+    "frame": 3,
+    "timestamp": "10:05:00.09",
+    "bbox": [
+      207.11,
+      261.75,
+      269.56,
+      544.91
+    ],
+    "detection_confidence": 0.7623
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track5_frame0004.jpg",
+    "camera_id": "C02",
+    "track_id": 5,
+    "frame": 4,
+    "timestamp": "10:05:00.13",
+    "bbox": [
+      205.79,
+      269.9,
+      265.97,
+      542.24
+    ],
+    "detection_confidence": 0.7595
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track5_frame0006.jpg",
+    "camera_id": "C02",
+    "track_id": 5,
+    "frame": 6,
+    "timestamp": "10:05:00.19",
+    "bbox": [
+      201.47,
+      275.49,
+      258.43,
+      532.62
+    ],
+    "detection_confidence": 0.656
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track9_frame0081.jpg",
+    "camera_id": "C02",
+    "track_id": 9,
+    "frame": 81,
+    "timestamp": "10:05:02.69",
+    "bbox": [
+      32.6,
+      262.42,
+      153.0,
+      579.31
+    ],
+    "detection_confidence": 0.6698
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track9_frame0092.jpg",
+    "camera_id": "C02",
+    "track_id": 9,
+    "frame": 92,
+    "timestamp": "10:05:03.06",
+    "bbox": [
+      54.91,
+      242.65,
+      231.39,
+      805.31
+    ],
+    "detection_confidence": 0.78
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track9_frame0102.jpg",
+    "camera_id": "C02",
+    "track_id": 9,
+    "frame": 102,
+    "timestamp": "10:05:03.39",
+    "bbox": [
+      120.08,
+      241.28,
+      256.34,
+      716.51
+    ],
+    "detection_confidence": 0.7418
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track9_frame0113.jpg",
+    "camera_id": "C02",
+    "track_id": 9,
+    "frame": 113,
+    "timestamp": "10:05:03.76",
+    "bbox": [
+      195.21,
+      230.6,
+      352.62,
+      795.65
+    ],
+    "detection_confidence": 0.8053
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track9_frame0123.jpg",
+    "camera_id": "C02",
+    "track_id": 9,
+    "frame": 123,
+    "timestamp": "10:05:04.09",
+    "bbox": [
+      258.03,
+      223.79,
+      383.17,
+      676.82
+    ],
+    "detection_confidence": 0.7869
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track11_frame0128.jpg",
+    "camera_id": "C02",
+    "track_id": 11,
+    "frame": 128,
+    "timestamp": "10:05:04.26",
+    "bbox": [
+      92.62,
+      214.53,
+      346.34,
+      829.33
+    ],
+    "detection_confidence": 0.9312
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track11_frame0167.jpg",
+    "camera_id": "C02",
+    "track_id": 11,
+    "frame": 167,
+    "timestamp": "10:05:05.56",
+    "bbox": [
+      126.48,
+      214.37,
+      388.31,
+      831.55
+    ],
+    "detection_confidence": 0.9009
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track13_frame0123.jpg",
+    "camera_id": "C02",
+    "track_id": 13,
+    "frame": 123,
+    "timestamp": "10:05:04.09",
+    "bbox": [
+      246.88,
+      216.84,
+      394.15,
+      793.65
+    ],
+    "detection_confidence": 0.6856
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track13_frame0127.jpg",
+    "camera_id": "C02",
+    "track_id": 13,
+    "frame": 127,
+    "timestamp": "10:05:04.23",
+    "bbox": [
+      263.73,
+      216.13,
+      412.45,
+      799.52
+    ],
+    "detection_confidence": 0.7855
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track13_frame0131.jpg",
+    "camera_id": "C02",
+    "track_id": 13,
+    "frame": 131,
+    "timestamp": "10:05:04.36",
+    "bbox": [
+      280.68,
+      213.14,
+      429.87,
+      796.26
+    ],
+    "detection_confidence": 0.7559
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track13_frame0136.jpg",
+    "camera_id": "C02",
+    "track_id": 13,
+    "frame": 136,
+    "timestamp": "10:05:04.53",
+    "bbox": [
+      309.48,
+      217.13,
+      447.59,
+      743.11
+    ],
+    "detection_confidence": 0.6454
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track14_frame0165.jpg",
+    "camera_id": "C02",
+    "track_id": 14,
+    "frame": 165,
+    "timestamp": "10:05:05.49",
+    "bbox": [
+      327.58,
+      210.33,
+      428.57,
+      375.03
+    ],
+    "detection_confidence": 0.6416
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track14_frame0168.jpg",
+    "camera_id": "C02",
+    "track_id": 14,
+    "frame": 168,
+    "timestamp": "10:05:05.59",
+    "bbox": [
+      312.61,
+      209.1,
+      426.48,
+      392.88
+    ],
+    "detection_confidence": 0.6768
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track14_frame0173.jpg",
+    "camera_id": "C02",
+    "track_id": 14,
+    "frame": 173,
+    "timestamp": "10:05:05.76",
+    "bbox": [
+      312.41,
+      226.47,
+      413.89,
+      391.34
+    ],
+    "detection_confidence": 0.6427
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track14_frame0177.jpg",
+    "camera_id": "C02",
+    "track_id": 14,
+    "frame": 177,
+    "timestamp": "10:05:05.89",
+    "bbox": [
+      310.1,
+      242.74,
+      407.52,
+      401.92
+    ],
+    "detection_confidence": 0.6117
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track15_frame0265.jpg",
+    "camera_id": "C02",
+    "track_id": 15,
+    "frame": 265,
+    "timestamp": "10:05:08.83",
+    "bbox": [
+      177.79,
+      333.21,
+      249.63,
+      632.21
+    ],
+    "detection_confidence": 0.7477
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track15_frame0379.jpg",
+    "camera_id": "C02",
+    "track_id": 15,
+    "frame": 379,
+    "timestamp": "10:05:12.63",
+    "bbox": [
+      171.4,
+      199.47,
+      323.4,
+      734.51
+    ],
+    "detection_confidence": 0.8652
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track15_frame0436.jpg",
+    "camera_id": "C02",
+    "track_id": 15,
+    "frame": 436,
+    "timestamp": "10:05:14.53",
+    "bbox": [
+      162.85,
+      313.34,
+      256.87,
+      590.02
+    ],
+    "detection_confidence": 0.7947
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track16_frame0270.jpg",
+    "camera_id": "C02",
+    "track_id": 16,
+    "frame": 270,
+    "timestamp": "10:05:08.99",
+    "bbox": [
+      223.78,
+      294.55,
+      351.94,
+      691.7
+    ],
+    "detection_confidence": 0.865
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track16_frame0325.jpg",
+    "camera_id": "C02",
+    "track_id": 16,
+    "frame": 325,
+    "timestamp": "10:05:10.83",
+    "bbox": [
+      133.89,
+      222.69,
+      381.39,
+      831.61
+    ],
+    "detection_confidence": 0.9064
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track16_frame0381.jpg",
+    "camera_id": "C02",
+    "track_id": 16,
+    "frame": 381,
+    "timestamp": "10:05:12.69",
+    "bbox": [
+      294.05,
+      185.9,
+      457.88,
+      727.58
+    ],
+    "detection_confidence": 0.8757
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track16_frame0436.jpg",
+    "camera_id": "C02",
+    "track_id": 16,
+    "frame": 436,
+    "timestamp": "10:05:14.53",
+    "bbox": [
+      240.5,
+      306.2,
+      328.68,
+      592.58
+    ],
+    "detection_confidence": 0.8622
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track17_frame0238.jpg",
+    "camera_id": "C02",
+    "track_id": 17,
+    "frame": 238,
+    "timestamp": "10:05:07.93",
+    "bbox": [
+      183.56,
+      333.78,
+      251.61,
+      576.72
+    ],
+    "detection_confidence": 0.6726
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track17_frame0255.jpg",
+    "camera_id": "C02",
+    "track_id": 17,
+    "frame": 255,
+    "timestamp": "10:05:08.49",
+    "bbox": [
+      149.01,
+      334.15,
+      220.44,
+      575.9
+    ],
+    "detection_confidence": 0.8299
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track17_frame0272.jpg",
+    "camera_id": "C02",
+    "track_id": 17,
+    "frame": 272,
+    "timestamp": "10:05:09.06",
+    "bbox": [
+      57.14,
+      287.13,
+      190.7,
+      718.16
+    ],
+    "detection_confidence": 0.881
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track18_frame0380.jpg",
+    "camera_id": "C02",
+    "track_id": 18,
+    "frame": 380,
+    "timestamp": "10:05:12.66",
+    "bbox": [
+      38.86,
+      160.32,
+      174.8,
+      722.91
+    ],
+    "detection_confidence": 0.9046
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track18_frame0399.jpg",
+    "camera_id": "C02",
+    "track_id": 18,
+    "frame": 399,
+    "timestamp": "10:05:13.29",
+    "bbox": [
+      83.33,
+      261.7,
+      193.51,
+      591.09
+    ],
+    "detection_confidence": 0.8975
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track18_frame0418.jpg",
+    "camera_id": "C02",
+    "track_id": 18,
+    "frame": 418,
+    "timestamp": "10:05:13.93",
+    "bbox": [
+      81.45,
+      288.23,
+      170.02,
+      566.15
+    ],
+    "detection_confidence": 0.8642
+  },
+  {
+    "crop_path": "C:/Users/anmol/OneDrive/Desktop/Trace/dataset/crops/C02/C02_track18_frame0436.jpg",
+    "camera_id": "C02",
+    "track_id": 18,
+    "frame": 436,
+    "timestamp": "10:05:14.53",
+    "bbox": [
+      39.64,
+      294.0,
+      147.64,
+      575.71
+    ],
+    "detection_confidence": 0.9085
+  }
+]

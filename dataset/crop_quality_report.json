@@ -1,206 +1,332 @@
 {
-  "dry_run": true,
+  "dry_run": false,
   "summary": {
-    "selected": 367,
-    "accepted": 353,
-    "rejected": 14
+    "selected": 70,
+    "accepted": 47,
+    "rejected": 23
   },
   "rejections": [
     {
-      "camera_id": "C01",
+      "camera_id": "C02",
       "track_id": 1,
-      "frame": 388,
-      "timestamp": "10:02:13.09",
+      "frame": 0,
+      "timestamp": "10:05:00.00",
       "bbox": [
-        1732.49,
-        66.67,
-        1920.0,
-        1022.68
+        0.81,
+        252.64,
+        120.8,
+        596.68
       ],
       "reason": "severely_truncated",
-      "details": "crop 188\u00d7956 is severely truncated at edge(s): right (x2=1920\u22651915, crop_w=188<960)"
+      "details": "crop 120\u00d7344 is severely truncated at edge(s): left (x1=0\u22645, crop_w=120<232)"
     },
     {
-      "camera_id": "C01",
-      "track_id": 8,
-      "frame": 135,
-      "timestamp": "10:02:04.55",
+      "camera_id": "C02",
+      "track_id": 1,
+      "frame": 7,
+      "timestamp": "10:05:00.23",
+      "bbox": [
+        4.48,
+        275.63,
+        111.33,
+        578.4
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 107\u00d7303 is severely truncated at edge(s): left (x1=4\u22645, crop_w=107<232)"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 1,
+      "frame": 20,
+      "timestamp": "10:05:00.66",
       "bbox": [
         0.0,
-        351.54,
-        137.11,
-        917.07
+        285.94,
+        99.19,
+        576.54
       ],
       "reason": "severely_truncated",
-      "details": "crop 137\u00d7566 is severely truncated at edge(s): left (x1=0\u22645, crop_w=137<960)"
+      "details": "crop 99\u00d7291 is severely truncated at edge(s): left (x1=0\u22645, crop_w=99<232)"
     },
     {
-      "camera_id": "C01",
+      "camera_id": "C02",
+      "track_id": 1,
+      "frame": 27,
+      "timestamp": "10:05:00.89",
+      "bbox": [
+        0.0,
+        308.71,
+        61.59,
+        594.04
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 61\u00d7286 is severely truncated at edge(s): left (x1=0\u22645, crop_w=61<232)"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 2,
+      "frame": 148,
+      "timestamp": "10:05:04.93",
+      "bbox": [
+        348.59,
+        211.82,
+        460.12,
+        830.54
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 112\u00d7619 is severely truncated at edge(s): right (x2=460\u2265459, crop_w=112<232)"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 2,
+      "frame": 261,
+      "timestamp": "10:05:08.69",
+      "bbox": [
+        0.0,
+        353.25,
+        79.76,
+        771.66
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 79\u00d7418 is severely truncated at edge(s): left (x1=0\u22645, crop_w=79<232)"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 3,
+      "frame": 128,
+      "timestamp": "10:05:04.26",
+      "bbox": [
+        346.34,
+        216.29,
+        464.0,
+        809.6
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 118\u00d7593 is severely truncated at edge(s): right (x2=464\u2265459, crop_w=118<232)"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 7,
+      "frame": 17,
+      "timestamp": "10:05:00.56",
+      "bbox": [
+        421.1,
+        336.28,
+        463.28,
+        423.18
+      ],
+      "reason": "crop_too_small",
+      "details": "crop size 42\u00d787 is below minimum 40\u00d7100 \u2014 crop height 87 < minimum 100"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 7,
+      "frame": 19,
+      "timestamp": "10:05:00.63",
+      "bbox": [
+        420.94,
+        335.48,
+        463.82,
+        423.89
+      ],
+      "reason": "crop_too_small",
+      "details": "crop size 43\u00d788 is below minimum 40\u00d7100 \u2014 crop height 88 < minimum 100"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 7,
+      "frame": 21,
+      "timestamp": "10:05:00.69",
+      "bbox": [
+        422.41,
+        333.08,
+        464.0,
+        424.83
+      ],
+      "reason": "crop_too_small",
+      "details": "crop size 42\u00d791 is below minimum 40\u00d7100 \u2014 crop height 91 < minimum 100"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 7,
+      "frame": 23,
+      "timestamp": "10:05:00.76",
+      "bbox": [
+        426.03,
+        334.8,
+        464.0,
+        423.81
+      ],
+      "reason": "crop_too_small",
+      "details": "crop size 38\u00d789 is below minimum 40\u00d7100 \u2014 crop width 38 < minimum 40; crop height 89 < minimum 100"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 7,
+      "frame": 25,
+      "timestamp": "10:05:00.83",
+      "bbox": [
+        431.69,
+        336.99,
+        464.0,
+        425.25
+      ],
+      "reason": "crop_too_small",
+      "details": "crop size 33\u00d789 is below minimum 40\u00d7100 \u2014 crop width 33 < minimum 40; crop height 89 < minimum 100"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 11,
+      "frame": 85,
+      "timestamp": "10:05:02.83",
+      "bbox": [
+        2.92,
+        343.31,
+        63.86,
+        627.17
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 61\u00d7284 is severely truncated at edge(s): left (x1=2\u22645, crop_w=61<232)"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 11,
+      "frame": 206,
+      "timestamp": "10:05:06.86",
+      "bbox": [
+        0.0,
+        296.83,
+        209.16,
+        831.92
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 209\u00d7535 is severely truncated at edge(s): left (x1=0\u22645, crop_w=209<232)"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 11,
+      "frame": 246,
+      "timestamp": "10:05:08.19",
+      "bbox": [
+        0.0,
+        384.45,
+        43.3,
+        678.26
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 43\u00d7294 is severely truncated at edge(s): left (x1=0\u22645, crop_w=43<232)"
+    },
+    {
+      "camera_id": "C02",
       "track_id": 13,
-      "frame": 202,
-      "timestamp": "10:02:06.81",
+      "frame": 142,
+      "timestamp": "10:05:04.73",
       "bbox": [
-        1682.06,
-        314.41,
-        1920.0,
-        930.44
+        324.44,
+        208.34,
+        464.0,
+        804.76
       ],
       "reason": "severely_truncated",
-      "details": "crop 238\u00d7616 is severely truncated at edge(s): right (x2=1920\u22651915, crop_w=238<960)"
+      "details": "crop 140\u00d7596 is severely truncated at edge(s): right (x2=464\u2265459, crop_w=140<232)"
     },
     {
-      "camera_id": "C01",
-      "track_id": 23,
-      "frame": 214,
-      "timestamp": "10:02:07.22",
+      "camera_id": "C02",
+      "track_id": 14,
+      "frame": 149,
+      "timestamp": "10:05:04.96",
+      "bbox": [
+        341.97,
+        210.94,
+        462.16,
+        410.94
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 121\u00d7200 is severely truncated at edge(s): right (x2=462\u2265459, crop_w=121<232)"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 15,
+      "frame": 207,
+      "timestamp": "10:05:06.89",
+      "bbox": [
+        377.71,
+        328.83,
+        460.06,
+        729.4
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 83\u00d7401 is severely truncated at edge(s): right (x2=460\u2265459, crop_w=83<232)"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 15,
+      "frame": 322,
+      "timestamp": "10:05:10.73",
+      "bbox": [
+        2.64,
+        257.84,
+        177.52,
+        832.0
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 175\u00d7575 is severely truncated at edge(s): left (x1=2\u22645, crop_w=175<232)"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 16,
+      "frame": 215,
+      "timestamp": "10:05:07.16",
+      "bbox": [
+        399.05,
+        335.72,
+        461.04,
+        671.4
+      ],
+      "reason": "severely_truncated",
+      "details": "crop 62\u00d7336 is severely truncated at edge(s): right (x2=461\u2265459, crop_w=62<232)"
+    },
+    {
+      "camera_id": "C02",
+      "track_id": 17,
+      "frame": 288,
+      "timestamp": "10:05:09.59",
       "bbox": [
         0.0,
-        340.01,
-        100.03,
-        879.89
+        247.53,
+        141.48,
+        832.0
       ],
       "reason": "severely_truncated",
-      "details": "crop 100\u00d7539 is severely truncated at edge(s): left (x1=0\u22645, crop_w=100<960)"
+      "details": "crop 141\u00d7585 is severely truncated at edge(s): left (x1=0\u22645, crop_w=141<232)"
     },
     {
-      "camera_id": "C01",
-      "track_id": 37,
-      "frame": 195,
-      "timestamp": "10:02:06.58",
+      "camera_id": "C02",
+      "track_id": 17,
+      "frame": 305,
+      "timestamp": "10:05:10.16",
       "bbox": [
-        3.27,
-        262.29,
-        105.5,
-        1075.71
+        0.0,
+        344.63,
+        70.3,
+        830.48
       ],
       "reason": "severely_truncated",
-      "details": "crop 102\u00d7813 is severely truncated at edge(s): left (x1=3\u22645, crop_w=102<960)"
+      "details": "crop 70\u00d7486 is severely truncated at edge(s): left (x1=0\u22645, crop_w=70<232)"
     },
     {
-      "camera_id": "C01",
-      "track_id": 37,
-      "frame": 405,
-      "timestamp": "10:02:13.67",
+      "camera_id": "C02",
+      "track_id": 18,
+      "frame": 359,
+      "timestamp": "10:05:11.96",
       "bbox": [
-        1551.15,
-        55.7,
-        1920.0,
-        1056.88
+        5.67,
+        228.46,
+        54.75,
+        565.76
       ],
       "reason": "severely_truncated",
-      "details": "crop 369\u00d71001 is severely truncated at edge(s): right (x2=1920\u22651915, crop_w=369<960)"
-    },
-    {
-      "camera_id": "C01",
-      "track_id": 45,
-      "frame": 257,
-      "timestamp": "10:02:08.67",
-      "bbox": [
-        1784.43,
-        389.1,
-        1915.76,
-        972.67
-      ],
-      "reason": "severely_truncated",
-      "details": "crop 131\u00d7583 is severely truncated at edge(s): right (x2=1915\u22651915, crop_w=131<960)"
-    },
-    {
-      "camera_id": "C01",
-      "track_id": 57,
-      "frame": 303,
-      "timestamp": "10:02:10.22",
-      "bbox": [
-        1859.45,
-        451.72,
-        1919.4,
-        887.25
-      ],
-      "reason": "severely_truncated",
-      "details": "crop 60\u00d7436 is severely truncated at edge(s): right (x2=1919\u22651915, crop_w=60<960)"
-    },
-    {
-      "camera_id": "C01",
-      "track_id": 64,
-      "frame": 362,
-      "timestamp": "10:02:12.21",
-      "bbox": [
-        1761.86,
-        234.73,
-        1920.0,
-        1053.35
-      ],
-      "reason": "severely_truncated",
-      "details": "crop 159\u00d7819 is severely truncated at edge(s): right (x2=1920\u22651915, crop_w=159<960)"
-    },
-    {
-      "camera_id": "C01",
-      "track_id": 64,
-      "frame": 368,
-      "timestamp": "10:02:12.42",
-      "bbox": [
-        1827.93,
-        196.96,
-        1920.0,
-        781.08
-      ],
-      "reason": "severely_truncated",
-      "details": "crop 93\u00d7585 is severely truncated at edge(s): right (x2=1920\u22651915, crop_w=93<960)"
-    },
-    {
-      "camera_id": "C01",
-      "track_id": 86,
-      "frame": 524,
-      "timestamp": "10:02:17.68",
-      "bbox": [
-        1834.27,
-        353.84,
-        1917.74,
-        938.49
-      ],
-      "reason": "severely_truncated",
-      "details": "crop 83\u00d7585 is severely truncated at edge(s): right (x2=1917\u22651915, crop_w=83<960)"
-    },
-    {
-      "camera_id": "C01",
-      "track_id": 86,
-      "frame": 619,
-      "timestamp": "10:02:20.89",
-      "bbox": [
-        1650.92,
-        148.1,
-        1920.0,
-        1042.82
-      ],
-      "reason": "severely_truncated",
-      "details": "crop 270\u00d7894 is severely truncated at edge(s): right (x2=1920\u22651915, crop_w=270<960)"
-    },
-    {
-      "camera_id": "C01",
-      "track_id": 92,
-      "frame": 567,
-      "timestamp": "10:02:19.13",
-      "bbox": [
-        1853.02,
-        393.51,
-        1918.51,
-        954.71
-      ],
-      "reason": "severely_truncated",
-      "details": "crop 65\u00d7561 is severely truncated at edge(s): right (x2=1918\u22651915, crop_w=65<960)"
-    },
-    {
-      "camera_id": "C01",
-      "track_id": 100,
-      "frame": 620,
-      "timestamp": "10:02:20.92",
-      "bbox": [
-        1677.82,
-        127.41,
-        1920.0,
-        753.22
-      ],
-      "reason": "severely_truncated",
-      "details": "crop 243\u00d7626 is severely truncated at edge(s): right (x2=1920\u22651915, crop_w=243<960)"
+      "details": "crop 49\u00d7337 is severely truncated at edge(s): left (x1=5\u22645, crop_w=49<232)"
     }
   ]
 }
