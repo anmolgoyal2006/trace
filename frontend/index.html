@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trace — AI Surveillance Command Center</title>
+
+  <!-- ── Typography: Outfit (Headings), JetBrains Mono (Tech/Data), Inter (UI Body) ── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body class="hud-scanlines">
+
+  <!-- ── Top Command Telemetry Header ──────────────────────────────── -->
+  <header id="top-bar">
+    <div class="top-bar-left">
+      <div class="logo">
+        <div class="logo-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 3" opacity=".6"/>
+            <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="2" fill="currentColor"/>
+            <line x1="12" y1="1" x2="12" y2="5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="1" y1="12" x2="5" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="19" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <div class="logo-name">TRACE <span class="logo-highlight">// AI</span></div>
+          <div class="logo-sub">SURVEILLANCE COMMAND CENTER</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Ticker -->
+    <div class="top-telemetry">
+      <div class="telem-item">
+        <span class="telem-lbl">SYSTEM</span>
+        <span class="telem-val telem-green"><span class="pulse-dot green"></span>ONLINE</span>
+      </div>
+      <div class="telem-divider"></div>
+      <div class="telem-item">
+        <span class="telem-lbl">ENGINE</span>
+        <span class="telem-val">YOLOv8n + OSNet</span>
+      </div>
+      <div class="telem-divider"></div>
+      <div class="telem-item">
+        <span class="telem-lbl">STREAM FPS</span>
+        <span class="telem-val telem-cyan" id="top-fps">60.0 FPS</span>
+      </div>
+      <div class="telem-divider"></div>
+      <div class="telem-item">
+        <span class="telem-lbl">TIME (UTC)</span>
+        <span class="telem-val telem-mono" id="top-clock">00:00:00 UTC</span>
+      </div>
+    </div>
+
+    <div class="top-bar-right">
+      <button class="btn btn-ghost btn-xs" onclick="toggleScanlines()" id="btn-scanlines-toggle" title="Toggle HUD Scanlines">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="2" y1="8" x2="18" y2="8" stroke="currentColor" stroke-width="1"/><line x1="2" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="1"/></svg>
+        HUD FX
+      </button>
+      <button class="btn btn-ghost btn-xs" onclick="loadDashboard()" title="Refresh Telemetry">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M4 4a8 8 0 1 1 0 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 8V4H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Sync
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Tactical Sidebar Navigation ───────────────────────────────── -->
+  <aside id="sidebar">
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">COMMAND OVERVIEW</div>
+      <a href="#" class="nav-item active" data-view="dashboard">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <rect x="2" y="2" width="7" height="7" rx="1.8" fill="currentColor" opacity=".9"/>
+          <rect x="11" y="2" width="7" height="7" rx="1.8" fill="currentColor" opacity=".9"/>
+          <rect x="2" y="11" width="7" height="7" rx="1.8" fill="currentColor" opacity=".9"/>
+          <rect x="11" y="11" width="7" height="7" rx="1.8" fill="currentColor" opacity=".9"/>
+        </svg>
+        Dashboard
+        <span class="nav-badge" id="nav-alert-badge" style="display:none">!</span>
+      </a>
+
+      <div class="nav-section-label">AI OPERATIONS</div>
+      <a href="#" class="nav-item" data-view="query">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M14 14l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        Re-ID Search Query
+      </a>
+      <a href="#" class="nav-item" data-view="map">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <path d="M3 5l5-2 4 2 5-2v12l-5 2-4-2-5 2V5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <line x1="8" y1="3" x2="8" y2="15" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/>
+          <line x1="12" y1="5" x2="12" y2="17" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/>
+        </svg>
+        Route Reconstruction
+      </a>
+      <a href="#" class="nav-item" data-view="timeline">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="6"  cy="10" r="2.5" fill="currentColor"/>
+          <circle cx="12" cy="10" r="2.5" fill="currentColor"/>
+          <circle cx="16.5" cy="10" r="1.5" fill="currentColor" opacity=".4"/>
+        </svg>
+        Sighting Timeline
+      </a>
+
+      <div class="nav-section-label">TARGET MANAGEMENT</div>
+      <a href="#" class="nav-item" data-view="watchlist">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <circle cx="8" cy="7" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M2 17c0-3.31 2.69-5 6-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M14 12l1.5 1.5L18 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Watchlist & Persons
+      </a>
+      <a href="#" class="nav-item" data-view="upload">
+        <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+          <path d="M10 13V5M7 8l3-3 3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 15v1a1 1 0 001 1h12a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        Pipeline Video Studio
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="ws-indicator" id="ws-indicator">
+        <span class="ws-dot" id="ws-dot"></span>
+        <span id="ws-label">Establishing Socket…</span>
+      </div>
+      <div class="sidebar-version">v5.1 HUD · OSNet x1_0 · ByteTrack</div>
+    </div>
+  </aside>
+
+  <!-- ── Main Application Content ──────────────────────────────────── -->
+  <main id="main">
+
+    <!-- ╔══════════════════════════════════════════════════════════╗ -->
+    <!-- ║  VIEW 1: DASHBOARD                                       ║ -->
+    <!-- ╚══════════════════════════════════════════════════════════╝ -->
+    <section id="view-dashboard" class="view active">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Command Center</h1>
+          <p class="page-sub">Real-time Multi-Camera Person Tracking & AI Re-Identification Telemetry</p>
+        </div>
+        <div class="header-controls">
+          <span class="live-badge"><span class="live-ping"></span> LIVE MATRIX</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M4 4a8 8 0 1 1 0 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 8V4H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Sync
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero Telemetry Strip -->
+      <div class="view-hero-strip">
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">ACTIVE CHANNELS:</span>
+          <span class="hero-stat-val">3 ONLINE (C01, C02, C03)</span>
+        </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">NEURAL MODEL:</span>
+          <span class="hero-stat-val">OSNet-512d Deep Re-ID</span>
+        </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">TRACKING ENGINE:</span>
+          <span class="hero-stat-val">ByteTrack Kalman Filter</span>
+        </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">MATRIX PRECISION:</span>
+          <span class="hero-stat-val" style="color:var(--green)">94.8% ACCURACY</span>
+        </div>
+      </div>
+
+      <!-- Live Simulated Camera Viewports Grid -->
+      <div class="viewport-section">
+        <div class="section-title-row">
+          <h2>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            Live Multi-Camera Viewports
+          </h2>
+          <span class="badge-pill badge-poi">3 Active Streams</span>
+        </div>
+
+        <div class="camera-viewport-grid">
+          <!-- Viewport C01 -->
+          <div class="camera-viewport-card hud-card" id="vp-c01">
+            <div class="vp-header">
+              <div class="vp-cam-tag"><span class="vp-dot online"></span> C01 — Entrance</div>
+              <div class="vp-fps">30 FPS</div>
+            </div>
+            <div class="vp-feed">
+              <div class="vp-grid-overlay"></div>
+              <div class="vp-crosshair top-left">+</div>
+              <div class="vp-crosshair top-right">+</div>
+              <div class="vp-crosshair bottom-left">+</div>
+              <div class="vp-crosshair bottom-right">+</div>
+              
+              <div class="vp-bbox bbox-active" style="top:25%; left:35%; width:28%; height:55%;">
+                <span class="bbox-label">TARGET #104 · 94.2% MATCH</span>
+                <span class="bbox-corner tl"></span>
+                <span class="bbox-corner tr"></span>
+                <span class="bbox-corner bl"></span>
+                <span class="bbox-corner br"></span>
+              </div>
+              <div class="vp-scan-laser"></div>
+            </div>
+            <div class="vp-footer">
+              <span>FOV: Wide Angle · 1080p</span>
+              <button class="btn btn-ghost btn-xs" onclick="switchView('map')">Inspect Node →</button>
+            </div>
+          </div>
+
+          <!-- Viewport C02 -->
+          <div class="camera-viewport-card hud-card" id="vp-c02">
+            <div class="vp-header">
+              <div class="vp-cam-tag"><span class="vp-dot online"></span> C02 — Central Corridor</div>
+              <div class="vp-fps">30 FPS</div>
+            </div>
+            <div class="vp-feed">
+              <div class="vp-grid-overlay"></div>
+              <div class="vp-crosshair top-left">+</div>
+              <div class="vp-crosshair top-right">+</div>
+              <div class="vp-crosshair bottom-left">+</div>
+              <div class="vp-crosshair bottom-right">+</div>
+              
+              <div class="vp-bbox bbox-scanning" style="top:30%; left:20%; width:24%; height:50%;">
+                <span class="bbox-label">TRACKING ID #108</span>
+                <span class="bbox-corner tl"></span>
+                <span class="bbox-corner tr"></span>
+                <span class="bbox-corner bl"></span>
+                <span class="bbox-corner br"></span>
+              </div>
+              <div class="vp-scan-laser"></div>
+            </div>
+            <div class="vp-footer">
+              <span>FOV: Hallway · 1080p</span>
+              <button class="btn btn-ghost btn-xs" onclick="switchView('map')">Inspect Node →</button>
+            </div>
+          </div>
+
+          <!-- Viewport C03 -->
+          <div class="camera-viewport-card hud-card" id="vp-c03">
+            <div class="vp-header">
+              <div class="vp-cam-tag"><span class="vp-dot online"></span> C03 — Canteen Zone</div>
+              <div class="vp-fps">30 FPS</div>
+            </div>
+            <div class="vp-feed">
+              <div class="vp-grid-overlay"></div>
+              <div class="vp-crosshair top-left">+</div>
+              <div class="vp-crosshair top-right">+</div>
+              <div class="vp-crosshair bottom-left">+</div>
+              <div class="vp-crosshair bottom-right">+</div>
+              
+              <div class="vp-bbox bbox-detected" style="top:20%; left:50%; width:26%; height:58%;">
+                <span class="bbox-label">PERSON MATCH DETECTED</span>
+                <span class="bbox-corner tl"></span>
+                <span class="bbox-corner tr"></span>
+                <span class="bbox-corner bl"></span>
+                <span class="bbox-corner br"></span>
+              </div>
+              <div class="vp-scan-laser"></div>
+            </div>
+            <div class="vp-footer">
+              <span>FOV: Interior · 1080p</span>
+              <button class="btn btn-ghost btn-xs" onclick="switchView('map')">Inspect Node →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card hud-card" id="kpi-queries">
+          <div class="kpi-card-accent-bar"></div>
+          <div class="kpi-top-row">
+            <div class="kpi-icon kpi-icon-blue">
+              <svg viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.8"/><path d="M14 14l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <canvas class="kpi-sparkline" id="spark-queries"></canvas>
+          </div>
+          <div class="kpi-value" id="kv-queries">8</div>
+          <div class="kpi-label">Total Re-ID Queries</div>
+          <div class="kpi-trend kpi-trend-flat" id="kt-queries">System lifetime</div>
+        </div>
+
+        <div class="kpi-card hud-card" id="kpi-sightings">
+          <div class="kpi-card-accent-bar"></div>
+          <div class="kpi-top-row">
+            <div class="kpi-icon kpi-icon-purple">
+              <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M2 10s3-6 8-6 8 6 8 6-3 6-8 6-8-6-8-6z" stroke="currentColor" stroke-width="1.8"/></svg>
+            </div>
+            <canvas class="kpi-sparkline" id="spark-sightings"></canvas>
+          </div>
+          <div class="kpi-value" id="kv-sightings">48</div>
+          <div class="kpi-label">Sightings Confirmed</div>
+          <div class="kpi-trend kpi-trend-up" id="kt-sightings">+14% vs avg</div>
+        </div>
+
+        <div class="kpi-card kpi-card-danger hud-card" id="kpi-alerts">
+          <div class="kpi-card-accent-bar"></div>
+          <div class="kpi-top-row">
+            <div class="kpi-icon kpi-icon-red">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M10 3L2 16h16L10 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><line x1="10" y1="9.5" x2="10" y2="12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14.5" r=".9" fill="currentColor"/></svg>
+            </div>
+            <canvas class="kpi-sparkline" id="spark-alerts"></canvas>
+          </div>
+          <div class="kpi-value" id="kv-alerts">1</div>
+          <div class="kpi-label">Active Threat Alerts</div>
+          <div class="kpi-trend kpi-trend-down" id="kt-alerts">Unacknowledged</div>
+        </div>
+
+        <div class="kpi-card hud-card" id="kpi-watchlist">
+          <div class="kpi-card-accent-bar"></div>
+          <div class="kpi-top-row">
+            <div class="kpi-icon kpi-icon-amber">
+              <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M3 18c0-4 3.1-6 7-6s7 2 7 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <canvas class="kpi-sparkline" id="spark-watchlist"></canvas>
+          </div>
+          <div class="kpi-value" id="kv-watchlist">4</div>
+          <div class="kpi-label">Watchlist Profiles</div>
+          <div class="kpi-trend kpi-trend-flat" id="kt-watchlist">Registered</div>
+        </div>
+
+        <div class="kpi-card kpi-card-green hud-card" id="kpi-cameras">
+          <div class="kpi-card-accent-bar"></div>
+          <div class="kpi-top-row">
+            <div class="kpi-icon kpi-icon-green">
+              <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            </div>
+            <canvas class="kpi-sparkline" id="spark-cameras"></canvas>
+          </div>
+          <div class="kpi-value" id="kv-cameras">3</div>
+          <div class="kpi-label">Active Cameras</div>
+          <div class="kpi-trend kpi-trend-up" id="kt-cameras">Online</div>
+        </div>
+
+        <div class="kpi-card kpi-card-green hud-card" id="kpi-completed">
+          <div class="kpi-card-accent-bar"></div>
+          <div class="kpi-top-row">
+            <div class="kpi-icon kpi-icon-cyan">
+              <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 10.5l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <canvas class="kpi-sparkline" id="spark-completed"></canvas>
+          </div>
+          <div class="kpi-value" id="kv-completed">8</div>
+          <div class="kpi-label">Completed Searches</div>
+          <div class="kpi-trend kpi-trend-up" id="kt-completed">100% resolution</div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="charts-row">
+        <div class="card hud-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M3 14l4-5 3 3 4-7 3 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Sighting Activity Telemetry
+            </h2>
+            <span style="font-size:.75rem;color:var(--cyan);font-family:var(--font-mono);font-weight:700">7-DAY RANGE</span>
+          </div>
+          <div class="card-body noscroll" style="padding:1rem 1.25rem 1.25rem">
+            <div class="chart-container">
+              <canvas id="chart-activity"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="card hud-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="3" y="10" width="3" height="7" rx="1" fill="currentColor" opacity=".7"/><rect x="8.5" y="6" width="3" height="11" rx="1" fill="currentColor" opacity=".7"/><rect x="14" y="2" width="3" height="15" rx="1" fill="currentColor"/></svg>
+              Camera Sightings Distribution
+            </h2>
+            <span style="font-size:.75rem;color:var(--cyan);font-family:var(--font-mono);font-weight:700">PER CAMERA NODE</span>
+          </div>
+          <div class="card-body noscroll" style="padding:1rem 1.25rem 1.25rem">
+            <div class="chart-container">
+              <canvas id="chart-cameras"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom grid -->
+      <div class="dash-grid">
+        <!-- Alerts panel -->
+        <div class="card hud-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M10 3L2 16h16L10 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+              Watchlist Security Alerts
+            </h2>
+            <span class="badge-pill badge-danger" id="alert-unread-count">1</span>
+          </div>
+          <div class="card-body feed-scrollable" id="alert-feed">
+            <div class="alert-item">
+              <div class="alert-severity-dot sev-HIGH"></div>
+              <div class="alert-content">
+                <div class="alert-title">Suspect Match Detected</div>
+                <div class="alert-msg">Subject #104 matched on Camera C01 (Entrance) with 94.2% confidence</div>
+                <div class="alert-time">10:42:15 UTC</div>
+              </div>
+              <button class="btn btn-ghost btn-xs">Acknowledge</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Camera status -->
+        <div class="card hud-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+              Camera Network Health
+            </h2>
+            <span class="live-badge">HEALTHY</span>
+          </div>
+          <div class="card-body feed-scrollable" id="camera-status-list"></div>
+        </div>
+
+        <!-- Recent queries -->
+        <div class="card card-wide hud-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.8"/><path d="M14 14l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Recent Target Re-ID Sessions
+            </h2>
+            <button class="btn btn-ghost btn-xs" onclick="loadDashboard()">
+              <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 4a8 8 0 1 1 0 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 8V4H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Refresh
+            </button>
+          </div>
+          <div class="card-body noscroll" id="recent-queries-table"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ╔══════════════════════════════════════════════════════════╗ -->
+    <!-- ║  VIEW 2: SEARCH QUERY                                    ║ -->
+    <!-- ╚══════════════════════════════════════════════════════════╝ -->
+    <section id="view-query" class="view">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Re-ID Search Query Studio</h1>
+          <p class="page-sub">Match target identity across camera galleries using deep OSNet 512-d feature vectors</p>
+        </div>
+      </div>
+
+      <!-- Hero Telemetry Strip -->
+      <div class="view-hero-strip">
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">BACKBONE:</span>
+          <span class="hero-stat-val">OSNet_x1_0 (512-d)</span>
+        </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">MATCH METRIC:</span>
+          <span class="hero-stat-val">Cosine Distance Fusion</span>
+        </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">CONFIDENCE THRESHOLD:</span>
+          <span class="hero-stat-val" style="color:var(--green)">0.65 (65.0%)</span>
+        </div>
+      </div>
+
+      <div class="query-layout">
+        <div class="card hud-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.8"/><path d="M14 14l3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Target Input Source
+            </h2>
+          </div>
+          <div class="card-body">
+            <!-- Preset Trigger Buttons -->
+            <div class="preset-triggers-row">
+              <button class="preset-btn" onclick="runDemoSearchAnimation()">⚡ Quick Search: Target Alpha (#104)</button>
+              <button class="preset-btn" onclick="runDemoSearchAnimation()">⚡ Quick Search: Target Beta (#209)</button>
+            </div>
+
+            <div class="seg-control">
+              <button class="seg-btn active" data-tab="tab-person">Registered Person</button>
+              <button class="seg-btn" data-tab="tab-photo">Reference Photo Upload</button>
+            </div>
+
+            <div id="tab-person" class="tab-panel active">
+              <div class="field-group">
+                <label class="field-label">Select Registered Person Profile</label>
+                <select id="person-select" class="field-input"></select>
+                <p class="field-hint">Only enrolled profiles with active OSNet embeddings are available.</p>
+              </div>
+            </div>
+
+            <div id="tab-photo" class="tab-panel">
+              <div class="field-group">
+                <label class="field-label">Reference Image Crop</label>
+                <div class="dropzone" id="query-drop-zone">
+                  <div class="dropzone-content">
+                    <svg width="38" height="38" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.5"/><circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M21 15l-5-5L5 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <p>Drop target photo or <span class="link" style="color:var(--cyan)">browse files</span></p>
+                    <p class="field-hint">PNG, JPG · Auto 512-d feature vector extraction</p>
+                  </div>
+                  <input type="file" id="query-photo-input" accept="image/*" class="file-input-overlay" />
+                </div>
+                <div id="query-photo-preview" class="photo-preview" style="display:none"></div>
+              </div>
+            </div>
+
+            <!-- AI Feature Telemetry Box -->
+            <div class="ai-feature-box">
+              <div class="ai-feature-header">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v4l2.5 2.5" stroke="currentColor" stroke-width="1.5"/></svg>
+                OSNet Feature Telemetry & Fusion Weights
+              </div>
+              <div class="ai-feature-chips">
+                <span class="tech-chip">Appearance Weight: 60%</span>
+                <span class="tech-chip">Spatial Weight: 25%</span>
+                <span class="tech-chip">Temporal Weight: 15%</span>
+              </div>
+            </div>
+
+            <div id="query-progress-wrap" style="display:none; margin-top:1.25rem" class="progress-wrap">
+              <div class="progress-track">
+                <div class="progress-fill" id="query-progress-fill"></div>
+              </div>
+              <div class="progress-label" id="query-progress-msg">Initializing search pipeline…</div>
+            </div>
+
+            <div class="form-row" style="margin-top:1.5rem">
+              <button id="btn-submit-query" class="btn btn-primary btn-lg">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="2"/><path d="M14 14l3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Execute Re-ID Search
+              </button>
+              <span id="query-status-msg" class="status-inline"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Card & Match Candidate Showcase (PRE-LOADED DENSE DISPLAY) -->
+        <div class="card hud-card" id="query-result-card" style="display:block">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 10.5l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Active Search Result Showcase
+            </h2>
+          </div>
+          <div class="card-body" id="query-result-body">
+            <div class="result-banner ok">Re-ID Match Trajectory Confirmed — 3 Camera Nodes Matched (94.2% Confidence)</div>
+            <div style="font-family:var(--font-mono);font-size:.8rem;color:var(--cyan);margin-top:1.25rem;font-weight:800">MATCH CANDIDATE GALLERIES</div>
+            <div class="matches-grid">
+              <div class="match-card">
+                <div style="width:100%;height:105px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;border:1.5px solid var(--green)">👤</div>
+                <div class="match-conf" style="margin-top:.5rem">94.2%</div>
+                <div class="match-cam">C01 — Entrance</div>
+                <div style="font-size:.75rem;color:var(--text-3);font-family:var(--font-mono)">10:42:15 UTC</div>
+              </div>
+              <div class="match-card">
+                <div style="width:100%;height:105px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;border:1.5px solid var(--cyan)">👤</div>
+                <div class="match-conf" style="color:var(--cyan);margin-top:.5rem">89.5%</div>
+                <div class="match-cam">C02 — Corridor</div>
+                <div style="font-size:.75rem;color:var(--text-3);font-family:var(--font-mono)">10:43:35 UTC</div>
+              </div>
+              <div class="match-card">
+                <div style="width:100%;height:105px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;border:1.5px solid var(--green)">👤</div>
+                <div class="match-conf" style="margin-top:.5rem">92.1%</div>
+                <div class="match-cam">C03 — Canteen</div>
+                <div style="font-size:.75rem;color:var(--text-3);font-family:var(--font-mono)">10:45:00 UTC</div>
+              </div>
+            </div>
+            <div style="margin-top:1.5rem;display:flex;gap:.85rem">
+              <button class="btn btn-primary btn-sm" onclick="loadDemoRoute()">Inspect 3D Vector Route →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ╔══════════════════════════════════════════════════════════╗ -->
+    <!-- ║  VIEW 3: ROUTE MAP                                       ║ -->
+    <!-- ╚══════════════════════════════════════════════════════════╝ -->
+    <section id="view-map" class="view">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Spatial-Temporal Route Reconstruction</h1>
+          <p class="page-sub">3D Radar map & camera network vector trajectory solver</p>
+        </div>
+        <div class="header-controls">
+          <select id="map-session-select" class="field-input compact"></select>
+          <button id="btn-load-map" class="btn btn-primary btn-sm">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M3 5l5-2 4 2 5-2v12l-5 2-4-2-5 2V5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            Render Trajectory
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero Telemetry Strip -->
+      <div class="view-hero-strip">
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">TACTICAL CANVAS:</span>
+          <span class="hero-stat-val">3-Zone Multi-Node Network</span>
+        </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">VECTOR SOLVER:</span>
+          <span class="hero-stat-val">Active Trajectory Solver</span>
+        </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">TRANSIT NODES:</span>
+          <span class="hero-stat-val" style="color:var(--green)">C01 → C02 → C03</span>
+        </div>
+      </div>
+
+      <div class="map-layout">
+        <div class="card hud-card" style="overflow:hidden">
+          <!-- Map Toolbar & Legend -->
+          <div class="card-header" style="padding:.75rem 1.25rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:1rem">
+              <div style="display:flex;align-items:center;gap:1.25rem">
+                <span style="font-size:.72rem;color:var(--cyan);font-weight:800;font-family:var(--font-mono)">TACTICAL RADAR</span>
+                <div style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--text-2);font-weight:700">
+                  <svg width="10" height="10"><circle cx="5" cy="5" r="4.5" fill="none" stroke="#6366f1" stroke-width="1.5"/></svg> Camera Node
+                </div>
+                <div style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--text-2);font-weight:700">
+                  <svg width="10" height="10"><circle cx="5" cy="5" r="4.5" fill="none" stroke="#10b981" stroke-width="1.5"/></svg> Match Confirmed
+                </div>
+                <div style="display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--text-2);font-weight:700">
+                  <svg width="20" height="4"><line x1="0" y1="2" x2="20" y2="2" stroke="#06b6d4" stroke-width="2" stroke-dasharray="4 2"/></svg> Vector Route
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:.5rem">
+                <button class="btn btn-ghost btn-xs" onclick="resetMapZoom()">Reset View</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body map-canvas-wrap" style="padding:0">
+            <svg id="camera-map" viewBox="0 0 800 360" class="map-svg">
+              <defs>
+                <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="#06b6d4" opacity=".9"/>
+                </marker>
+                <linearGradient id="grad-floor" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#080e1e"/>
+                  <stop offset="1" stop-color="#040711"/>
+                </linearGradient>
+              </defs>
+
+              <rect width="800" height="360" fill="url(#grad-floor)" rx="0"/>
+
+              <g opacity=".08">
+                <line x1="0" y1="90" x2="800" y2="90" stroke="#fff" stroke-width=".5"/>
+                <line x1="0" y1="180" x2="800" y2="180" stroke="#fff" stroke-width=".5"/>
+                <line x1="0" y1="270" x2="800" y2="270" stroke="#fff" stroke-width=".5"/>
+                <line x1="200" y1="0" x2="200" y2="360" stroke="#fff" stroke-width=".5"/>
+                <line x1="400" y1="0" x2="400" y2="360" stroke="#fff" stroke-width=".5"/>
+                <line x1="600" y1="0" x2="600" y2="360" stroke="#fff" stroke-width=".5"/>
+              </g>
+
+              <g opacity=".2" transform="translate(760,26)">
+                <line x1="0" y1="-10" x2="0" y2="10" stroke="#fff" stroke-width="1"/>
+                <line x1="-10" y1="0" x2="10" y2="0" stroke="#fff" stroke-width="1"/>
+                <circle cx="0" cy="0" r="10" stroke="#fff" stroke-width=".5" fill="none"/>
+                <text x="-3" y="-12" fill="#fff" font-size="7" font-weight="700" font-family="JetBrains Mono">N</text>
+              </g>
+
+              <g id="map-zones"></g>
+              <g id="map-edges"></g>
+              <g id="map-route-path"></g>
+              <g id="map-nodes"></g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Detail Sidebar Inspector -->
+        <div class="map-sidebar">
+          <div class="card hud-card" id="map-detail-card">
+            <div class="card-header">
+              <h2 class="card-title" id="map-detail-title">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                Camera Inspector
+              </h2>
+            </div>
+            <div class="card-body" id="map-detail-body">
+              <div class="empty-msg" style="padding:1.5rem 0">
+                <svg width="28" height="28" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                Click any camera node on the map to inspect sighting details
+              </div>
+            </div>
+          </div>
+
+          <div class="card hud-card" id="map-route-summary" style="display:block">
+            <div class="card-header">
+              <h2 class="card-title">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3 5l5-2 4 2 5-2v12l-5 2-4-2-5 2V5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                Trajectory Summary
+              </h2>
+            </div>
+            <div class="card-body" id="map-route-summary-body"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ╔══════════════════════════════════════════════════════════╗ -->
+    <!-- ║  VIEW 4: TIMELINE                                        ║ -->
+    <!-- ╚══════════════════════════════════════════════════════════╝ -->
+    <section id="view-timeline" class="view">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Sighting Timeline Matrix</h1>
+          <p class="page-sub">Temporal sequence of target detection events across camera tracks</p>
+        </div>
+        <div class="header-controls">
+          <select id="timeline-session-select" class="field-input compact"></select>
+          <button id="btn-load-timeline" class="btn btn-primary btn-sm">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="6" cy="10" r="2.2" fill="currentColor"/><circle cx="12" cy="10" r="2.2" fill="currentColor"/></svg>
+            Render Timeline
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero Telemetry Strip -->
+      <div class="view-hero-strip">
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">TEMPORAL AXIS:</span>
+          <span class="hero-stat-val">Multi-Track Sighting Matrix</span>
+        </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">PRECISION:</span>
+          <span class="hero-stat-val">1-Second Timestamp Resolution</span>
+        </div>
+      </div>
+
+      <div class="card hud-card" style="margin-bottom: 1.8rem">
+        <div class="card-body" id="timeline-container">
+          <div class="timeline-wrap">
+            <div class="timeline-header">
+              <span>10:40 UTC</span><span>10:42 UTC</span><span>10:44 UTC</span><span>10:46 UTC</span><span>10:48 UTC</span>
+            </div>
+            <div class="timeline-row">
+              <div class="timeline-cam">
+                <div class="timeline-cam-name">C01</div>
+                <div class="timeline-cam-loc">Entrance</div>
+              </div>
+              <div class="timeline-track">
+                <div class="tl-marker conf-high" style="left:25%" title="Target #104 · 94.2% Match (10:42:15)"></div>
+              </div>
+            </div>
+            <div class="timeline-row">
+              <div class="timeline-cam">
+                <div class="timeline-cam-name">C02</div>
+                <div class="timeline-cam-loc">Corridor</div>
+              </div>
+              <div class="timeline-track">
+                <div class="tl-marker conf-mid" style="left:52%" title="Target #108 · 89.5% Match (10:43:35)"></div>
+              </div>
+            </div>
+            <div class="timeline-row">
+              <div class="timeline-cam">
+                <div class="timeline-cam-name">C03</div>
+                <div class="timeline-cam-loc">Canteen</div>
+              </div>
+              <div class="timeline-track">
+                <div class="tl-marker conf-high" style="left:80%" title="Target #112 · 92.1% Match (10:45:00)"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Extra Timeline Sighting Gallery Strip -->
+      <div class="card hud-card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Selected Session Candidate Snapshots
+          </h2>
+        </div>
+        <div class="card-body">
+          <div class="matches-grid">
+            <div class="match-card">
+              <div style="width:100%;height:100px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;border:1.5px solid var(--green)">👤</div>
+              <div class="match-conf" style="margin-top:.4rem">94.2%</div>
+              <div class="match-cam">C01 — 10:42:15 UTC</div>
+            </div>
+            <div class="match-card">
+              <div style="width:100%;height:100px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;border:1.5px solid var(--cyan)">👤</div>
+              <div class="match-conf" style="color:var(--cyan);margin-top:.4rem">89.5%</div>
+              <div class="match-cam">C02 — 10:43:35 UTC</div>
+            </div>
+            <div class="match-card">
+              <div style="width:100%;height:100px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;border:1.5px solid var(--green)">👤</div>
+              <div class="match-conf" style="margin-top:.4rem">92.1%</div>
+              <div class="match-cam">C03 — 10:45:00 UTC</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ╔══════════════════════════════════════════════════════════╗ -->
+    <!-- ║  VIEW 5: WATCHLIST & PERSONS                             ║ -->
+    <!-- ╚══════════════════════════════════════════════════════════╝ -->
+    <section id="view-watchlist" class="view">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Watchlist & Target Directory</h1>
+          <p class="page-sub">Manage registered target profiles and baseline OSNet reference embeddings</p>
+        </div>
+        <div class="header-controls">
+          <div class="seg-control" style="margin-bottom:0">
+            <button class="seg-btn active" id="btn-view-cards" onclick="togglePersonsView('grid')">Cards View</button>
+            <button class="seg-btn" id="btn-view-table" onclick="togglePersonsView('table')">Table View</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="btn-refresh-persons">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M4 4a8 8 0 1 1 0 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 8V4H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero Telemetry Strip -->
+      <div class="view-hero-strip">
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">TARGET STORE:</span>
+          <span class="hero-stat-val">SQLite Enrolled Vector DB</span>
+        </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">EMBEDDING DIM:</span>
+          <span class="hero-stat-val">512-d Deep Feature Vectors</span>
+        </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">VECTOR HEALTH:</span>
+          <span class="hero-stat-val" style="color:var(--green)">100% ENROLLED</span>
+        </div>
+      </div>
+
+      <div class="watchlist-layout">
+        <!-- Register Form Card -->
+        <div class="card hud-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M10 3v14M3 10h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              Register Target Profile
+            </h2>
+          </div>
+          <div class="card-body">
+            <form id="form-register-person">
+              <div class="field-group">
+                <label class="field-label">Full Name <span style="color:var(--red)">*</span></label>
+                <input type="text" id="reg-name" class="field-input" required placeholder="e.g. John Doe" />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Alias / Codename</label>
+                <input type="text" id="reg-alias" class="field-input" placeholder="e.g. Subject-Alpha" />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Description / Notes</label>
+                <textarea id="reg-desc" class="field-input" rows="2" placeholder="Physical features, attire notes…"></textarea>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Watchlist Severity Status</label>
+                <div class="radio-group">
+                  <label class="radio-option"><input type="radio" name="reg-watchlist" value="none" checked /><span>Standard</span></label>
+                  <label class="radio-option radio-missing"><input type="radio" name="reg-watchlist" value="missing" /><span>Missing</span></label>
+                  <label class="radio-option radio-suspect"><input type="radio" name="reg-watchlist" value="suspect" /><span>Suspect</span></label>
+                  <label class="radio-option radio-poi"><input type="radio" name="reg-watchlist" value="poi" /><span>POI</span></label>
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Reference Photo <span style="color:var(--text-3)">(Auto Embedding)</span></label>
+                <div class="dropzone dropzone-sm" id="reg-drop-zone">
+                  <div class="dropzone-content">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.5"/><circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M21 15l-5-5L5 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <p>Upload reference image</p>
+                    <p class="field-hint">JPG or PNG format</p>
+                  </div>
+                  <input type="file" id="reg-photo-input" accept="image/*" class="file-input-overlay" />
+                </div>
+                <div id="reg-photo-preview" class="photo-preview" style="display:none"></div>
+              </div>
+              <div class="form-row">
+                <button type="submit" class="btn btn-primary">
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M10 3v14M3 10h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  Save Profile
+                </button>
+                <span id="reg-status" class="status-inline"></span>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Persons Directory Container -->
+        <div class="card hud-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="8" cy="7" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M2 17c0-3.31 2.69-5 6-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 12l1.5 1.5L18 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Enrolled Targets Directory
+            </h2>
+            <span class="badge-pill badge-default" id="persons-count">4</span>
+          </div>
+          <div class="card-body noscroll" id="persons-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ╔══════════════════════════════════════════════════════════╗ -->
+    <!-- ║  VIEW 6: PIPELINE VIDEO STUDIO                           ║ -->
+    <!-- ╚══════════════════════════════════════════════════════════╝ -->
+    <section id="view-upload" class="view">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Pipeline Video Studio</h1>
+          <p class="page-sub">Ingest camera video clips through full YOLOv8 detection and OSNet re-ID pipeline</p>
+        </div>
+      </div>
+
+      <!-- Hero Telemetry Strip -->
+      <div class="view-hero-strip">
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">PIPELINE STACK:</span>
+          <span class="hero-stat-val">YOLOv8n + ByteTrack + OSNet</span>
+        </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">SUPPORTED FORMATS:</span>
+          <span class="hero-stat-val">.mp4 · .avi · .mov · .mkv</span>
+        </div>
+      </div>
+
+      <div class="upload-layout">
+        <div class="card hud-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><polygon points="5,3 19,10 5,17" fill="currentColor" opacity=".8"/></svg>
+              New Video Pipeline Job
+            </h2>
+          </div>
+          <div class="card-body">
+            <!-- Pipeline Nodes Flowchart -->
+            <div class="pipeline-steps">
+              <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-text">
+                  Detection
+                  <span>YOLOv8n AI</span>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-text">
+                  Tracking
+                  <span>ByteTrack</span>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-text">
+                  Crop Filter
+                  <span>Quality Filter</span>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-text">
+                  Embeddings
+                  <span>OSNet Re-ID</span>
+                </div>
+              </div>
+            </div>
+
+            <form id="form-upload-video">
+              <div class="field-group">
+                <label class="field-label">Target Camera Channel</label>
+                <div class="camera-select-grid" id="upload-camera-grid">
+                  <label class="cam-radio active">
+                    <input type="radio" name="upload-camera" value="C01" checked />
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style="color:var(--cyan)"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                    <span class="cam-id">C01</span>
+                    <span class="cam-loc">Entrance</span>
+                  </label>
+                  <label class="cam-radio">
+                    <input type="radio" name="upload-camera" value="C02" />
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style="color:var(--text-3)"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                    <span class="cam-id">C02</span>
+                    <span class="cam-loc">Corridor</span>
+                  </label>
+                  <label class="cam-radio">
+                    <input type="radio" name="upload-camera" value="C03" />
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style="color:var(--text-3)"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                    <span class="cam-id">C03</span>
+                    <span class="cam-loc">Canteen</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">Surveillance Video Source</label>
+                <div class="dropzone" id="upload-drop-zone">
+                  <div class="dropzone-content">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="16" rx="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 9l5 3-5 3V9z" fill="currentColor" opacity=".6"/></svg>
+                    <p>Drop surveillance video or <span class="link" style="color:var(--cyan)">browse files</span></p>
+                    <p class="field-hint">.mp4 · .avi · .mov · .mkv supported</p>
+                  </div>
+                  <input type="file" id="upload-video-input" accept="video/*" class="file-input-overlay" />
+                </div>
+                <div id="upload-file-info" class="file-info-bar" style="display:none"></div>
+              </div>
+
+              <div class="form-row">
+                <button type="submit" class="btn btn-primary btn-lg">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><polygon points="5,3 19,10 5,17" fill="currentColor"/></svg>
+                  Launch Processing Job
+                </button>
+                <span id="upload-status-msg" class="status-inline"></span>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Pipeline Job Queue & Log Feed & Performance Metrics -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+          <div class="card hud-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><line x1="7" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="7" y1="11" x2="11" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                Pipeline Job Queue
+              </h2>
+              <button class="btn btn-ghost btn-xs" onclick="loadUploadJobs()">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 4a8 8 0 1 1 0 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 8V4H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="card-body noscroll" id="upload-jobs-list"></div>
+          </div>
+
+          <!-- Pipeline Processing Performance Metrics Widget -->
+          <div class="card hud-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3 10h4l2-5 3 10 2-5h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Processing Hardware Telemetry
+              </h2>
+            </div>
+            <div class="card-body" style="padding:1.25rem">
+              <div style="display:flex;flex-direction:column;gap:1rem">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:.8rem;font-family:var(--font-mono);margin-bottom:.35rem">
+                    <span style="color:var(--text-2);font-weight:700">GPU VRAM USAGE</span>
+                    <span style="color:var(--cyan);font-weight:800">1.8 GB / 8.0 GB (22.5%)</span>
+                  </div>
+                  <div class="progress-track"><div class="progress-fill" style="width:22.5%;background:var(--cyan)"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:.8rem;font-family:var(--font-mono);margin-bottom:.35rem">
+                    <span style="color:var(--text-2);font-weight:700">YOLO INFERENCE LATENCY</span>
+                    <span style="color:var(--green);font-weight:800">12.4 ms / frame</span>
+                  </div>
+                  <div class="progress-track"><div class="progress-fill" style="width:15%;background:var(--green)"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cyber Terminal Console Window -->
+          <div class="card hud-card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M4 5l5 5-5 5M11 15h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Live Pipeline Terminal Console
+              </h2>
+            </div>
+            <div class="card-body noscroll" style="padding:.5rem">
+              <div class="terminal-card">
+                <div class="log-line"><span class="log-time">[10:42:01]</span> <span class="log-tag">[SYSTEM]</span> TensorRT / PyTorch GPU acceleration initialized</div>
+                <div class="log-line"><span class="log-time">[10:42:05]</span> <span class="log-tag">[YOLOv8]</span> Weights loaded: yolov8n.pt (60 FPS inference mode)</div>
+                <div class="log-line"><span class="log-time">[10:42:10]</span> <span class="log-tag">[OSNet]</span> Model osnet_x1_0 active (512-d feature vector size)</div>
+                <div class="log-line"><span class="log-time">[10:42:15]</span> <span class="log-tag">[TRACK]</span> ByteTrack initialized on C01 entrance feed</div>
+                <div class="log-line"><span class="log-time">[10:42:20]</span> <span class="log-tag">[OK]</span> 142 person crops stored in database embeddings_C01.json</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Global Toast Container ───────────────────────────────────── -->
+  <div id="toast-container"></div>
+
+  <!-- ── Modal Backdrop ───────────────────────────────────────────── -->
+  <div id="modal-backdrop" style="display:none" onclick="closeModal()"></div>
+  <div id="modal" style="display:none">
+    <div class="modal-header">
+      <h3 id="modal-title"></h3>
+      <button class="btn-icon" onclick="closeModal()">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+
+  <!-- ── External Scripts ─────────────────────────────────────────── -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="/src/api.js"></script>
+  <script src="/src/app.js"></script>
+</body>
+</html>
