@@ -269,9 +269,6 @@ class PipelineService:
         # Build step objects for the WebSocket event
         step_outs: list[RouteStepOut] = []
         for step in all_steps:
-            s = existing_sightings.get(
-                next((fs.match.camera_id for fs in fused_route if fs.match.camera_id in existing_sightings), None)
-            )
             # find matching sighting by id
             matching_sighting = next(
                 (si for si in all_sightings if si.id == step.sighting_id), None

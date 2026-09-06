@@ -196,7 +196,7 @@ function initCanvasViewports() {
       ctx.lineWidth = 1.6;
       ctx.stroke();
 
-      State.canvasAnimIds[id] = requestAnimationFrame(renderFeed);
+      State.canvasAnimIds[cfg.id] = requestAnimationFrame(renderFeed);
     }
     renderFeed();
   });
@@ -436,7 +436,7 @@ function renderCameraStatusList(activity) {
       <div class="cam-info">
         <div class="cam-name">${esc(c.camera_id)}</div>
         <div class="cam-loc">${esc(c.location)}</div>
-        <div class="cam-stats">${c.total_sightings} sightings · ${c.unique_persons ?? 0} targets</div>
+        <div class="cam-stats">${c.total_sightings} sightings · ${c.recent_queries ?? 0} queries</div>
       </div>
       <span class="cam-badge cam-badge-active">ONLINE</span>
     </div>
@@ -1204,7 +1204,7 @@ async function registerPerson() {
   const name  = document.getElementById('reg-name').value.trim();
   const alias = document.getElementById('reg-alias').value.trim();
   const desc  = document.getElementById('reg-desc').value.trim();
-  const status = document.querySelector('input[name="reg-watchlist"]:checked')?.value || 'none';
+  const watchlistStatus = document.querySelector('input[name="reg-watchlist"]:checked')?.value || 'none';
   const st    = document.getElementById('reg-status');
 
   if (!name) { st.textContent = 'Name is required.'; st.className = 'status-inline err'; return; }
@@ -1212,13 +1212,18 @@ async function registerPerson() {
   st.className   = 'status-inline';
 
   try {
-    const person = await API.persons.create({ name, alias, description: desc, watchlist_status: status });
+    // Build FormData — backend expects multipart form fields, not JSON
+    const fd = new FormData();
+    fd.append('name',             name);
+    fd.append('alias',            alias);
+    fd.append('description',      desc);
+    fd.append('watchlist_status', watchlistStatus);
+
     const photoInput = document.getElementById('reg-photo-input');
-    if (photoInput?.files[0]) {
-      const fd = new FormData();
-      fd.append('photo', photoInput.files[0]);
-      await API.persons.enroll(person.id, fd);
-    }
+    if (photoInput?.files[0]) fd.append('photo', photoInput.files[0]);
+
+    const person = await API.persons.create(fd);
+
     st.textContent = 'Registered successfully!';
     st.className   = 'status-inline ok';
     document.getElementById('form-register-person').reset();
@@ -1227,9 +1232,9 @@ async function registerPerson() {
     loadPersonsSelect();
     toast('Target profile enrolled', 'success');
   } catch (e) {
-    st.textContent = 'Registered successfully!';
-    st.className   = 'status-inline ok';
-    loadPersonsList();
+    st.textContent = e.message || 'Registration failed.';
+    st.className   = 'status-inline err';
+    toast('Registration failed: ' + e.message, 'error');
   }
 }
 
@@ -1366,37 +1371,87 @@ function setupCamRadios() {
 
 async function uploadVideo() {
   const st = document.getElementById('upload-status-msg');
-  st.textContent = 'Launching pipeline job…';
-  st.className   = 'status-inline ok';
+  if (!_uploadFile) { st.textContent = 'Select a video file first.'; st.className = 'status-inline err'; return; }
 
-  setTimeout(() => {
-    st.textContent = 'Job #C01_e92a completed! Gallery ready.';
+  st.textContent = 'Uploading…';
+  st.className   = 'status-inline';
+
+  const camId = document.querySelector('input[name="upload-camera"]:checked')?.value || 'C01';
+  const fd    = new FormData();
+  fd.append('camera_id', camId);
+  fd.append('video',     _uploadFile);
+
+  try {
+    const job = await API.upload.video(fd);
+    st.textContent = `Job started (${job.job_id.slice(0, 8)}…)`;
+    st.className   = 'status-inline ok';
+    _uploadFile    = null;
+    const info = document.getElementById('upload-file-info');
+    if (info) info.style.display = 'none';
+    toast('Processing started — this may take several minutes', 'info');
     loadUploadJobs();
-    toast('Video processing pipeline complete!', 'success');
-  }, 1500);
+    pollJob(job.job_id);
+  } catch (e) {
+    st.textContent = e.message;
+    st.className   = 'status-inline err';
+    toast('Upload failed: ' + e.message, 'error');
+  }
 }
 
 async function loadUploadJobs() {
   const el = document.getElementById('upload-jobs-list');
   if (!el) return;
 
-  el.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:1rem">
-      <div style="padding:1.1rem;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border)">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <span style="font-family:var(--font-heading);font-weight:800;color:#fff;font-size:.95rem">Job #C01_Entrance_01.mp4</span>
-          <span class="chip chip-done">DONE</span>
+  try {
+    const jobs = await API.upload.jobs();
+    if (!jobs.length) {
+      el.innerHTML = `<div class="empty-msg" style="padding:2.5rem 0">
+        <svg width="36" height="36" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="7" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="7" y1="11" x2="11" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        No jobs yet
+      </div>`;
+      return;
+    }
+    el.innerHTML = jobs.map(j => `
+      <div class="job-row" id="job-${j.job_id}">
+        <div class="job-icon">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8l4 2-4 2V8z" fill="currentColor" opacity=".7"/></svg>
         </div>
-        <div style="font-size:.78rem;color:var(--cyan);font-family:var(--font-mono);margin-top:.45rem;font-weight:700">YOLOv8: 142 Detections · OSNet: 512-d Vectors Extracted</div>
-      </div>
-      <div style="padding:1.1rem;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border)">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <span style="font-family:var(--font-heading);font-weight:800;color:#fff;font-size:.95rem">Job #C02_Corridor_02.mp4</span>
-          <span class="chip chip-done">DONE</span>
+        <div class="job-info">
+          <div class="job-name">${esc(j.camera_id)} — ${esc(j.filename)}</div>
+          <div class="job-msg">${esc(j.message || '')}</div>
         </div>
-        <div style="font-size:.78rem;color:var(--cyan);font-family:var(--font-mono);margin-top:.45rem;font-weight:700">YOLOv8: 98 Detections · OSNet: 512-d Vectors Extracted</div>
-      </div>
-    </div>`;
+        <span class="chip chip-${j.status}">${j.status}</span>
+      </div>`).join('');
+  } catch (e) {
+    el.innerHTML = `<div class="empty-msg" style="color:var(--red)">${esc(e.message)}</div>`;
+  }
+}
+
+const _jobPollers = {};
+
+function pollJob(jobId) {
+  if (_jobPollers[jobId]) return;
+  _jobPollers[jobId] = setInterval(async () => {
+    try {
+      const job = await API.upload.status(jobId);
+      const row = document.getElementById(`job-${jobId}`);
+      if (row) {
+        row.querySelector('.job-msg').textContent = job.message || '';
+        const chip = row.querySelector('.chip');
+        chip.className   = `chip chip-${job.status}`;
+        chip.textContent = job.status;
+      }
+      if (job.status === 'done' || job.status === 'failed') {
+        clearInterval(_jobPollers[jobId]);
+        delete _jobPollers[jobId];
+        if (job.status === 'done') toast(`Pipeline complete for ${job.camera_id}`, 'success');
+        else                       toast(`Pipeline failed for ${job.camera_id}`, 'error');
+      }
+    } catch {
+      clearInterval(_jobPollers[jobId]);
+      delete _jobPollers[jobId];
+    }
+  }, 3000);
 }
 
 /* ═══════════════════════════════════════════════════════════════════

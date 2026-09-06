@@ -6,7 +6,7 @@ Single-search-at-a-time enforced: a new query is rejected with 409 if
 another session is currently running.
 """
 
-import asyncio
+import json
 import shutil
 import uuid
 from pathlib import Path
@@ -26,6 +26,7 @@ from backend.app.models.schemas import (
     RouteStepOut,
     SightingOut,
 )
+from backend.app.services.embedding_service import embedding_service
 
 router = APIRouter(prefix="/api/queries", tags=["queries"])
 
@@ -36,6 +37,26 @@ _pipeline_service = None
 def set_pipeline_service(svc) -> None:
     global _pipeline_service
     _pipeline_service = svc
+
+
+# ---------------------------------------------------------------------------
+# Module-level camera graph cache
+# Loaded once on first use — avoids repeated disk reads in get_route()
+# ---------------------------------------------------------------------------
+_cam_data_cache: Optional[dict] = None
+
+
+def _get_cam_data() -> dict:
+    """Return camera metadata dict from camera_graph.json, cached after first load."""
+    global _cam_data_cache
+    if _cam_data_cache is None:
+        try:
+            with open(settings.camera_graph_path) as f:
+                _cam_data_cache = json.load(f).get("cameras", {})
+        except FileNotFoundError:
+            logger.warning(f"[queries] camera_graph.json not found: {settings.camera_graph_path}")
+            _cam_data_cache = {}
+    return _cam_data_cache
 
 
 # ---------------------------------------------------------------------------
@@ -59,6 +80,10 @@ async def submit_query(
     Returns 409 if another query is already running.
     Returns 400 if neither person_id nor image is provided.
     """
+    # ── guard: pipeline service must be ready ─────────────────────────
+    if _pipeline_service is None:
+        raise HTTPException(status_code=503, detail="Pipeline service not initialised.")
+
     # ── single-search-at-a-time guard ─────────────────────────────────
     running = await db.execute(
         select(QuerySession).where(QuerySession.status == "running")
@@ -73,6 +98,13 @@ async def submit_query(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Provide either person_id or an image upload.",
+        )
+
+    # ── if image submitted, embedding model must be ready ─────────────
+    if image is not None and person_id is None and not embedding_service.is_ready:
+        raise HTTPException(
+            status_code=503,
+            detail="Embedding model not loaded yet. Use a registered person with an enrolled photo, or wait for model startup.",
         )
 
     # ── validate person if given ───────────────────────────────────────
@@ -109,10 +141,6 @@ async def submit_query(
     await db.commit()
 
     logger.info(f"[queries] Session {session.id} created (person_id={person_id})")
-
-    # ── kick off background pipeline ──────────────────────────────────
-    if _pipeline_service is None:
-        raise HTTPException(status_code=503, detail="Pipeline service not initialised.")
 
     background_tasks.add_task(_pipeline_service.run_session, session.id)
 
@@ -173,12 +201,7 @@ async def get_route(
     # Build a lookup: sighting_id → Sighting
     sighting_map = {s.id: s for s in sightings}
 
-    from backend.app.services.route_service import RouteService
-    from backend.app.config import settings as cfg
-    import json
-    with open(cfg.camera_graph_path) as f:
-        graph = json.load(f)
-    cam_data = graph.get("cameras", {})
+    cam_data = _get_cam_data()
 
     step_outs: list[RouteStepOut] = []
     for step in steps:

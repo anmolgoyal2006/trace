@@ -85,36 +85,35 @@ async def dashboard(db: AsyncSession = Depends(get_db)) -> AnalyticsDashboard:
     )
     recent_alerts = [AlertOut.model_validate(a) for a in alerts_result.scalars().all()]
 
-    # Per-camera activity
+    # Per-camera activity — two batch aggregates instead of 2×N round-trips
     cameras_result = await db.execute(select(Camera).where(Camera.is_active == True))
     cameras = cameras_result.scalars().all()
 
-    activity: list[CameraActivityItem] = []
-    for cam in cameras:
-        sighting_count = (
-            await db.scalar(
-                select(func.count())
-                .select_from(Sighting)
-                .where(Sighting.camera_id == cam.id)
-            )
-        ) or 0
-        recent_query_count = (
-            await db.scalar(
-                select(func.count())
-                .select_from(Sighting)
-                .join(QuerySession, Sighting.session_id == QuerySession.id)
-                .where(
-                    Sighting.camera_id == cam.id,
-                    QuerySession.status == "done",
-                )
-            )
-        ) or 0
-        activity.append(CameraActivityItem(
+    # Batch 1: total sightings per camera
+    sightings_agg_result = await db.execute(
+        select(Sighting.camera_id, func.count().label("cnt"))
+        .group_by(Sighting.camera_id)
+    )
+    sightings_by_cam: dict[str, int] = {row.camera_id: row.cnt for row in sightings_agg_result}
+
+    # Batch 2: completed-query sightings per camera
+    done_agg_result = await db.execute(
+        select(Sighting.camera_id, func.count().label("cnt"))
+        .join(QuerySession, Sighting.session_id == QuerySession.id)
+        .where(QuerySession.status == "done")
+        .group_by(Sighting.camera_id)
+    )
+    done_by_cam: dict[str, int] = {row.camera_id: row.cnt for row in done_agg_result}
+
+    activity: list[CameraActivityItem] = [
+        CameraActivityItem(
             camera_id=cam.id,
             location=cam.location,
-            total_sightings=sighting_count,
-            recent_queries=recent_query_count,
-        ))
+            total_sightings=sightings_by_cam.get(cam.id, 0),
+            recent_queries=done_by_cam.get(cam.id, 0),
+        )
+        for cam in cameras
+    ]
 
     return AnalyticsDashboard(
         stats=stats,
