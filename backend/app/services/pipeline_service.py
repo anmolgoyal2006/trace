@@ -5,9 +5,13 @@ End-to-end query pipeline orchestrator for the unified Trace system.
 Handles one query session from start to finish:
   1. Load the query embedding (from registered person or uploaded photo).
   2. For each MVP camera: load its gallery embeddings.
-  3. Run MatchingService.search_camera() per camera.
-  4. Run RouteService.reconstruct_route() over the matches.
-  5. Persist Sighting and RouteStep records to the database.
+  3. Run MatchingService.search_camera_top_k() per camera → top-3 candidate
+     tracks per camera, sorted by appearance score descending.
+  4. Run RouteService.reconstruct_route() with the candidate lists → picks the
+     track per camera that maximises the fused (appearance+spatial+temporal)
+     score given the route context built so far.
+  5. Persist one Sighting per route step (the route-selected track, not the
+     raw appearance-top track) and write RouteStep records.
   6. Fire watchlist alerts if the queried person is on the watchlist.
   7. Push WebSocket progress events throughout.
 
@@ -166,55 +170,63 @@ class PipelineService:
                 "Run the embedding pipeline first."
             )
 
-        # ── Step 3: per-camera matching ───────────────────────────────────
+        # ── Step 3: per-camera matching (top-K candidates per camera) ────
         await self._push_progress(session, db, 25, "Running cross-camera matching...")
 
-        camera_matches: dict[str, Optional[CameraMatch]] = {}
+        # camera_candidates: {camera_id: [CameraMatch, ...]} sorted by appearance desc
+        # Using top-3 candidates per camera so RouteService can pick the track
+        # that is most consistent with spatial+temporal context, not just the
+        # one with the highest raw appearance score in isolation.
+        camera_candidates: dict[str, list[CameraMatch]] = {}
         n_cameras = len(galleries)
 
         for i, (cam_id, gallery) in enumerate(galleries.items()):
             pct = 25 + int((i / n_cameras) * 40)
             await self._push_progress(session, db, pct, f"Matching camera {cam_id}...")
 
-            match = _matching_service.search_camera(
+            candidates = _matching_service.search_camera_top_k(
                 query_embedding=query_embedding,
                 gallery=gallery,
                 camera_id=cam_id,
+                candidate_tracks=3,
             )
-            camera_matches[cam_id] = match
-
-            # Persist sighting immediately if match found
-            if match is not None:
-                sighting = await self._persist_sighting(
-                    db=db,
-                    session_id=session_id,
-                    match=match,
-                    spatial=1.0,   # will be updated after route reconstruction
-                    temporal=1.0,
-                    fusion=match.appearance_score,
-                )
-                await db.commit()
-
-                # Push sighting found event
-                await self._ws.broadcast(WsSightingFound(
-                    session_id=session_id,
-                    sighting=SightingOut.model_validate(sighting),
-                ).model_dump())
-
-                # Fire watchlist alert if applicable
-                if session.person and session.person.watchlist_status != "none":
-                    await self._fire_alert(
-                        db=db,
-                        session=session,
-                        sighting=sighting,
-                    )
+            if candidates:
+                camera_candidates[cam_id] = candidates
 
         # ── Step 4: route reconstruction ──────────────────────────────────
         await self._push_progress(session, db, 70, "Reconstructing route...")
 
         route_service = get_route_service()
-        fused_route = route_service.reconstruct_route(camera_matches)
+        # reconstruct_route picks the best track per camera given context
+        fused_route = route_service.reconstruct_route(camera_candidates)
         route_confidence = route_service.compute_route_confidence(fused_route)
+
+        # Persist one sighting per route step using the track the route walk
+        # actually selected (may differ from the raw top-appearance track).
+        for fused in fused_route:
+            sighting = await self._persist_sighting(
+                db=db,
+                session_id=session_id,
+                match=fused.match,
+                spatial=1.0,   # will be overwritten with real scores below
+                temporal=1.0,
+                fusion=fused.match.appearance_score,
+            )
+            await db.commit()
+
+            # Push sighting found event
+            await self._ws.broadcast(WsSightingFound(
+                session_id=session_id,
+                sighting=SightingOut.model_validate(sighting),
+            ).model_dump())
+
+            # Fire watchlist alert if applicable
+            if session.person and session.person.watchlist_status != "none":
+                await self._fire_alert(
+                    db=db,
+                    session=session,
+                    sighting=sighting,
+                )
 
         # ── Step 5: persist route steps and update sighting fusion scores ─
         await self._push_progress(session, db, 85, "Persisting route...")

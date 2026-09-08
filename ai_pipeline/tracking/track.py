@@ -1,6 +1,10 @@
 """
 track.py — Phase 2.2
-Run YOLOv8 + ByteTrack on a single camera video and write structured track records to JSON.
+Run YOLOv8 + BoT-SORT on a single camera video and write structured track records to JSON.
+
+Tracker upgraded from ByteTrack → BoT-SORT (botsort.yaml, bundled with Ultralytics).
+BoT-SORT adds camera-motion compensation and appearance re-entry cues, improving
+track continuity across occlusion gaps without any extra dependencies.
 
 Reuses timestamp utilities and config loading from Phase 1 (detect.py).
 Does NOT modify or overwrite detect.py or detections_*.json.
@@ -83,7 +87,11 @@ def run_tracking(
     print(f"[INFO] Conf          : {confidence}  |  Classes: {classes}")
     print("[INFO] Starting tracking...\n")
 
-    # --- run ByteTrack via Ultralytics model.track() ---
+    # --- run BoT-SORT via Ultralytics model.track() ---
+    # BoT-SORT replaces ByteTrack.  It adds camera-motion compensation (CMC)
+    # and optional appearance re-entry cues, which improves track continuity
+    # across occlusion gaps (e.g. the 18-frame gaps flagged in phase2 diagnostics).
+    # botsort.yaml is bundled with Ultralytics — no extra installation needed.
     # model.track() returns results one frame at a time when a generator is used.
     # persist=True keeps the tracker state alive across frames.
     tracks       = []
@@ -94,7 +102,7 @@ def run_tracking(
         source=str(video_path),
         conf=confidence,
         classes=classes,
-        tracker="bytetrack.yaml",
+        tracker="botsort.yaml",
         persist=True,
         stream=True,    # generator — avoids loading all frames into memory
         verbose=False,
@@ -154,7 +162,7 @@ def run_tracking(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="TRACE — YOLOv8 + ByteTrack person tracking for a single camera video."
+        description="TRACE — YOLOv8 + BoT-SORT person tracking for a single camera video."
     )
     parser.add_argument(
         "--video", required=True, type=Path,

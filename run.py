@@ -23,11 +23,11 @@ def main():
     args = parser.parse_args()
 
     print("=" * 60)
-    print("  Trace — Unified Surveillance Intelligence")
+    print("  Trace - Unified Surveillance Intelligence")
     print("=" * 60)
-    print(f"  Dashboard  →  http://{args.host}:{args.port}")
-    print(f"  API Docs   →  http://{args.host}:{args.port}/api/docs")
-    print(f"  WebSocket  →  ws://{args.host}:{args.port}/ws")
+    print(f"  Dashboard  ->  http://{args.host}:{args.port}")
+    print(f"  API Docs   ->  http://{args.host}:{args.port}/api/docs")
+    print(f"  WebSocket  ->  ws://{args.host}:{args.port}/ws")
     print("=" * 60)
 
     import uvicorn
