@@ -117,6 +117,27 @@ class CameraWithGraph(_Base):
     connects_to: list[CameraGraphEdge] = []
 
 
+class CameraUpdate(BaseModel):
+    """
+    User-editable camera fields.
+
+    location    — human-readable place name shown in the UI and map.
+    start_time  — HH:MM:SS wall-clock time when the recording started.
+    transit_updates — map of {neighbour_camera_id: avg_transit_sec} to
+                      patch specific edges in camera_graph.json.
+    """
+    location: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    start_time: Optional[str] = Field(
+        default=None,
+        pattern=r"^\d{2}:\d{2}(:\d{2})?$",
+        description="HH:MM or HH:MM:SS",
+    )
+    transit_updates: Optional[dict[str, int]] = Field(
+        default=None,
+        description="Neighbour camera ID → new avg_transit_sec",
+    )
+
+
 # ===========================================================================
 # Sighting
 # ===========================================================================

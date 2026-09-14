@@ -86,6 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadDashboard();
   loadPersonsSelect();
   loadUploadJobs();
+  loadCameraConfig();   // pre-fetch so radios are live from first page load
 });
 
 /* ── System Clock ── */
@@ -256,7 +257,7 @@ function switchView(name) {
   );
   if (name === 'dashboard') loadDashboard();
   if (name === 'watchlist') loadPersonsList();
-  if (name === 'upload')    loadUploadJobs();
+  if (name === 'upload')    { loadUploadJobs(); loadCameraConfig(); }
   if (name === 'query')     { loadPersonsSelect(); renderCandidateMatchesShowcase(); }
   if (name === 'map')       { loadSessionSelect('map-session-select'); loadDemoRoute(); }
   if (name === 'timeline')  { loadSessionSelect('timeline-session-select'); renderTimeline(); }
@@ -1353,6 +1354,11 @@ async function deletePerson(id) {
 ═══════════════════════════════════════════════════════════════════ */
 let _uploadFile = null;
 
+// In-memory mirror of camera config loaded from the API.
+// Shape: { C01: { location, start_time, connects_to: [{to_camera_id, avg_transit_sec}] }, … }
+const _camConfig = {};
+
+/* ── Wiring ── */
 function setupUploadForm() {
   document.getElementById('form-upload-video')?.addEventListener('submit', async e => {
     e.preventDefault();
@@ -1360,18 +1366,274 @@ function setupUploadForm() {
   });
 }
 
-function setupCamRadios() {
-  document.querySelectorAll('.cam-radio').forEach(label => {
+// setupCamRadios is now a no-op — radios are rebuilt by renderCameraConfigUI.
+function setupCamRadios() {}
+
+/* ── Load camera data from API and render both config panel + radio strip ── */
+async function loadCameraConfig() {
+  try {
+    const cameras = await API.cameras.list();
+    cameras.forEach(c => { _camConfig[c.id] = c; });
+    renderCameraConfigUI(cameras);
+    rebuildCamRadios(cameras);
+    const heroEl = document.getElementById('hero-cam-count');
+    if (heroEl) heroEl.textContent = `${cameras.length} camera${cameras.length !== 1 ? 's' : ''} configured`;
+  } catch (e) {
+    // API not reachable — if the grid is visible show a message, otherwise silently skip
+    const grid = document.getElementById('camera-config-grid');
+    if (grid && grid.offsetParent !== null) {
+      grid.innerHTML = `<div style="color:var(--text-3);font-size:.85rem;font-family:var(--font-mono);padding:.5rem 0;grid-column:1/-1">
+        Camera data unavailable — configure settings after connecting the backend.
+      </div>`;
+    }
+  }
+}
+
+/* ── Render the Step-1 camera config cards ── */
+function renderCameraConfigUI(cameras) {
+  const grid    = document.getElementById('camera-config-grid');
+  const strip   = document.getElementById('transit-config-strip');
+  const edgeList = document.getElementById('transit-edges-list');
+  if (!grid) return;
+
+  // Camera cards
+  grid.innerHTML = cameras.map(cam => {
+    const loc  = esc(cam.location  || '');
+    const time = esc(cam.start_time || '');
+    return `
+    <div class="cam-config-card" id="cfg-card-${cam.id}">
+      <div class="cam-config-header">
+        <span class="cam-config-badge">${esc(cam.id)}</span>
+        <span style="font-size:.8rem;color:var(--text-3);font-family:var(--font-mono)">CAMERA CHANNEL</span>
+        <span id="cfg-saved-${cam.id}" style="display:none;font-size:.72rem;color:var(--green);font-family:var(--font-mono);font-weight:800;margin-left:auto">✓ SAVED</span>
+      </div>
+
+      <div>
+        <div class="cam-config-label">LOCATION NAME</div>
+        <input
+          class="cam-config-input"
+          id="cfg-loc-${cam.id}"
+          type="text"
+          placeholder="e.g. Main Entrance"
+          value="${loc}"
+          oninput="markCamDirty('${cam.id}')"
+        />
+      </div>
+
+      <div>
+        <div class="cam-config-label">RECORDING START TIME (HH:MM:SS)</div>
+        <input
+          class="cam-config-input"
+          id="cfg-time-${cam.id}"
+          type="time"
+          step="1"
+          value="${time}"
+          oninput="markCamDirty('${cam.id}')"
+        />
+      </div>
+
+      <button
+        class="btn btn-ghost btn-xs cam-config-save-btn"
+        onclick="saveCameraConfig('${cam.id}')"
+        id="cfg-btn-${cam.id}"
+      >
+        <svg width="11" height="11" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Save ${esc(cam.id)}
+      </button>
+    </div>`;
+  }).join('');
+
+  // Collect all transit edges — only between MVP cameras that are in the loaded list
+  const loadedCamIds = new Set(cameras.map(c => c.id));
+  const seenEdges = new Set();
+  const allEdges  = [];
+  cameras.forEach(cam => {
+    (cam.connects_to || []).forEach(edge => {
+      // Skip edges to cameras not in the active camera list (stretch-only)
+      if (!loadedCamIds.has(edge.to_camera_id)) return;
+      const key = [cam.id, edge.to_camera_id].sort().join('-');
+      if (!seenEdges.has(key)) {
+        seenEdges.add(key);
+        allEdges.push({ from: cam.id, to: edge.to_camera_id, secs: edge.avg_transit_sec });
+      }
+    });
+  });
+
+  if (allEdges.length && edgeList && strip) {
+    strip.style.display = 'block';
+    edgeList.innerHTML = allEdges.map(e => {
+      const fromLoc = _camConfig[e.from]?.location || e.from;
+      const toLoc   = _camConfig[e.to]?.location   || e.to;
+      return `
+      <div class="transit-edge-row">
+        <span class="transit-edge-label">
+          <strong style="color:#fff">${esc(e.from)}</strong>
+          <span style="color:var(--cyan);margin:0 .35rem">→</span>
+          <strong style="color:#fff">${esc(e.to)}</strong>
+          <span style="color:var(--text-3);margin-left:.4rem">(${esc(fromLoc)} → ${esc(toLoc)})</span>
+        </span>
+        <input
+          class="transit-input"
+          id="transit-${e.from}-${e.to}"
+          type="number"
+          min="1"
+          max="3600"
+          value="${e.secs}"
+          oninput="markTransitDirty()"
+        />
+        <span class="transit-unit">sec</span>
+      </div>`;
+    }).join('');
+
+    // Store edge metadata for save
+    edgeList.dataset.edges = JSON.stringify(allEdges.map(e => ({ from: e.from, to: e.to })));
+  }
+}
+
+/* ── Mark a camera card dirty (unsaved changes) ── */
+function markCamDirty(camId) {
+  const card = document.getElementById(`cfg-card-${camId}`);
+  if (card) { card.classList.add('dirty'); card.classList.remove('saved'); }
+  const savedBadge = document.getElementById(`cfg-saved-${camId}`);
+  if (savedBadge) savedBadge.style.display = 'none';
+}
+
+function markTransitDirty() {
+  // Visual feedback — we don't have a per-edge card, just pulse the save-all btn
+  const btn = document.getElementById('btn-save-all-cameras');
+  if (btn) btn.classList.add('btn-primary');
+}
+
+/* ── Save one camera's location + start_time ── */
+async function saveCameraConfig(camId) {
+  const locEl  = document.getElementById(`cfg-loc-${camId}`);
+  const timeEl = document.getElementById(`cfg-time-${camId}`);
+  const btn    = document.getElementById(`cfg-btn-${camId}`);
+  const card   = document.getElementById(`cfg-card-${camId}`);
+
+  const location   = locEl?.value.trim()  || null;
+  const start_time = timeEl?.value.trim() || null;
+
+  if (!location) {
+    toast(`${camId}: Location name cannot be empty`, 'error');
+    locEl?.focus();
+    return;
+  }
+
+  // Collect any transit updates that involve this camera (as the source)
+  const edgeList = document.getElementById('transit-edges-list');
+  const edgeMeta = edgeList?.dataset.edges ? JSON.parse(edgeList.dataset.edges) : [];
+  const transit_updates = {};
+  edgeMeta.forEach(({ from, to }) => {
+    if (from === camId) {
+      const inp = document.getElementById(`transit-${from}-${to}`);
+      if (inp) transit_updates[to] = parseInt(inp.value, 10) || 30;
+    }
+  });
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  try {
+    const updated = await API.cameras.patch(camId, {
+      location,
+      start_time: start_time || undefined,
+      transit_updates: Object.keys(transit_updates).length ? transit_updates : undefined,
+    });
+
+    // Update in-memory mirror
+    _camConfig[camId] = updated;
+
+    // Update the radio label in the upload selector
+    const radioLocEl = document.querySelector(`#upload-camera-grid label:has(input[value="${camId}"]) .cam-loc`);
+    if (radioLocEl) radioLocEl.textContent = updated.location;
+
+    // Mark saved state
+    if (card) { card.classList.remove('dirty'); card.classList.add('saved'); }
+    const savedBadge = document.getElementById(`cfg-saved-${camId}`);
+    if (savedBadge) savedBadge.style.display = 'inline';
+
+    toast(`${camId} saved — "${updated.location}"`, 'success');
+  } catch (err) {
+    toast(`Failed to save ${camId}: ${err.message}`, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = `Save ${camId}`; }
+  }
+}
+
+/* ── Save all cameras + all transit times at once ── */
+async function saveAllCameras() {
+  const btn = document.getElementById('btn-save-all-cameras');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  // Save each camera sequentially (avoids concurrent graph.json writes)
+  const ids = Object.keys(_camConfig);
+  if (!ids.length) {
+    // No data loaded yet — nothing to save
+    toast('No camera data loaded yet', 'info');
+    if (btn) { btn.disabled = false; btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Save All`; }
+    return;
+  }
+
+  let anyFail = false;
+  for (const camId of ids) {
+    try {
+      await saveCameraConfig(camId);
+    } catch {
+      anyFail = true;
+    }
+  }
+
+  if (btn) {
+    btn.disabled = false;
+    btn.classList.remove('btn-primary');
+    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Save All`;
+  }
+  if (!anyFail) toast('All camera settings saved', 'success');
+}
+
+/* ── Rebuild the upload-form camera radio buttons from live API data ── */
+function rebuildCamRadios(cameras) {
+  const grid = document.getElementById('upload-camera-grid');
+  if (!grid || !cameras.length) return;
+
+  const camIconSvg = (active) =>
+    `<svg width="18" height="18" viewBox="0 0 20 20" fill="none" style="color:${active ? 'var(--cyan)' : 'var(--text-3)'}"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+
+  grid.innerHTML = cameras.map((cam, i) => `
+    <label class="cam-radio${i === 0 ? ' active' : ''}">
+      <input type="radio" name="upload-camera" value="${esc(cam.id)}" ${i === 0 ? 'checked' : ''} />
+      ${camIconSvg(i === 0)}
+      <span class="cam-id">${esc(cam.id)}</span>
+      <span class="cam-loc">${esc(cam.location)}</span>
+    </label>`).join('');
+
+  // Re-wire active highlight on change
+  grid.querySelectorAll('.cam-radio').forEach(label => {
     label.querySelector('input')?.addEventListener('change', () => {
-      document.querySelectorAll('.cam-radio').forEach(l => l.classList.remove('active'));
+      grid.querySelectorAll('.cam-radio').forEach(l => l.classList.remove('active'));
       label.classList.add('active');
+      // Update svg color
+      grid.querySelectorAll('.cam-radio svg').forEach(svg => svg.style.color = 'var(--text-3)');
+      label.querySelector('svg').style.color = 'var(--cyan)';
     });
   });
 }
 
+/* ── Upload video ── */
 async function uploadVideo() {
   const st = document.getElementById('upload-status-msg');
   if (!_uploadFile) { st.textContent = 'Select a video file first.'; st.className = 'status-inline err'; return; }
+
+  // Auto-save any dirty camera config before processing starts
+  const dirtyCards = document.querySelectorAll('.cam-config-card.dirty');
+  if (dirtyCards.length) {
+    st.textContent = 'Saving camera settings…';
+    st.className   = 'status-inline';
+    for (const card of dirtyCards) {
+      const camId = card.id.replace('cfg-card-', '');
+      try { await saveCameraConfig(camId); } catch { /* non-fatal */ }
+    }
+  }
 
   st.textContent = 'Uploading…';
   st.className   = 'status-inline';
@@ -1388,7 +1650,7 @@ async function uploadVideo() {
     _uploadFile    = null;
     const info = document.getElementById('upload-file-info');
     if (info) info.style.display = 'none';
-    toast('Processing started — this may take several minutes', 'info');
+    toast(`Processing started for ${camId} — this may take several minutes`, 'info');
     loadUploadJobs();
     pollJob(job.job_id);
   } catch (e) {
@@ -1398,6 +1660,7 @@ async function uploadVideo() {
   }
 }
 
+/* ── Job queue ── */
 async function loadUploadJobs() {
   const el = document.getElementById('upload-jobs-list');
   if (!el) return;
@@ -1411,17 +1674,21 @@ async function loadUploadJobs() {
       </div>`;
       return;
     }
-    el.innerHTML = jobs.map(j => `
+    // Resolve location label from in-memory config
+    el.innerHTML = jobs.map(j => {
+      const loc = _camConfig[j.camera_id]?.location || j.camera_id;
+      return `
       <div class="job-row" id="job-${j.job_id}">
         <div class="job-icon">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8l4 2-4 2V8z" fill="currentColor" opacity=".7"/></svg>
         </div>
         <div class="job-info">
-          <div class="job-name">${esc(j.camera_id)} — ${esc(j.filename)}</div>
+          <div class="job-name">${esc(j.camera_id)} <span style="color:var(--text-3)">·</span> ${esc(loc)} — ${esc(j.filename)}</div>
           <div class="job-msg">${esc(j.message || '')}</div>
         </div>
         <span class="chip chip-${j.status}">${j.status}</span>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } catch (e) {
     el.innerHTML = `<div class="empty-msg" style="color:var(--red)">${esc(e.message)}</div>`;
   }
@@ -1444,8 +1711,9 @@ function pollJob(jobId) {
       if (job.status === 'done' || job.status === 'failed') {
         clearInterval(_jobPollers[jobId]);
         delete _jobPollers[jobId];
-        if (job.status === 'done') toast(`Pipeline complete for ${job.camera_id}`, 'success');
-        else                       toast(`Pipeline failed for ${job.camera_id}`, 'error');
+        const loc = _camConfig[job.camera_id]?.location || job.camera_id;
+        if (job.status === 'done') toast(`Pipeline complete — ${job.camera_id} (${loc})`, 'success');
+        else                       toast(`Pipeline failed — ${job.camera_id}`, 'error');
       }
     } catch {
       clearInterval(_jobPollers[jobId]);

@@ -321,7 +321,7 @@ input, select, textarea { font-family: inherit; }
   font-family: var(--font-heading);
   font-size: 2.15rem; font-weight: 900; letter-spacing: -.03em; color: #fff;
   background: linear-gradient(135deg, #ffffff 40%, var(--cyan) 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
 .page-sub { font-size: .925rem; color: var(--text-2); margin-top: .35rem; -webkit-text-fill-color: var(--text-2); }
 .header-controls { display: flex; align-items: center; gap: 1.15rem; flex-shrink: 0; }
@@ -1031,6 +1031,145 @@ textarea.field-input { resize: vertical; }
 .query-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
 .watchlist-layout { display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; align-items: start; }
 .upload-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+
+/* ── Camera Configuration Cards (Step 1 on Upload view) ── */
+.cam-config-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.cam-config-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface2);
+  padding: 1rem 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  transition: border-color .2s, box-shadow .2s;
+}
+.cam-config-card.dirty {
+  border-color: var(--cyan);
+  box-shadow: 0 0 14px rgba(6,182,212,.2);
+}
+.cam-config-card.saved {
+  border-color: var(--green);
+  box-shadow: 0 0 10px rgba(16,185,129,.18);
+}
+.cam-config-header {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-bottom: .1rem;
+}
+.cam-config-badge {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--cyan);
+  background: rgba(6,182,212,.12);
+  border: 1px solid rgba(6,182,212,.3);
+  border-radius: 6px;
+  padding: .15rem .55rem;
+  flex-shrink: 0;
+}
+.cam-config-label {
+  font-size: .72rem;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  font-weight: 700;
+  letter-spacing: .06em;
+  margin-bottom: .25rem;
+}
+.cam-config-input {
+  width: 100%;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: .88rem;
+  padding: .45rem .65rem;
+  outline: none;
+  transition: border-color .18s;
+  box-sizing: border-box;
+}
+.cam-config-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(6,182,212,.15);
+}
+.cam-config-save-btn {
+  margin-top: .25rem;
+  align-self: flex-end;
+}
+/* Skeleton loaders */
+.cam-config-skeleton {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface2);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--surface3);
+}
+.skeleton-line.w-50  { width: 50%; }
+.skeleton-line.w-60  { width: 60%; }
+.skeleton-line.w-80  { width: 80%; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .45; }
+}
+/* Transit edge row */
+.transit-edge-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .6rem .9rem;
+}
+.transit-edge-label {
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  color: var(--text-2);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.transit-input {
+  width: 80px;
+  flex-shrink: 0;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: .85rem;
+  text-align: right;
+  padding: .35rem .55rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color .18s;
+}
+.transit-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(6,182,212,.15);
+}
+.transit-unit {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
 
 /* Pipeline Node Steps Flowchart - Clean Grid Columns & Pulsing Nodes */
 .pipeline-steps {

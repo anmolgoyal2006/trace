@@ -222,11 +222,10 @@ async def _seed_cameras() -> None:
                 db.add(cam)
                 logger.info(f"[seed] Inserted camera {cam_id}: {cam_info.get('location')}")
             else:
-                existing.location = cam_info.get("location", cam_id)
+                # Only update description (structural metadata).
+                # location and start_time are user-editable via the UI — don't overwrite.
                 existing.description = cam_info.get("description")
-                if start_time:
-                    existing.start_time = start_time
-                logger.debug(f"[seed] Camera {cam_id} already exists — updated")
+                logger.debug(f"[seed] Camera {cam_id} already exists — kept user location/time")
 
         await db.commit()
 

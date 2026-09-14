@@ -55,6 +55,7 @@ const API = (() => {
   const cameras = {
     list:      ()   => get('/api/cameras'),
     get:       (id) => get(`/api/cameras/${id}`),
+    patch:     (id, body) => _request('PATCH', `/api/cameras/${id}`, body),
     sightings: (id, limit = 20) => get(`/api/cameras/${id}/sightings?limit=${limit}`),
   };
 

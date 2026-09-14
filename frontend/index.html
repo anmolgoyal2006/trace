@@ -927,7 +927,7 @@
       <div class="page-header">
         <div>
           <h1 class="page-title">Pipeline Video Studio</h1>
-          <p class="page-sub">Ingest camera video clips through full YOLOv8 detection and OSNet re-ID pipeline</p>
+          <p class="page-sub">Configure cameras, set locations &amp; timings, then upload a video to run the full AI pipeline</p>
         </div>
       </div>
 
@@ -942,74 +942,110 @@
           <span class="hero-stat-lbl">SUPPORTED FORMATS:</span>
           <span class="hero-stat-val">.mp4 · .avi · .mov · .mkv</span>
         </div>
+        <div class="telem-divider"></div>
+        <div class="hero-stat-item">
+          <span class="hero-stat-lbl">CAMERA SETUP:</span>
+          <span class="hero-stat-val" id="hero-cam-count">3 cameras configured</span>
+        </div>
+      </div>
+
+      <!-- ── STEP 1: Camera Configuration ─────────────────────────── -->
+      <div class="card hud-card" style="margin-bottom:1.5rem">
+        <div class="card-header">
+          <h2 class="card-title">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            Step 1 — Camera Configuration
+          </h2>
+          <div style="display:flex;align-items:center;gap:.6rem">
+            <span style="font-size:.75rem;color:var(--text-3);font-family:var(--font-mono)">Edit location &amp; timings per camera</span>
+            <button class="btn btn-ghost btn-xs" id="btn-save-all-cameras" onclick="saveAllCameras()">
+              <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Save All
+            </button>
+            <button class="btn btn-ghost btn-xs" onclick="loadCameraConfig()">
+              <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 4a8 8 0 1 1 0 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 8V4H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:1.25rem">
+
+          <!-- Camera config cards — populated by JS -->
+          <div id="camera-config-grid" class="cam-config-grid">
+            <!-- JS renders one .cam-config-card per camera -->
+            <div class="cam-config-skeleton">
+              <div class="skeleton-line w-50"></div>
+              <div class="skeleton-line w-80"></div>
+              <div class="skeleton-line w-60"></div>
+            </div>
+            <div class="cam-config-skeleton">
+              <div class="skeleton-line w-50"></div>
+              <div class="skeleton-line w-80"></div>
+              <div class="skeleton-line w-60"></div>
+            </div>
+            <div class="cam-config-skeleton">
+              <div class="skeleton-line w-50"></div>
+              <div class="skeleton-line w-80"></div>
+              <div class="skeleton-line w-60"></div>
+            </div>
+          </div>
+
+          <!-- Transit time strip — shown between camera cards -->
+          <div id="transit-config-strip" style="display:none;margin-top:1.25rem">
+            <div style="font-size:.72rem;color:var(--cyan);font-family:var(--font-mono);font-weight:800;margin-bottom:.75rem;letter-spacing:.08em">
+              TRANSIT TIMES (seconds between camera FOVs)
+            </div>
+            <div id="transit-edges-list" style="display:flex;flex-direction:column;gap:.6rem"></div>
+          </div>
+
+        </div>
       </div>
 
       <div class="upload-layout">
+        <!-- ── STEP 2: Upload form ──────────────────────────────────── -->
         <div class="card hud-card">
           <div class="card-header">
             <h2 class="card-title">
               <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><polygon points="5,3 19,10 5,17" fill="currentColor" opacity=".8"/></svg>
-              New Video Pipeline Job
+              Step 2 — Upload &amp; Launch Pipeline
             </h2>
           </div>
           <div class="card-body">
             <!-- Pipeline Nodes Flowchart -->
             <div class="pipeline-steps">
-              <div class="step">
-                <div class="step-num">1</div>
-                <div class="step-text">
-                  Detection
-                  <span>YOLOv8n AI</span>
-                </div>
-              </div>
-              <div class="step">
-                <div class="step-num">2</div>
-                <div class="step-text">
-                  Tracking
-                  <span>ByteTrack</span>
-                </div>
-              </div>
-              <div class="step">
-                <div class="step-num">3</div>
-                <div class="step-text">
-                  Crop Filter
-                  <span>Quality Filter</span>
-                </div>
-              </div>
-              <div class="step">
-                <div class="step-num">4</div>
-                <div class="step-text">
-                  Embeddings
-                  <span>OSNet Re-ID</span>
-                </div>
-              </div>
+              <div class="step"><div class="step-num">1</div><div class="step-text">Detection<span>YOLOv8n AI</span></div></div>
+              <div class="step"><div class="step-num">2</div><div class="step-text">Tracking<span>ByteTrack</span></div></div>
+              <div class="step"><div class="step-num">3</div><div class="step-text">Crop Filter<span>Quality Filter</span></div></div>
+              <div class="step"><div class="step-num">4</div><div class="step-text">Embeddings<span>OSNet Re-ID</span></div></div>
             </div>
 
             <form id="form-upload-video">
+              <!-- Camera selector — rebuilt by JS from API data so labels stay in sync -->
               <div class="field-group">
                 <label class="field-label">Target Camera Channel</label>
                 <div class="camera-select-grid" id="upload-camera-grid">
+                  <!-- JS renders radios here after loadCameraConfig() -->
                   <label class="cam-radio active">
                     <input type="radio" name="upload-camera" value="C01" checked />
                     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style="color:var(--cyan)"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
                     <span class="cam-id">C01</span>
-                    <span class="cam-loc">Entrance</span>
+                    <span class="cam-loc">Loading…</span>
                   </label>
                   <label class="cam-radio">
                     <input type="radio" name="upload-camera" value="C02" />
                     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style="color:var(--text-3)"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
                     <span class="cam-id">C02</span>
-                    <span class="cam-loc">Corridor</span>
+                    <span class="cam-loc">Loading…</span>
                   </label>
                   <label class="cam-radio">
                     <input type="radio" name="upload-camera" value="C03" />
                     <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style="color:var(--text-3)"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
                     <span class="cam-id">C03</span>
-                    <span class="cam-loc">Canteen</span>
+                    <span class="cam-loc">Loading…</span>
                   </label>
                 </div>
               </div>
 
+              <!-- Video drop zone -->
               <div class="field-group">
                 <label class="field-label">Surveillance Video Source</label>
                 <div class="dropzone" id="upload-drop-zone">
@@ -1034,7 +1070,7 @@
           </div>
         </div>
 
-        <!-- Pipeline Job Queue & Log Feed & Performance Metrics -->
+        <!-- Pipeline Job Queue & Telemetry -->
         <div style="display:flex;flex-direction:column;gap:1.5rem">
           <div class="card hud-card">
             <div class="card-header">
@@ -1049,7 +1085,7 @@
             <div class="card-body noscroll" id="upload-jobs-list"></div>
           </div>
 
-          <!-- Pipeline Processing Performance Metrics Widget -->
+          <!-- Hardware Telemetry -->
           <div class="card hud-card">
             <div class="card-header">
               <h2 class="card-title">
@@ -1077,7 +1113,7 @@
             </div>
           </div>
 
-          <!-- Cyber Terminal Console Window -->
+          <!-- Live Terminal Console -->
           <div class="card hud-card">
             <div class="card-header">
               <h2 class="card-title">

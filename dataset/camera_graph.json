@@ -1,14 +1,17 @@
 {
   "version": "1.0",
-  "notes": "MVP uses C01–C03. C04–C05 are stretch/phase-2 only. Edge weights are estimated average transit times in seconds between camera FOVs under normal walking pace.",
+  "notes": "MVP uses C01\u00e2\u20ac\u201cC03. C04\u00e2\u20ac\u201cC05 are stretch/phase-2 only. Edge weights are estimated average transit times in seconds between camera FOVs under normal walking pace.",
   "cameras": {
     "C01": {
-      "location": "Main Entrance",
+      "location": "Main Door",
       "description": "Wide-angle view of the building entry doors and immediate foyer. High foot traffic, variable lighting (bright outdoors spill vs indoor fluorescent).",
       "height_m": 3.0,
       "angle": "overhead-angled",
       "connects_to": {
-        "C02": {"avg_transit_sec": 20, "notes": "Direct corridor walk from foyer"}
+        "C02": {
+          "avg_transit_sec": 20,
+          "notes": "Direct corridor walk from foyer"
+        }
       },
       "mvp": true
     },
@@ -18,9 +21,18 @@
       "height_m": 2.8,
       "angle": "overhead-angled",
       "connects_to": {
-        "C01": {"avg_transit_sec": 20, "notes": "Return walk to foyer"},
-        "C03": {"avg_transit_sec": 30, "notes": "Corridor continues to canteen"},
-        "C04": {"avg_transit_sec": 45, "notes": "Stairwell branch — stretch only"}
+        "C01": {
+          "avg_transit_sec": 20,
+          "notes": "Return walk to foyer"
+        },
+        "C03": {
+          "avg_transit_sec": 30,
+          "notes": "Corridor continues to canteen"
+        },
+        "C04": {
+          "avg_transit_sec": 45,
+          "notes": "Stairwell branch \u00e2\u20ac\u201d stretch only"
+        }
       },
       "mvp": true
     },
@@ -30,8 +42,14 @@
       "height_m": 3.2,
       "angle": "overhead-angled",
       "connects_to": {
-        "C02": {"avg_transit_sec": 30, "notes": "Return to corridor"},
-        "C05": {"avg_transit_sec": 60, "notes": "Exit to outdoor courtyard — stretch only"}
+        "C02": {
+          "avg_transit_sec": 30,
+          "notes": "Return to corridor"
+        },
+        "C05": {
+          "avg_transit_sec": 60,
+          "notes": "Exit to outdoor courtyard \u00e2\u20ac\u201d stretch only"
+        }
       },
       "mvp": true
     },
@@ -41,7 +59,10 @@
       "height_m": 2.6,
       "angle": "side-mounted",
       "connects_to": {
-        "C02": {"avg_transit_sec": 45, "notes": "Down stairs to main corridor"}
+        "C02": {
+          "avg_transit_sec": 45,
+          "notes": "Down stairs to main corridor"
+        }
       },
       "mvp": false
     },
@@ -51,11 +72,24 @@
       "height_m": 4.0,
       "angle": "overhead-angled",
       "connects_to": {
-        "C03": {"avg_transit_sec": 60, "notes": "Indoor canteen entry"}
+        "C03": {
+          "avg_transit_sec": 60,
+          "notes": "Indoor canteen entry"
+        }
       },
       "mvp": false
     }
   },
-  "mvp_subgraph": ["C01", "C02", "C03"],
-  "stretch_subgraph": ["C01", "C02", "C03", "C04", "C05"]
+  "mvp_subgraph": [
+    "C01",
+    "C02",
+    "C03"
+  ],
+  "stretch_subgraph": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05"
+  ]
 }
