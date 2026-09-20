@@ -31,6 +31,7 @@ Thumbs.db
 # Environment
 .env
 *.env.*
+!.env.example
 
 # Large dataset files — store in Google Drive, not git
 # See docs/git_workflow.md for the shared Drive link
