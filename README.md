@@ -95,11 +95,15 @@ Trace/
 
 ## Prerequisites
 
-- Python 3.11
-- pip
-- Git
+- Python 3.11 — https://www.python.org/downloads/release/python-3110/
+- pip (comes with Python)
+- Git — https://git-scm.com/downloads
 - 4GB+ RAM (8GB recommended for KPR)
 - GPU optional but significantly faster for KPR (use Google Colab for KPR on CPU machines)
+
+> **Windows users:** Make sure Python is added to PATH during installation. Check "Add Python to PATH" in the installer.
+
+> **macOS users:** If `python3.11` is not available, install via `brew install python@3.11`
 
 ---
 
@@ -134,6 +138,20 @@ pip install -r backend/requirements.txt
 
 > This installs FastAPI, SQLAlchemy, PyTorch, Ultralytics (YOLOv8), torchreid (OSNet), OpenCV, and all other backend + AI deps in one shot.
 
+> ⚠️ **PyTorch is ~800MB.** This step can take 5–30 minutes depending on your internet speed. This is normal.
+
+> ⚠️ **torchreid install issue?** If `torchreid` fails to install from PyPI, install it directly from source:
+> ```bash
+> pip install git+https://github.com/KaiyangZhou/deep-person-reid.git
+> ```
+> Then re-run `pip install -r backend/requirements.txt`
+
+> ⚠️ **Windows + OpenCV error?** If you see a DLL error with `opencv-python`, install the headless version instead:
+> ```bash
+> pip uninstall opencv-python
+> pip install opencv-python-headless==4.9.0.80
+> ```
+
 ### 4. Set up environment config
 
 ```bash
@@ -151,6 +169,12 @@ Open `.env` — the defaults work for body-only mode. No changes needed for basi
 ```bash
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+> ⚠️ **Must be run from the project root** (`Trace/` directory), not from inside `backend/`. The import paths assume the project root.
+
+> On first startup, OSNet weights (~5MB) are downloaded automatically from the internet. You'll see:
+> `Successfully loaded imagenet pretrained weights from "...osnet_x1_0_imagenet.pth"`
+> This is normal — happens once only.
 
 ### 6. Open the dashboard
 
@@ -438,6 +462,13 @@ Full interactive docs: `http://localhost:8000/api/docs`
 ---
 
 ## Troubleshooting
+
+**`ModuleNotFoundError: No module named 'backend'`**
+You're running uvicorn from the wrong directory. Always run from the project root:
+```bash
+cd Trace   # make sure you're here
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+```
 
 **`torchreid` not found**
 ```bash
