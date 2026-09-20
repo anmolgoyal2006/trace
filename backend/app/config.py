@@ -56,10 +56,24 @@ class Settings(BaseSettings):
     fusion_temporal_weight: float = 0.15
 
     # ------------------------------------------------------------------ #
-    # Body + face fusion weights (body + face = 1.0 when face active)     #
+    # Fusion weights                                                       #
+    # Body + face (Step 2):  body=0.70, face=0.30                        #
+    # Body + face + KPR (Step 3): KPR dominates; body reduced to 0.40    #
+    # Weights are re-normalised at runtime by the active signal count,    #
+    # so these values only need to reflect relative importance.           #
     # ------------------------------------------------------------------ #
-    fusion_body_weight: float = 0.70
+    fusion_body_weight: float = 0.40   # reduced: KPR handles body better
     fusion_face_weight: float = 0.30
+    fusion_kpr_weight: float = 0.60   # KPR dominates — best at partial bodies
+
+    # ------------------------------------------------------------------ #
+    # KPR (Keypoint Promptable Re-Identification, ECCV 2024)              #
+    # ------------------------------------------------------------------ #
+    # Paths are intentionally empty — supply at runtime via environment
+    # variables (KPR_WEIGHTS_PATH, KPR_CONFIG_PATH) or a .env file.
+    kpr_weights_path: str = ""   # path to .pth.tar checkpoint
+    kpr_config_path: str = ""    # path to KPR yaml config
+    kpr_vis_threshold: float = 0.30  # minimum per-part visibility to include
 
     # ------------------------------------------------------------------ #
     # Face detection / recognition (SCRFD + ArcFace, ONNX Runtime)        #

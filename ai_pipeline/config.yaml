@@ -39,6 +39,18 @@ reid:
     batch_size: 32             # Crops per GPU forward pass — override with --batch-size CLI flag
                                # Swin-Small is heavier than OSNet; reduce to 16 if OOM on <8 GB GPU.
 
+  kpr:
+    model: "kpr_swin_small"    # KPR Swin-Small backbone (ECCV 2024)
+    holistic_dim: 768          # holistic embedding dimension
+    num_parts: 5               # update after probing actual model output (embed_kpr.py logs this)
+    part_dim: 768              # per-part embedding dimension
+    vis_threshold: 0.3         # minimum per-part visibility score to include in similarity
+    weights: ""                # path to .pth.tar checkpoint
+                               # download: https://drive.google.com/file/d/1Np5wu3nQa_Fl_z7Zw2kchJNC8JZVwsh5/view
+    kpr_config: ""             # path to KPR yaml config file, e.g.
+                               # configs/kpr/imagenet/kpr_occ_posetrack_test.yaml
+    batch_size: 16             # KPR is heavier than OSNet — reduce to 8 if OOM on <8 GB GPU
+
   search:
     no_match_similarity_threshold: 0.74  # MVP threshold for Phase 5.7 no-match handling
                                         # Updated from 0.70 after Phase 5.7 real-world test showed
