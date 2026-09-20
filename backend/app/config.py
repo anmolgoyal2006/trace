@@ -56,10 +56,53 @@ class Settings(BaseSettings):
     fusion_temporal_weight: float = 0.15
 
     # ------------------------------------------------------------------ #
+    # Fusion weights                                                       #
+    # Body + face (Step 2):  body=0.70, face=0.30                        #
+    # Body + face + KPR (Step 3): KPR dominates; body reduced to 0.40    #
+    # Weights are re-normalised at runtime by the active signal count,    #
+    # so these values only need to reflect relative importance.           #
+    # ------------------------------------------------------------------ #
+    fusion_body_weight: float = 0.40   # reduced: KPR handles body better
+    fusion_face_weight: float = 0.30
+    fusion_kpr_weight: float = 0.60   # KPR dominates — best at partial bodies
+
+    # ------------------------------------------------------------------ #
+    # KPR (Keypoint Promptable Re-Identification, ECCV 2024)              #
+    # ------------------------------------------------------------------ #
+    # Paths are intentionally empty — supply at runtime via environment
+    # variables (KPR_WEIGHTS_PATH, KPR_CONFIG_PATH) or a .env file.
+    kpr_weights_path: str = ""   # path to .pth.tar checkpoint
+    kpr_config_path: str = ""    # path to KPR yaml config
+    kpr_vis_threshold: float = 0.30  # minimum per-part visibility to include
+
+    # ------------------------------------------------------------------ #
+    # Face detection / recognition (SCRFD + ArcFace, ONNX Runtime)        #
+    # ------------------------------------------------------------------ #
+    face_det_threshold: float = 0.50
+    # Paths are intentionally empty by default — supply at runtime via
+    # environment variables (FACE_DET_MODEL, FACE_REC_MODEL) or a .env file.
+    face_det_model: str = ""     # path to det_10g.onnx
+    face_rec_model: str = ""     # path to w600k_r50.onnx
+
+    # ------------------------------------------------------------------ #
     # Confidence scaling (from Phase 4.5 observed distributions)          #
     # ------------------------------------------------------------------ #
     similarity_observed_min: float = 0.3315049352393543
     similarity_observed_max: float = 0.9730031552165505
+
+    # ------------------------------------------------------------------ #
+    # SOLIDER-REID (Swin-Small, 768-dim)                                  #
+    # ------------------------------------------------------------------ #
+    # Paths are intentionally empty by default — supply them at runtime
+    # via environment variables (SOLIDER_WEIGHTS, SOLIDER_CONFIG_PATH) or
+    # override in a .env file.  embed_solider.py accepts these values via
+    # its own --weights / --solider-config CLI flags independently of the
+    # backend settings; these fields exist so the backend can load a
+    # SOLIDER embedding file and know its dimension without re-running
+    # inference.
+    solider_weights: Path = Path("")
+    solider_config_path: Path = Path("")
+    solider_embedding_dim: int = 768
 
     # ------------------------------------------------------------------ #
     # Detection                                                            #
