@@ -56,10 +56,39 @@ class Settings(BaseSettings):
     fusion_temporal_weight: float = 0.15
 
     # ------------------------------------------------------------------ #
+    # Body + face fusion weights (body + face = 1.0 when face active)     #
+    # ------------------------------------------------------------------ #
+    fusion_body_weight: float = 0.70
+    fusion_face_weight: float = 0.30
+
+    # ------------------------------------------------------------------ #
+    # Face detection / recognition (SCRFD + ArcFace, ONNX Runtime)        #
+    # ------------------------------------------------------------------ #
+    face_det_threshold: float = 0.50
+    # Paths are intentionally empty by default — supply at runtime via
+    # environment variables (FACE_DET_MODEL, FACE_REC_MODEL) or a .env file.
+    face_det_model: str = ""     # path to det_10g.onnx
+    face_rec_model: str = ""     # path to w600k_r50.onnx
+
+    # ------------------------------------------------------------------ #
     # Confidence scaling (from Phase 4.5 observed distributions)          #
     # ------------------------------------------------------------------ #
     similarity_observed_min: float = 0.3315049352393543
     similarity_observed_max: float = 0.9730031552165505
+
+    # ------------------------------------------------------------------ #
+    # SOLIDER-REID (Swin-Small, 768-dim)                                  #
+    # ------------------------------------------------------------------ #
+    # Paths are intentionally empty by default — supply them at runtime
+    # via environment variables (SOLIDER_WEIGHTS, SOLIDER_CONFIG_PATH) or
+    # override in a .env file.  embed_solider.py accepts these values via
+    # its own --weights / --solider-config CLI flags independently of the
+    # backend settings; these fields exist so the backend can load a
+    # SOLIDER embedding file and know its dimension without re-running
+    # inference.
+    solider_weights: Path = Path("")
+    solider_config_path: Path = Path("")
+    solider_embedding_dim: int = 768
 
     # ------------------------------------------------------------------ #
     # Detection                                                            #

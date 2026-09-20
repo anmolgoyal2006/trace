@@ -1,10 +1,35 @@
 """
 matching_service.py — MatchingService
-Cross-camera Re-ID matching using OSNet embeddings.
+Cross-camera Re-ID matching using appearance embeddings.
 
 Given a query embedding and one or more per-camera gallery files, this
 service finds matching tracks in each camera and returns them ranked by
 appearance score.
+
+Embedding backbone compatibility
+---------------------------------
+This service is dimension-agnostic.  cosine_similarity() (similarity.py)
+operates on plain NumPy arrays and accepts any vector length, so it works
+identically with:
+
+  • OSNet x1_0  (embed.py)         → 512-dim embeddings
+  • SOLIDER Swin-Small (embed_solider.py) → 768-dim embeddings
+
+No code changes are required here when switching backbones.  The only
+runtime requirement is that the query embedding and gallery embeddings
+were produced by the same backbone (same dimension).  Mixed-backbone
+galleries will produce a ValueError from cosine_similarity() (dimension
+mismatch), which is caught per-crop in _compute_crop_similarities() and
+logged as a debug skip.
+
+To switch backbones end-to-end:
+  1. Re-run embed_solider.py to produce new gallery files
+     (e.g. dataset/embeddings_solider_C01.json).
+  2. Update the embeddings_dir / file-naming convention so the query
+     router loads the correct gallery files.
+  3. Update config.embedding_dim to 768 (or leave it — the service does
+     not use embedding_dim directly; it is used by the upload router for
+     validation only).
 
 Cross-camera ranking fix (Phase 5.4):
     The original implementation returned only the single best-scoring track
@@ -22,11 +47,30 @@ Cross-camera ranking fix (Phase 5.4):
     The original search_camera() is retained unchanged for backwards
     compatibility (persons/search endpoint, enroll flow).
 
+Face fusion (Step 2):
+    When face_gallery is provided to search_camera_top_k(), a second signal
+    is fused with the body appearance score per track:
+
+        fused_score = (body_weight * body_sim + face_weight * face_sim)
+                      / (body_weight + face_weight)
+
+    Face similarity is only used when face_coverage >= 0.3 for that track
+    (at least 30 % of its crops had a detected face).  Below that threshold
+    face_weight is set to 0 and the body score is used unchanged — this
+    makes the face path fully additive: it can only help, never silently
+    penalise tracks where faces are occluded.
+
+    face_gallery=None (default) reproduces byte-for-byte identical output
+    to the pre-face-fusion code.  Existing callers are unaffected.
+
 Uses:
-  - ai_pipeline/reid/similarity.py        → cosine_similarity
+  - ai_pipeline/reid/similarity.py        → cosine_similarity (dimension-agnostic)
   - ai_pipeline/reid/track_aggregation.py → aggregate_by_track
   - ai_pipeline/reid/confidence_scaling.py→ similarity_to_confidence
+  - ai_pipeline/reid/face_similarity.py   → face_cosine_similarity,
+                                            aggregate_face_by_track
   - config.no_match_threshold (0.74) for filtering low-confidence matches
+  - config.fusion_body_weight / fusion_face_weight for face fusion
 """
 
 import sys
@@ -45,6 +89,14 @@ if str(settings.repo_root) not in sys.path:
 from ai_pipeline.reid.similarity import cosine_similarity          # noqa: E402
 from ai_pipeline.reid.track_aggregation import aggregate_by_track  # noqa: E402
 from ai_pipeline.reid.confidence_scaling import similarity_to_confidence  # noqa: E402
+from ai_pipeline.reid.face_similarity import (                     # noqa: E402
+    face_cosine_similarity,
+    aggregate_face_by_track,
+)
+
+# Minimum face_coverage for a track before its face signal is trusted.
+# Below this fraction face_weight is dropped to 0 (body-only scoring).
+_FACE_COVERAGE_MIN: float = 0.3
 
 
 # ---------------------------------------------------------------------------
@@ -58,6 +110,13 @@ class CameraMatch:
 
     All scores are in [0.0, 1.0] unless noted.
     confidence is in [0.0, 100.0].
+
+    Face fusion fields (only populated when face_gallery is provided):
+        face_sim    — face cosine similarity for this track, or None when
+                      face_coverage < 0.3 or no face was detected.
+        face_weight — the weight actually applied to face_sim in the fusion
+                      (0.0 when face was not used, settings.fusion_face_weight
+                      otherwise).
     """
     camera_id: str
     track_id: int
@@ -70,6 +129,9 @@ class CameraMatch:
     best_crop_path: Optional[str] = None
     # crop-level records for this track (sorted by similarity desc)
     top_crops: list[dict] = field(default_factory=list)
+    # face fusion signal — None when face_gallery was not provided
+    face_sim: Optional[float] = None
+    face_weight: float = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -82,14 +144,22 @@ class MatchingService:
 
     Primary entry point for the pipeline:
         search_camera_top_k() — returns up to N CameraMatch objects per camera,
-                                 sorted by appearance_score descending.
+                                 sorted by appearance_score (or fused score when
+                                 face_gallery is provided) descending.
 
     Legacy entry point (persons/search, enroll):
         search_camera()       — returns only the single best CameraMatch or None.
+
+    Face fusion:
+        Pass face_gallery to search_camera_top_k() to activate body+face fusion.
+        face_gallery=None (default) is a strict no-op — produces byte-for-byte
+        identical output to the pre-fusion code path.
     """
 
     def __init__(self) -> None:
-        self._threshold = settings.no_match_threshold
+        self._threshold   = settings.no_match_threshold
+        self._body_weight = settings.fusion_body_weight
+        self._face_weight = settings.fusion_face_weight
 
     # ------------------------------------------------------------------ #
     # Shared internals                                                     #
@@ -128,6 +198,65 @@ class MatchingService:
                 "frame":      rec.get("frame"),
             })
         return crop_sims
+
+    def _compute_face_similarities(
+        self,
+        query_face_embedding: list[float],
+        face_gallery: list[dict],
+    ) -> dict[int | str, dict]:
+        """
+        Aggregate face embeddings from *face_gallery* by track and return
+        per-track face statistics via aggregate_face_by_track().
+
+        Then compute a per-track face similarity score between
+        *query_face_embedding* and the mean (centroid) face embedding of
+        each gallery track.
+
+        Returns
+        -------
+        dict keyed by track_id, each value containing:
+            face_sim      float | None  — cosine sim between query face and
+                                          track mean face; None if coverage low
+                                          or no faces detected.
+            face_coverage float         — fraction of crops with detected face.
+
+        Only called when face_gallery is not None.
+        """
+        face_track_stats = aggregate_face_by_track(face_gallery)
+        result: dict[int | str, dict] = {}
+
+        for track_id, stats in face_track_stats.items():
+            coverage = stats["face_coverage"]
+
+            if coverage < _FACE_COVERAGE_MIN or stats["num_face_detected"] == 0:
+                # Not enough face evidence — mark as unusable
+                result[track_id] = {"face_sim": None, "face_coverage": coverage}
+                continue
+
+            # Build mean face embedding for this track from all detected crops
+            track_embs = [
+                rec["face_embedding"]
+                for rec in face_gallery
+                if rec.get("track_id") == track_id
+                and rec.get("face_detected")
+                and rec.get("face_embedding") is not None
+            ]
+
+            if not track_embs:
+                result[track_id] = {"face_sim": None, "face_coverage": coverage}
+                continue
+
+            import numpy as np
+            stacked  = np.array(track_embs, dtype=np.float64)
+            centroid = stacked.mean(axis=0)
+            norm_c   = float(np.linalg.norm(centroid))
+            if norm_c > 0.0:
+                centroid /= norm_c
+
+            face_sim = face_cosine_similarity(query_face_embedding, centroid.tolist())
+            result[track_id] = {"face_sim": face_sim, "face_coverage": coverage}
+
+        return result
 
     def _build_camera_match(
         self,
@@ -179,29 +308,37 @@ class MatchingService:
         source_crop_path: Optional[str] = None,
         candidate_tracks: int = 3,
         crops_top_k: int = 5,
+        face_gallery: Optional[list[dict]] = None,
+        query_face_embedding: Optional[list[float]] = None,
     ) -> list[CameraMatch]:
         """
         Return up to *candidate_tracks* CameraMatch objects for *camera_id*,
-        one per qualifying track, sorted by appearance_score descending.
+        one per qualifying track, sorted by fused score descending.
 
-        All returned matches have appearance_score >= no_match_threshold.
-        Returns an empty list when no track clears the threshold.
+        When face_gallery is None (default) the method behaves identically to
+        the pre-face-fusion version — no new computation, no changed output.
 
         Args:
-            query_embedding:   512-D float list from OSNet.
-            gallery:           Embedding records from embeddings_<cam>.json.
-            camera_id:         Camera identifier.
-            source_crop_path:  Crop to exclude for anti-leakage.
-            candidate_tracks:  Max number of tracks to return (default 3).
-            crops_top_k:       Number of crop-level records to keep per track.
+            query_embedding:       512-D body embedding from OSNet.
+            gallery:               Body embedding records (embeddings_<cam>.json).
+            camera_id:             Camera identifier string.
+            source_crop_path:      Crop path to exclude (anti-leakage).
+            candidate_tracks:      Max tracks to return per camera (default 3).
+            crops_top_k:           Crop-level records to keep per track (default 5).
+            face_gallery:          Face embedding records (face_embeddings_<cam>.json),
+                                   or None to skip face fusion entirely.
+            query_face_embedding:  512-D ArcFace embedding of the query person's face,
+                                   or None.  Ignored when face_gallery is None.
 
         Returns:
-            List of CameraMatch, best-appearance first.  Empty → no match.
+            List of CameraMatch sorted by effective score descending.
+            Empty list when no track clears the no_match_threshold.
         """
         if not gallery:
             logger.warning(f"[MatchingService] Empty gallery for camera {camera_id}")
             return []
 
+        # ---- body similarities (unchanged path) --------------------------
         crop_sims = self._compute_crop_similarities(
             query_embedding, gallery, source_crop_path
         )
@@ -209,40 +346,94 @@ class MatchingService:
             logger.warning(f"[MatchingService] No valid crops for camera {camera_id}")
             return []
 
-        # Aggregate per-track stats
         track_stats = aggregate_by_track(crop_sims)
 
-        # Sort all tracks by max_similarity descending
+        # ---- optional face similarities ----------------------------------
+        # Only computed when both face_gallery and query_face_embedding are
+        # supplied.  If either is absent, the face path is fully skipped and
+        # every track gets face_weight=0, face_sim=None.
+        use_face = face_gallery is not None and query_face_embedding is not None
+        face_info: dict[int | str, dict] = {}
+        if use_face:
+            try:
+                face_info = self._compute_face_similarities(
+                    query_face_embedding, face_gallery  # type: ignore[arg-type]
+                )
+            except Exception as exc:
+                # Face pipeline failure must never break the body-only result
+                logger.warning(
+                    f"[MatchingService] Face similarity failed for {camera_id}: {exc}"
+                    " — falling back to body-only scoring."
+                )
+                use_face = False
+
+        # ---- compute effective (possibly fused) score per track ----------
+        def _effective_score(track_id: int | str, body_sim: float) -> float:
+            """Return fused score when face is available, else body_sim."""
+            if not use_face:
+                return body_sim
+
+            fi = face_info.get(track_id, {})
+            f_sim = fi.get("face_sim")
+
+            if f_sim is None:
+                # No usable face for this track — body only
+                return body_sim
+
+            # Weighted fusion: normalise by the sum of active weights
+            bw = self._body_weight
+            fw = self._face_weight
+            fused = (bw * body_sim + fw * f_sim) / (bw + fw)
+            return fused
+
+        # ---- sort by effective score descending --------------------------
         ranked_tracks = sorted(
             track_stats.items(),
-            key=lambda kv: kv[1]["max_similarity"],
+            key=lambda kv: _effective_score(kv[0], kv[1]["max_similarity"]),
             reverse=True,
         )
 
         matches: list[CameraMatch] = []
         for track_id, stats in ranked_tracks:
-            if stats["max_similarity"] < self._threshold:
-                break  # list is sorted — nothing below here will qualify
+            effective = _effective_score(track_id, stats["max_similarity"])
+
+            if effective < self._threshold:
+                break  # list is sorted — nothing below will qualify
             if len(matches) >= candidate_tracks:
                 break
 
             match = self._build_camera_match(
                 camera_id, track_id, stats, crop_sims, crops_top_k
             )
+
+            # Populate face fusion fields when face was used
+            if use_face:
+                fi       = face_info.get(track_id, {})
+                f_sim    = fi.get("face_sim")
+                f_weight = self._face_weight if f_sim is not None else 0.0
+                match.face_sim    = round(f_sim, 6) if f_sim is not None else None
+                match.face_weight = f_weight
+
             matches.append(match)
 
             logger.info(
                 f"[MatchingService] camera={camera_id} "
                 f"track={track_id} "
-                f"sim={stats['max_similarity']:.4f} "
+                f"body_sim={stats['max_similarity']:.4f} "
+                f"effective={effective:.4f} "
+                f"face_sim={match.face_sim} "
                 f"conf={match.best_confidence:.1f} "
                 f"(candidate {len(matches)}/{candidate_tracks})"
             )
 
         if not matches:
+            best_body = ranked_tracks[0][1]["max_similarity"] if ranked_tracks else 0.0
+            best_eff  = _effective_score(
+                ranked_tracks[0][0], best_body
+            ) if ranked_tracks else 0.0
             logger.info(
                 f"[MatchingService] camera={camera_id} "
-                f"best_sim={ranked_tracks[0][1]['max_similarity']:.4f} "
+                f"best_effective={best_eff:.4f} "
                 f"< threshold={self._threshold} → no confident match"
             )
 
@@ -266,6 +457,9 @@ class MatchingService:
         Returns None if no track exceeds the no-match threshold.
         Used by the /api/persons/search endpoint and reference-photo enrollment.
         For the main query pipeline use search_camera_top_k() instead.
+
+        Does NOT accept face_gallery — face fusion is only available via
+        search_camera_top_k() to keep this legacy method a strict no-op.
         """
         results = self.search_camera_top_k(
             query_embedding=query_embedding,

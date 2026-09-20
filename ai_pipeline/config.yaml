@@ -26,6 +26,19 @@ reid:
                               # The Phase 4.3 generator will determine output dim programmatically
                               # and validate it against this value — do not hardcode 512 in model inference.
     batch_size: 32            # crops per forward pass — override with --batch-size CLI flag
+  solider:
+    model: "swin_small"        # SOLIDER-REID Swin-Small backbone (TransReID-style)
+    embedding_dim: 768         # Swin-Small last-stage output: embed_dims=96 × 2³ = 768
+                               # Determined programmatically at runtime via dummy forward pass —
+                               # this value is used for config validation only, not hardcoded inference.
+    weights: ""                # Path to .pth checkpoint — supply at runtime via --weights CLI flag
+                               # Use the fine-tuned SOLIDER-REID checkpoint (Market-1501 or MSMT17)
+                               # OR the converted SOLIDER backbone (solider_swin_small_tea.pth).
+    solider_config: ""         # Path to SOLIDER-REID yaml config — supply via --solider-config
+                               # e.g. SOLIDER-REID/configs/market/swin_small.yml
+    batch_size: 32             # Crops per GPU forward pass — override with --batch-size CLI flag
+                               # Swin-Small is heavier than OSNet; reduce to 16 if OOM on <8 GB GPU.
+
   search:
     no_match_similarity_threshold: 0.74  # MVP threshold for Phase 5.7 no-match handling
                                         # Updated from 0.70 after Phase 5.7 real-world test showed
@@ -38,3 +51,20 @@ reid:
                                         # Corresponds to ~63.7 scaled confidence score.
                                         # NOT a calibrated probability or universally valid Re-ID threshold.
                                         # If best candidate similarity < threshold, return no_confident_match.
+
+face:
+  detector: "scrfd_10g"         # SCRFD 10G — high-accuracy face detector
+  recogniser: "arcface_r50"     # ArcFace ResNet-50 — 512-dim face embedding
+  det_threshold: 0.5            # SCRFD minimum detection confidence
+  min_face_size: 20             # minimum face bounding-box dimension in pixels
+  embedding_dim: 512            # ArcFace ResNet-50 output dimension
+  weights:
+    det: ""                     # fill in path to det_10g.onnx
+                                # download: https://huggingface.co/yakhyo/scrfd/resolve/main/det_10g.onnx
+    rec: ""                     # fill in path to w600k_r50.onnx
+                                # download: https://huggingface.co/yakhyo/arcface/resolve/main/w600k_r50.onnx
+  fusion:
+    body_weight: 0.70           # weight for body (OSNet) similarity when fusing with face
+    face_weight: 0.30           # weight for face (ArcFace) similarity
+    min_face_coverage: 0.30     # minimum fraction of track crops with detected face
+                                # to trust the face signal; below this, face_weight=0
