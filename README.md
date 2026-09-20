@@ -140,6 +140,19 @@ pip install -r backend/requirements.txt
 
 > ⚠️ **PyTorch is ~800MB.** This step can take 5–30 minutes depending on your internet speed. This is normal.
 
+> ⚠️ **macOS (Apple Silicon M1/M2/M3):** PyTorch runs on CPU by default. It works correctly but has no CUDA GPU support (Apple uses MPS, not CUDA). All models will run on CPU. KPR will be slow — use Google Colab for KPR embedding generation.
+> If you see a `torch` version conflict, install PyTorch for Apple Silicon first:
+> ```bash
+> pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+> pip install -r backend/requirements.txt
+> ```
+
+> ⚠️ **macOS — `libGL` error with OpenCV:** If you see `ImportError: dlopen ... libGL`, install the headless variant:
+> ```bash
+> pip uninstall opencv-python
+> pip install opencv-python-headless==4.9.0.80
+> ```
+
 > ⚠️ **torchreid install issue?** If `torchreid` fails to install from PyPI, install it directly from source:
 > ```bash
 > pip install git+https://github.com/KaiyangZhou/deep-person-reid.git
@@ -285,6 +298,11 @@ python setup.py develop
 cd ..
 ```
 
+> ⚠️ **macOS:** If `python setup.py develop` fails, try:
+> ```bash
+> pip install -e .
+> ```
+
 ### Step 3 — Download KPR pretrained weights
 
 Download from Google Drive:
@@ -428,13 +446,14 @@ Camera connections and transit times are defined in `dataset/camera_graph.json`.
 
 ## Processing Times (35-second video)
 
-| Mode | CPU | GPU (CUDA) |
-|---|---|---|
-| Body only (OSNet) | 6–11 min | 1–2 min |
-| Body + Face | 7–13 min | 1.5–2.5 min |
-| Body + Face + KPR | 14–26 min | 2–4 min |
+| Mode | CPU (Intel/AMD) | Apple Silicon (M1/M2) | GPU (NVIDIA CUDA) |
+|---|---|---|---|
+| Body only (OSNet) | 6–11 min | 3–5 min | 1–2 min |
+| Body + Face | 7–13 min | 4–7 min | 1.5–2.5 min |
+| Body + Face + KPR | 14–26 min | 8–14 min | 2–4 min |
 
-> KPR on CPU is impractically slow. Use Google Colab for KPR embedding generation if you don't have a GPU.
+> KPR on CPU is slow regardless of platform. Use Google Colab (free T4 GPU) for KPR embedding generation if you don't have an NVIDIA GPU.
+> Apple Silicon has no CUDA support — MPS (Metal) is not used by this project. CPU times apply.
 
 ---
 
@@ -468,6 +487,33 @@ You're running uvicorn from the wrong directory. Always run from the project roo
 ```bash
 cd Trace   # make sure you're here
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+**macOS — `zsh: command not found: python`**
+macOS ships with Python 2 or no Python. Use `python3` or install Python 3.11:
+```bash
+brew install python@3.11
+python3.11 -m venv venv
+source venv/bin/activate
+```
+After activating the venv, `python` and `pip` will point to 3.11 correctly.
+
+**macOS — `OSError: dlopen libgomp` or OpenMP error with torchreid**
+Install OpenMP via Homebrew:
+```bash
+brew install libomp
+```
+Then retry the pip install.
+
+**macOS — `SSL: CERTIFICATE_VERIFY_FAILED` when downloading OSNet weights**
+Run the Python certificate installer:
+```bash
+/Applications/Python\ 3.11/Install\ Certificates.command
+```
+Or:
+```bash
+pip install certifi
+python -c "import ssl; ssl.create_default_context()"
 ```
 
 **`torchreid` not found**
