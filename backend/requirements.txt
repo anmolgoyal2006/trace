@@ -20,7 +20,8 @@ python-multipart==0.0.9
 httpx==0.27.0
 
 # AI pipeline deps (already in ai_pipeline/requirements.txt but listed here for one-shot install)
-ultralytics==8.2.27
+# Ultralytics 8.3+ fixes PyTorch 2.6 weights_only compatibility
+ultralytics>=8.3.0
 torch>=2.0.0
 torchvision>=0.15.0
 torchreid>=0.2.5

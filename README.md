@@ -482,6 +482,13 @@ Full interactive docs: `http://localhost:8000/api/docs`
 
 ## Troubleshooting
 
+**`Tracking failed: Weights only load failed` (PyTorch 2.6)**
+PyTorch 2.6 changed `torch.load` defaults, breaking Ultralytics 8.2.x. Fix by upgrading Ultralytics:
+```bash
+pip install "ultralytics>=8.3.0"
+```
+Then retry the video upload. This is already fixed in `requirements.txt` — if you installed before this fix, run the upgrade manually.
+
 **`ModuleNotFoundError: No module named 'backend'`**
 You're running uvicorn from the wrong directory. Always run from the project root:
 ```bash
