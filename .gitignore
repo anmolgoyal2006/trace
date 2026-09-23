@@ -16,6 +16,14 @@ db/
 *.pth
 *.onnx
 weights/
+pretrained_models/
+
+# External model repos (cloned per README setup, not part of Trace)
+keypoint_promptable_reidentification/
+SOLIDER-REID/
+
+# Local gallery backups (e.g. OSNet gallery kept when switching to SOLIDER)
+dataset/embeddings_*_osnet.json
 
 # IDE
 .vscode/

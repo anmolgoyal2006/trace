@@ -70,6 +70,7 @@ Uses:
   - config.no_match_threshold             (0.74)
   - config.fusion_kpr_weight / fusion_face_weight / fusion_body_weight
 """
+from __future__ import annotations
 
 import sys
 from dataclasses import dataclass, field

@@ -94,12 +94,21 @@ const API = (() => {
   function createWebSocket(onMessage, onOpen, onClose) {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     const ws = new WebSocket(`${proto}://${location.host}/ws`);
+    // Guard: browsers fire BOTH onerror and onclose for a failed socket.
+    // Without this, each failure schedules two reconnects → exponential
+    // connection growth (observed: 255 server-side connections from one tab).
+    let settled = false;
+    const handleClose = () => {
+      if (settled) return;
+      settled = true;
+      onClose && onClose();
+    };
     ws.onmessage = (e) => {
       try { onMessage(JSON.parse(e.data)); } catch (_) {}
     };
     ws.onopen    = () => onOpen && onOpen(ws);
-    ws.onclose   = () => onClose && onClose();
-    ws.onerror   = () => onClose && onClose();
+    ws.onclose   = handleClose;
+    ws.onerror   = () => { try { ws.close(); } catch (_) {} };
     return ws;
   }
 

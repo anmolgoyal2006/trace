@@ -21,7 +21,10 @@ httpx==0.27.0
 
 # AI pipeline deps (already in ai_pipeline/requirements.txt but listed here for one-shot install)
 # Ultralytics 8.3+ fixes PyTorch 2.6 weights_only compatibility
+# (the weights_only=False shim in detect.py/track.py stays as a safety net
+# for older installs); lapx is required by the BoT-SORT tracker.
 ultralytics>=8.3.0
+lapx>=0.5.2
 torch>=2.0.0
 torchvision>=0.15.0
 torchreid>=0.2.5

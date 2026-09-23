@@ -272,6 +272,10 @@ function connectWs() {
   dot.className = 'ws-dot';
   lbl.textContent = 'Connecting…';
 
+  // Close any previous socket before opening a new one so abandoned
+  // sockets don't linger on the server.
+  try { if (State.ws) State.ws.close(); } catch (_) {}
+
   State.ws = API.createWebSocket(
     onWsMsg,
     () => { dot.classList.add('connected'); lbl.textContent = 'Live Matrix'; },
@@ -749,15 +753,14 @@ async function submitQuery() {
   msg.textContent  = '';
   msg.className    = 'status-inline';
 
-  const pid = document.getElementById('person-select')?.value;
-  if (pid === 'demo-1' || pid === 'demo-2' || (!pid && !_queryPhotoFile)) {
-    runDemoSearchAnimation();
-    return;
-  }
-
   const fd = new FormData();
   if (activeTab === 'tab-person') {
-    if (!pid) { msg.textContent = 'Select a registered target first.'; msg.className = 'status-inline err'; return; }
+    const pid = document.getElementById('person-select')?.value;
+    if (!pid || pid === 'demo-1' || pid === 'demo-2') {
+      msg.textContent = 'No enrolled targets — register a target profile first, or switch to Reference Photo Upload.';
+      msg.className = 'status-inline err';
+      return;
+    }
     fd.append('person_id', pid);
   } else {
     if (!_queryPhotoFile) { msg.textContent = 'Select a reference photo first.'; msg.className = 'status-inline err'; return; }
@@ -776,7 +779,13 @@ async function submitQuery() {
     msg.textContent = `Session #${session.id}`;
     msg.className   = 'status-inline ok';
   } catch (e) {
-    runDemoSearchAnimation();
+    hideProgress();
+    enableQueryBtn();
+    const detail = (e && e.message) || 'Search submission failed.';
+    msg.textContent = detail;
+    msg.className = 'status-inline err';
+    showQueryResult(`Execution Error: ${detail}`, true);
+    toast(`Query failed: ${detail}`, 'error');
   }
 }
 

@@ -16,7 +16,7 @@ Organised by resource:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -313,4 +313,4 @@ class WsError(BaseModel):
 
 
 # Generic envelope — used for serialising any WS event to JSON
-WsEvent = WsQueryProgress | WsSightingFound | WsRouteComplete | WsAlert | WsError
+WsEvent = Union[WsQueryProgress, WsSightingFound, WsRouteComplete, WsAlert, WsError]

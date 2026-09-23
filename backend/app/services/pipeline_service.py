@@ -104,6 +104,92 @@ def _load_galleries(camera_ids: list[str]) -> dict[str, list[dict]]:
     return galleries
 
 
+def _peek_gallery_dim(gallery: list[dict]) -> Optional[int]:
+    """Return the embedding dimension of a gallery (None if empty/malformed)."""
+    for rec in gallery:
+        emb = rec.get("embedding")
+        if isinstance(emb, list) and emb:
+            return len(emb)
+    return None
+
+
+def _solider_paths() -> Optional[tuple[Path, Path]]:
+    """
+    Return (weights, config) paths when SOLIDER is configured AND the files
+    exist, else None. NOTE: settings.solider_weights defaults to Path("")
+    which normalises to Path(".") — always truthy and exists() — so compare
+    the string form explicitly.
+    """
+    w, c = str(settings.solider_weights or ""), str(settings.solider_config_path or "")
+    if w.strip() in ("", ".") or c.strip() in ("", "."):
+        return None
+    wp, cp = Path(w), Path(c)
+    if not wp.exists() or not cp.exists():
+        return None
+    return wp, cp
+
+
+# Cached SOLIDER model (one per weights path) — loaded once, reused for all
+# queries. The SOLIDER-REID modules use unique top-level names for this
+# process (config/model/datasets under its repo root, imported via path
+# insert below), so no isolation surgery is needed unlike the KPR fork.
+_solider_model_cache: dict[str, object] = {}
+
+
+def _embed_query_solider(img_path: Path) -> Optional[list[float]]:
+    """
+    Embed a query image with SOLIDER Swin-Small (768-dim, L2-normalised).
+    Returns None when SOLIDER is not configured or embedding fails.
+
+    Runs synchronously — call inside run_in_executor.
+    """
+    paths = _solider_paths()
+    if paths is None:
+        logger.debug("[PipelineService] SOLIDER weights not configured — skipping")
+        return None
+    weights_path, config_path = paths
+
+    try:
+        import torch  # noqa: PLC0415
+        from PIL import Image  # noqa: PLC0415
+
+        _repo_root = Path(__file__).resolve().parents[3]
+        if str(_repo_root) not in sys.path:
+            sys.path.insert(0, str(_repo_root))
+
+        from ai_pipeline.reid.embed_solider import (  # noqa: PLC0415
+            SOLIDER_TRANSFORM,
+            load_solider_model,
+            solider_forward,
+        )
+
+        solider_root = _repo_root / "SOLIDER-REID"
+        cache_key = str(weights_path.resolve())
+        model = _solider_model_cache.get(cache_key)
+        if model is None:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            model = load_solider_model(
+                weights_path, config_path, solider_root, device
+            )
+            _solider_model_cache[cache_key] = model
+            logger.info("[PipelineService] SOLIDER model cached for queries")
+
+        device = next(model.parameters()).device
+        img = Image.open(img_path).convert("RGB")
+        tensor = SOLIDER_TRANSFORM(img).unsqueeze(0).to(device)
+        with torch.no_grad():
+            emb = solider_forward(model, tensor)
+        vec = emb.cpu().squeeze(0).tolist()
+        logger.info(f"[PipelineService] SOLIDER query embedded: dim={len(vec)}")
+        return vec
+
+    except Exception as exc:
+        logger.warning(
+            f"[PipelineService] SOLIDER query embedding failed (non-fatal): {exc}"
+        )
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Face gallery helpers
 # ---------------------------------------------------------------------------
@@ -227,16 +313,127 @@ def _load_kpr_galleries(camera_ids: list[str]) -> dict[str, list[dict]]:
     return galleries
 
 
+# Module-level YOLO cache for query auto-crop (lazy — keeps startup fast)
+_yolo_model = None
+
+
+def _get_yolo_model():
+    """
+    Load YOLOv8n once and cache it for query-image person detection.
+    Uses the same torch>=2.6 weights_only-safe load as the pipeline scripts.
+    """
+    global _yolo_model
+    if _yolo_model is not None:
+        return _yolo_model
+    import torch  # noqa: PLC0415
+    from ultralytics import YOLO  # noqa: PLC0415
+
+    _orig_load = torch.load
+
+    def _patched_load(*args, **kwargs):
+        kwargs.setdefault("weights_only", False)
+        return _orig_load(*args, **kwargs)
+
+    model_path = Path(settings.yolo_model)
+    if not model_path.is_absolute():
+        model_path = Path(__file__).resolve().parents[3] / model_path
+
+    torch.load = _patched_load
+    try:
+        _yolo_model = YOLO(str(model_path))
+    finally:
+        torch.load = _orig_load
+    logger.info(f"[PipelineService] YOLO query model ready: {model_path.name}")
+    return _yolo_model
+
+
+def _autocrop_query_person(img_path: Path) -> Path:
+    """
+    Crop a multi-person query image down to its largest detected person.
+
+    Full-frame snaps (e.g. video screenshots) embed as one meaningless
+    vector and match nothing. Cropping the most prominent subject makes
+    every downstream signal (body / face / KPR) see a single person —
+    the same framing the gallery crops have.
+
+    Returns the crop path, or the original path unchanged when no person
+    is detected or detection fails. Never raises.
+    Runs synchronously — call inside run_in_executor.
+    """
+    try:
+        import cv2  # noqa: PLC0415
+
+        model = _get_yolo_model()
+        results = model.predict(
+            source=str(img_path),
+            conf=settings.detection_confidence,
+            classes=settings.detection_classes,
+            verbose=False,
+        )
+        boxes = results[0].boxes
+        if boxes is None or len(boxes) == 0:
+            logger.warning(
+                "[PipelineService] No person detected in query image — "
+                "embedding full image (may match nothing)"
+            )
+            return img_path
+
+        xyxy = boxes.xyxy.tolist()
+        confs = boxes.conf.tolist()
+        # Largest box by area = most prominent subject
+        areas = [(b[2] - b[0]) * (b[3] - b[1]) for b in xyxy]
+        best = max(range(len(xyxy)), key=lambda i: areas[i])
+        x1, y1, x2, y2 = (int(v) for v in xyxy[best])
+
+        img = cv2.imread(str(img_path))
+        if img is None:
+            return img_path
+        h, w = img.shape[:2]
+        x1, y1 = max(0, x1), max(0, y1)
+        x2, y2 = min(w, x2), min(h, y2)
+        if x2 - x1 < 32 or y2 - y1 < 64:
+            logger.warning(
+                "[PipelineService] Detected person box too small "
+                f"({x2 - x1}x{y2 - y1}) — embedding full image"
+            )
+            return img_path
+
+        crop_path = img_path.parent / f"{img_path.stem}_person{img_path.suffix}"
+        cv2.imwrite(str(crop_path), img[y1:y2, x1:x2])
+        logger.info(
+            f"[PipelineService] Query auto-crop: {len(xyxy)} person(s), "
+            f"kept largest (conf={confs[best]:.2f}, "
+            f"box={x2 - x1}x{y2 - y1}) → {crop_path.name}"
+        )
+        return crop_path
+    except Exception as exc:
+        logger.warning(
+            f"[PipelineService] Query auto-crop failed (non-fatal, "
+            f"using full image): {exc}"
+        )
+        return img_path
+
+
 def _embed_query_kpr(img_path: Path) -> Optional[dict]:
     """
     Run KPR on a single query image to produce holistic + part embeddings.
     Returns a dict with keys: holistic_embedding, part_embeddings,
-    part_visibility — or None if KPR weights are not configured or import fails.
+    part_visibility — or None if KPR weights are not configured or the
+    subprocess fails.
+
+    Runs KPR in a FRESH subprocess via embed_kpr.py's CLI (same reason as
+    the upload path: the KPR torchreid fork cannot coexist in-process with
+    the standard torchreid used by OSNet). The single image is wrapped in
+    a 1-record metadata file, embedded, and the record parsed back.
 
     Runs synchronously — call inside run_in_executor.
     """
+    import os
+    import subprocess
+    import tempfile
+
     kpr_weights = settings.kpr_weights_path
-    kpr_config  = settings.kpr_config_path
+    kpr_config = settings.kpr_config_path
 
     if not kpr_weights or not kpr_config:
         logger.debug("[PipelineService] KPR weights not configured — skipping KPR query")
@@ -252,69 +449,87 @@ def _embed_query_kpr(img_path: Path) -> Optional[dict]:
         )
         return None
 
-    try:
-        import torch  # noqa: PLC0415
+    _repo_root = Path(__file__).resolve().parents[3]
+    _script = _repo_root / "ai_pipeline" / "reid" / "embed_kpr.py"
 
-        _repo_root = Path(__file__).resolve().parents[3]
-        if str(_repo_root) not in sys.path:
-            sys.path.insert(0, str(_repo_root))
-
-        from ai_pipeline.reid.embed_kpr import (  # noqa: PLC0415
-            load_kpr_model,
-            probe_kpr_output,
-            validate_and_preprocess,
-            _parse_kpr_output,
-        )
-        from torchreid.utils.tools import extract_test_embeddings  # noqa: PLC0415
-
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        # Infer kpr_root from config path (walk up to find setup.py / torchreid dir)
+    # Infer kpr_root: prefer the standard clone location at the repo root,
+    # then fall back to walking up from the config path.
+    kpr_root = None
+    _candidate = _repo_root / "keypoint_promptable_reidentification"
+    if (_candidate / "torchreid" / "scripts" / "builder.py").exists():
+        kpr_root = _candidate
+    if kpr_root is None:
         kpr_root = kpr_c.resolve().parent
         for parent in kpr_c.resolve().parents:
             if (parent / "setup.py").exists() or (parent / "torchreid").exists():
                 kpr_root = parent
                 break
 
-        extractor = load_kpr_model(kpr_w, kpr_c, kpr_root, device)
-        num_slots, holistic_idx, num_parts, part_dim = probe_kpr_output(extractor, device)
+    tmp_dir = Path(tempfile.mkdtemp(prefix="kpr_query_"))
+    try:
+        meta_path = tmp_dir / "query_metadata.json"
+        out_path = tmp_dir / "query_kpr.json"
+        # Absolute crop_path: embed_kpr does _REPO_ROOT / rec["crop_path"],
+        # and pathlib lets an absolute right-hand side win, so this resolves
+        # back to the query image itself.
+        with open(meta_path, "w") as f:
+            json.dump([{
+                "crop_path": str(img_path.resolve()),
+                "camera_id": "QUERY",
+                "track_id": 0,
+                "frame": 0,
+                "timestamp": "00:00:00.00",
+                "bbox": [0, 0, 4096, 4096],
+                "detection_confidence": 1.0,
+            }], f)
 
-        # Preprocess the query image
-        tensor, failure = validate_and_preprocess(
-            img_path, str(img_path), min_crop_width=32, min_crop_height=64
+        cmd = [
+            sys.executable,
+            str(_script),
+            "--metadata", str(meta_path),
+            "--crop-dir", str(img_path.resolve().parent),
+            "--output", str(out_path),
+            "--kpr-weights", str(kpr_w),
+            "--kpr-config", str(kpr_c),
+            "--kpr-root", str(kpr_root),
+            "--overwrite",
+        ]
+        proc = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=str(_repo_root),
+            env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+            timeout=600,  # 10 min cap for a single query image on CPU
         )
-        if failure is not None:
+        if proc.returncode != 0:
+            out = proc.stdout.decode(errors="replace") if proc.stdout else "(no output)"
             logger.warning(
-                f"[PipelineService] KPR query preprocess failed: {failure.reason}"
+                f"[PipelineService] KPR query subprocess failed "
+                f"(code {proc.returncode}, non-fatal):\n{out[-2000:]}"
             )
             return None
-
-        # Run KPR forward pass on single image (batch size 1)
-        batch = tensor.unsqueeze(0).to(device)  # [1, C, H, W]
-        with torch.no_grad():
-            embeddings_batch, vis_scores_batch = extract_test_embeddings(
-                extractor, batch
-            )
-
-        holistic_emb, part_embs, part_vis = _parse_kpr_output(
-            embeddings_batch, vis_scores_batch,
-            batch_idx_in_batch=0,
-            holistic_idx=holistic_idx,
-        )
-
-        logger.info(
-            f"[PipelineService] KPR query embedded: "
-            f"{num_parts} parts, holistic_dim={len(holistic_emb)}"
-        )
+        if not out_path.exists():
+            logger.warning("[PipelineService] KPR query produced no output — skipping")
+            return None
+        with open(out_path) as f:
+            records = json.load(f)
+        if not records:
+            logger.warning("[PipelineService] KPR query embedded 0 crops — skipping")
+            return None
+        rec = records[0]
+        logger.info("[PipelineService] KPR query embedded via subprocess")
         return {
-            "holistic_embedding": holistic_emb,
-            "part_embeddings":    part_embs,
-            "part_visibility":    part_vis,
+            "holistic_embedding": rec["holistic_embedding"],
+            "part_embeddings": rec["part_embeddings"],
+            "part_visibility": rec["part_visibility"],
         }
-
-    except Exception as exc:
+    except (Exception, SystemExit) as exc:
         logger.warning(f"[PipelineService] KPR query embedding failed (non-fatal): {exc}")
         return None
+    finally:
+        import shutil
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 # ---------------------------------------------------------------------------
@@ -348,7 +563,7 @@ class PipelineService:
 
             try:
                 await self._execute(session, db)
-            except Exception as e:
+            except (Exception, SystemExit) as e:
                 logger.exception(f"[PipelineService] Session {session_id} failed: {e}")
                 session.status = "failed"
                 session.error_message = str(e)
@@ -369,7 +584,16 @@ class PipelineService:
 
         # ── Step 1: body embedding ────────────────────────────────────────
         await self._push_progress(session, db, 5, "Loading body embedding...")
-        query_embedding = await self._resolve_query_embedding(session)
+        # Normalise the query image first: multi-person snaps (e.g. full
+        # video screenshots) are auto-cropped to the largest detected
+        # person so every signal embeds one subject, not the whole scene.
+        img_path = self._resolve_query_image_path(session)
+        if img_path is not None:
+            await self._push_progress(session, db, 3, "Detecting subject in query photo...")
+            img_path = await loop.run_in_executor(
+                None, _autocrop_query_person, img_path
+            )
+        query_embedding = await self._resolve_query_embedding(session, img_path)
         if query_embedding is None:
             raise ValueError(
                 "No embedding available. Enroll a reference photo for this person "
@@ -379,7 +603,6 @@ class PipelineService:
         # ── Step 2: face embedding for query image (optional) ─────────────
         await self._push_progress(session, db, 10, "Extracting face from query image...")
         query_face_embedding: Optional[list[float]] = None
-        img_path = self._resolve_query_image_path(session)
         if img_path is not None:
             query_face_embedding = await loop.run_in_executor(
                 None, _embed_query_face, img_path
@@ -453,6 +676,37 @@ class PipelineService:
                 )
                 query_kpr = None  # deactivate — nothing to match against
 
+        # ── Step 4b: SOLIDER query vector (optional, per-gallery dim) ──────
+        # Galleries may mix backbones (e.g. C01 SOLIDER-768, C02 OSNet-512).
+        # Build a dim → query-vector map and pick the matching vector per
+        # camera in Step 5. Enrolled-person vectors participate with their
+        # native dim; cameras with no matching vector are skipped.
+        query_vecs: dict[int, list[float]] = {len(query_embedding): query_embedding}
+        gallery_dims = {
+            cam_id: _peek_gallery_dim(g) for cam_id, g in body_galleries.items()
+        }
+        logger.info(f"[PipelineService] Gallery dims: {gallery_dims}")
+        need_solider_dim = settings.solider_embedding_dim
+        if (
+            need_solider_dim not in query_vecs
+            and need_solider_dim in set(gallery_dims.values())
+            and img_path is not None
+        ):
+            await self._push_progress(
+                session, db, 17, "Embedding query with SOLIDER..."
+            )
+            solider_vec = await loop.run_in_executor(
+                None, _embed_query_solider, img_path
+            )
+            if solider_vec is not None:
+                query_vecs[len(solider_vec)] = solider_vec
+                logger.info("[PipelineService] SOLIDER signal: active")
+            else:
+                logger.info(
+                    "[PipelineService] SOLIDER signal: inactive "
+                    "(weights missing or embedding failed)"
+                )
+
         # Log active fusion mode
         active_signals = ["body"]
         if query_face_embedding is not None:
@@ -476,8 +730,21 @@ class PipelineService:
                 f"({'+'.join(active_signals)})..."
             )
 
+            # Pick the query vector matching this gallery's backbone dim.
+            # Galleries with no compatible query vector are skipped (e.g.
+            # enrolled OSNet-512 vector vs SOLIDER-768 gallery — re-enroll
+            # the person after switching gallery backbones).
+            cam_dim = gallery_dims.get(cam_id)
+            cam_query_vec = query_vecs.get(cam_dim) if cam_dim else None
+            if cam_query_vec is None:
+                logger.warning(
+                    f"[PipelineService] Skipping {cam_id}: no query vector "
+                    f"with dim={cam_dim} (have dims={sorted(query_vecs)})"
+                )
+                continue
+
             candidates = _matching_service.search_camera_top_k(
-                query_embedding=query_embedding,
+                query_embedding=cam_query_vec,
                 gallery=gallery,
                 camera_id=cam_id,
                 candidate_tracks=3,
@@ -490,6 +757,19 @@ class PipelineService:
             )
             if candidates:
                 camera_candidates[cam_id] = candidates
+
+        if not camera_candidates and any(
+            d is not None and d not in query_vecs
+            for d in gallery_dims.values()
+        ):
+            raise ValueError(
+                "Query embedding dimension does not match any gallery "
+                f"(query dims={sorted(query_vecs)}, "
+                f"gallery dims={gallery_dims}). If you switched gallery "
+                "backbones (OSNet ↔ SOLIDER), re-enroll reference photos "
+                "or search with a query image so the vector can be "
+                "recomputed in the gallery's dimension."
+            )
 
         # ── Step 6: route reconstruction ──────────────────────────────────
         await self._push_progress(session, db, 75, "Reconstructing route...")
@@ -621,12 +901,14 @@ class PipelineService:
         return None
 
     async def _resolve_query_embedding(
-        self, session: QuerySession
+        self, session: QuerySession, img_path: Optional[Path] = None
     ) -> Optional[list[float]]:
         """
         Get the body query embedding:
           - Registered person with enrolled embedding → use stored vector.
           - Uploaded query image → embed on the fly with OSNet.
+        img_path, when given, is the (possibly auto-cropped) query image
+        resolved by the caller; otherwise it falls back to the session path.
         """
         if session.person and session.person.embedding_vector:
             logger.info(
@@ -635,8 +917,9 @@ class PipelineService:
             )
             return session.person.embedding_vector
 
-        if session.query_image_path:
+        if img_path is None and session.query_image_path:
             img_path = Path(session.query_image_path)
+        if img_path is not None:
             if not img_path.exists():
                 raise FileNotFoundError(f"Query image not found: {img_path}")
             logger.info(f"[PipelineService] Embedding query image: {img_path.name}")

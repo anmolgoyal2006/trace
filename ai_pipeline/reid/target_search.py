@@ -1,9 +1,9 @@
 """
-target_search.py — Phase 5.5
+target_search.py — Phase 5.5 / Phase 5.8
 Target Search Integration Layer for TRACE Re-ID
 
 Accepts a query photo, embeds it using the existing Phase 4 pipeline,
-computes cosine similarity against the C01 gallery, and returns top-K
+computes cosine similarity against any compatible gallery, and returns top-K
 candidates with similarity-derived confidence scores.
 
 IMPORTANT:
@@ -16,18 +16,18 @@ IMPORTANT:
 
 Usage (run in Google Colab with GPU):
     python ai_pipeline/reid/target_search.py \\
-        --query dataset/query_photos/query_track13/test_query.jpg \\
-        --embeddings dataset/embeddings_C01.json \\
-        --query-metadata dataset/query_photos/query_track13/query_metadata.json \\
-        --top-k 5 \\
-        --output dataset/target_search/phase5_5_results.json
+        --query dataset/query_photos/test_query_1.jpg \\
+        --gallery dataset/new_video_test/embeddings_C01.json \\
+        --top-k 10 \\
+        --output dataset/new_video_test/target_search_results.json
 
 Options:
     --query            Path to query image (required)
-    --embeddings       Path to gallery embeddings JSON (required)
+    --gallery          Path to gallery embeddings JSON (required; alias: --embeddings)
     --query-metadata   Path to query metadata JSON (optional, for source crop exclusion)
     --top-k            Number of candidates to return (default: 5)
     --output           Path to output JSON (default: stdout)
+    --format           Output format: 'full' (default) or 'backend'
     --config           Path to config.yaml (default: ai_pipeline/config.yaml)
 """
 
@@ -293,13 +293,58 @@ def format_output(candidates: list[dict]) -> list[dict]:
     return formatted
 
 
+def format_full_output(
+    candidates: list[dict],
+    query_path: str,
+    gallery_path: str,
+    top_k: int,
+    model_name: str,
+    embedding_dim: int,
+    gallery_size: int,
+    threshold: float,
+    status: str,
+) -> dict:
+    """
+    Format results with full metadata for analysis and debugging.
+
+    Includes rank, raw similarity, confidence, crop_path, camera_id,
+    track_id, and frame for each candidate, plus query/gallery metadata.
+
+    This is the comprehensive output format. For the minimal backend
+    contract, use format_output() instead.
+    """
+    results = []
+    for i, candidate in enumerate(candidates, start=1):
+        results.append({
+            "rank": i,
+            "similarity": round(candidate["similarity"], 6),
+            "confidence": candidate["confidence"],
+            "crop_path": candidate.get("crop_path"),
+            "camera_id": candidate.get("camera_id"),
+            "track_id": candidate.get("track_id"),
+            "frame": candidate.get("frame"),
+        })
+
+    return {
+        "query": str(query_path),
+        "gallery": str(gallery_path),
+        "top_k": top_k,
+        "model": model_name,
+        "embedding_dim": embedding_dim,
+        "gallery_size": gallery_size,
+        "threshold": threshold,
+        "status": status,
+        "results": results,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Main CLI
 # ---------------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Phase 5.5 Target Search — Query-to-gallery Re-ID"
+        description="Phase 5.8 Target Search — Query-to-gallery Re-ID"
     )
     parser.add_argument(
         "--query",
@@ -308,7 +353,8 @@ def main():
         help="Path to query image"
     )
     parser.add_argument(
-        "--embeddings",
+        "--gallery", "--embeddings",
+        dest="gallery",
         type=Path,
         required=True,
         help="Path to gallery embeddings JSON"
@@ -332,6 +378,14 @@ def main():
         help="Path to output JSON (default: stdout)"
     )
     parser.add_argument(
+        "--format",
+        dest="output_format",
+        choices=["full", "backend"],
+        default="full",
+        help="Output format: 'full' (default) includes all metadata, "
+             "'backend' uses minimal backend contract"
+    )
+    parser.add_argument(
         "--config",
         type=Path,
         default=_REPO_ROOT / "ai_pipeline" / "config.yaml",
@@ -346,11 +400,12 @@ def main():
         sys.exit(1)
 
     print("=" * 60)
-    print("Phase 5.7 Target Search — With No-Match Handling")
+    print("Phase 5.8 Target Search — Query Matching")
     print("=" * 60)
     print(f"[INFO] Query: {args.query}")
-    print(f"[INFO] Gallery: {args.embeddings}")
+    print(f"[INFO] Gallery: {args.gallery}")
     print(f"[INFO] Top-K: {args.top_k}")
+    print(f"[INFO] Output format: {args.output_format}")
 
     # Load config
     cfg = load_config(args.config)
@@ -373,7 +428,7 @@ def main():
 
     # Load gallery
     try:
-        gallery = load_gallery(args.embeddings)
+        gallery = load_gallery(args.gallery)
     except (FileNotFoundError, ValueError) as e:
         print(f"[ERROR] {e}")
         sys.exit(1)
@@ -409,30 +464,44 @@ def main():
     print(f"[INFO] Ranking and converting to confidence scores...")
     top_candidates = rank_and_convert(results, args.top_k)
 
-    # Check if best candidate meets threshold
+    # Determine status based on threshold
     if len(top_candidates) > 0:
         best_similarity = top_candidates[0]["similarity"]
         print(f"[INFO] Best candidate similarity: {best_similarity:.4f}")
 
         if best_similarity < threshold:
             print(f"[INFO] Best similarity below threshold ({threshold}), returning no_confident_match")
-            output = {
-                "status": "no_confident_match",
-                "candidates": []
-            }
+            status = "no_confident_match"
         else:
             print(f"[INFO] Best similarity meets/exceeds threshold, returning candidates")
-            formatted = format_output(top_candidates)
-            output = {
-                "status": "matches_found",
-                "candidates": formatted
-            }
+            status = "matches_found"
     else:
         print("[INFO] No candidates available, returning no_confident_match")
+        status = "no_confident_match"
+
+    # Build output based on format
+    active_candidates = top_candidates if status == "matches_found" else []
+
+    if args.output_format == "full":
+        output = format_full_output(
+            candidates=active_candidates,
+            query_path=str(args.query),
+            gallery_path=str(args.gallery),
+            top_k=args.top_k,
+            model_name=model_name,
+            embedding_dim=512,
+            gallery_size=len(gallery),
+            threshold=threshold,
+            status=status,
+        )
+        result_count = len(output["results"])
+    else:
+        formatted = format_output(active_candidates)
         output = {
-            "status": "no_confident_match",
-            "candidates": []
+            "status": status,
+            "candidates": formatted,
         }
+        result_count = len(output["candidates"])
 
     # Output
     output_json = json.dumps(output, indent=2)
@@ -448,7 +517,7 @@ def main():
         print("=" * 60)
         print(output_json)
 
-    print(f"\n[INFO] Returned {len(output['candidates'])} candidates (top-{args.top_k} requested)")
+    print(f"\n[INFO] Returned {result_count} candidates (top-{args.top_k} requested)")
     print("[INFO] Done")
 
 

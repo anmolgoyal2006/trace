@@ -481,7 +481,9 @@ def probe_kpr_output(
         part_dim  = embs.shape[2]
 
         # Holistic slot = highest mean visibility (foreground branch ≈ 1.0)
-        mean_vis = vis[0].detach().cpu()  # [num_slots]
+        # NOTE: vis can be a Bool tensor on some builds — argmax is not
+        # implemented for Bool on CPU, so cast to float first.
+        mean_vis = vis[0].detach().cpu().float()  # [num_slots]
         holistic_idx = int(mean_vis.argmax().item())
 
         num_parts = num_slots - 1

@@ -32,6 +32,7 @@ Usage (dry-run — no files written):
         --metadata   dataset/crops_metadata.json \\
         --dry-run
 """
+from __future__ import annotations
 
 import argparse
 import json

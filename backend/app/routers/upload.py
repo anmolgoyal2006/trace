@@ -14,6 +14,7 @@ skipped gracefully — the OSNet gallery is always produced.
 """
 
 import asyncio
+import os
 import sys
 import shutil
 import uuid
@@ -126,11 +127,15 @@ async def _run_video_pipeline(job_id: str, video_path: Path, camera_id: str) -> 
       1. Detection (YOLOv8) + Tracking (ByteTrack)
       2. Crop extraction (quality-filtered)
       3. OSNet body embeddings  → embeddings_<cam>.json       (always)
+      3b. SOLIDER body embeddings → embeddings_<cam>.json     (if weights set;
+         replaces the OSNet gallery — matching is dimension-agnostic and the
+         query path embeds per-gallery-dim, so mixed backbones across
+         cameras keep working)
       4. Face embeddings        → face_embeddings_<cam>.json  (if weights set)
       5. KPR part embeddings    → kpr_embeddings_<cam>.json   (if weights set)
 
-    Steps 4 and 5 are skipped gracefully if their model weight paths are not
-    configured — the OSNet gallery is always produced regardless.
+    Steps 3b, 4 and 5 are skipped gracefully if their model weight paths are
+    not configured — the OSNet gallery is always produced regardless.
     """
 
     def _update(status: str, message: str) -> None:
@@ -169,6 +174,41 @@ async def _run_video_pipeline(job_id: str, video_path: Path, camera_id: str) -> 
         )
         logger.info(f"[upload job {job_id}] OSNet gallery ready: {embeddings_path.name}")
 
+        # ── Step 3b: SOLIDER body embeddings (optional, replaces gallery) ─
+        solider_w = str(settings.solider_weights or "")
+        solider_c = str(settings.solider_config_path or "")
+        if (
+            solider_w.strip() not in ("", ".")
+            and solider_c.strip() not in ("", ".")
+            and Path(solider_w).exists()
+            and Path(solider_c).exists()
+        ):
+            _update("processing", f"[3b/5] Generating SOLIDER body embeddings for {camera_id}...")
+            try:
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(
+                    None,
+                    _run_solider_embed,
+                    metadata_path,
+                    crop_dir,
+                    embeddings_path,
+                    Path(solider_w),
+                    Path(solider_c),
+                )
+                logger.info(
+                    f"[upload job {job_id}] SOLIDER gallery ready: {embeddings_path.name}"
+                )
+            except (Exception, SystemExit) as exc:
+                logger.warning(
+                    f"[upload job {job_id}] SOLIDER embedding failed (non-fatal, "
+                    f"keeping OSNet gallery): {exc}"
+                )
+        else:
+            logger.info(
+                f"[upload job {job_id}] Skipping SOLIDER embeddings — "
+                "weights not configured"
+            )
+
         # ── Step 4: Face embeddings (SCRFD + ArcFace, optional) ────────
         face_det   = Path(settings.face_det_model)  if settings.face_det_model  else None
         face_rec   = Path(settings.face_rec_model)  if settings.face_rec_model  else None
@@ -190,7 +230,7 @@ async def _run_video_pipeline(job_id: str, video_path: Path, camera_id: str) -> 
                 logger.info(
                     f"[upload job {job_id}] Face gallery ready: {face_output.name}"
                 )
-            except Exception as exc:
+            except (Exception, SystemExit) as exc:
                 logger.warning(
                     f"[upload job {job_id}] Face embedding failed (non-fatal): {exc}"
                 )
@@ -227,7 +267,7 @@ async def _run_video_pipeline(job_id: str, video_path: Path, camera_id: str) -> 
                 logger.info(
                     f"[upload job {job_id}] KPR gallery ready: {kpr_output.name}"
                 )
-            except Exception as exc:
+            except (Exception, SystemExit) as exc:
                 logger.warning(
                     f"[upload job {job_id}] KPR embedding failed (non-fatal): {exc}"
                 )
@@ -252,7 +292,7 @@ async def _run_video_pipeline(job_id: str, video_path: Path, camera_id: str) -> 
             + "."
         )
 
-    except Exception as e:
+    except (Exception, SystemExit) as e:
         logger.exception(f"[upload job {job_id}] Pipeline failed: {e}")
         _update("failed", str(e))
 
@@ -294,6 +334,46 @@ def _run_face_embed(
     )
 
 
+def _run_solider_embed(
+    metadata_path: Path,
+    crop_dir: Path,
+    output_path: Path,
+    solider_weights: Path,
+    solider_config: Path,
+) -> None:
+    """
+    Thin synchronous wrapper around embed_solider.
+    Overwrites the OSNet gallery with 768-dim SOLIDER vectors (the query
+    path embeds per-gallery-dim, so mixed backbones keep working).
+    Runs in a thread-pool executor so it doesn't block the event loop.
+    """
+    _repo_root = Path(__file__).resolve().parents[3]
+    if str(_repo_root) not in sys.path:
+        sys.path.insert(0, str(_repo_root))
+
+    from ai_pipeline.reid.embed_solider import (  # noqa: PLC0415
+        run_solider_embedding_pipeline,
+        select_device,
+    )
+
+    device = select_device()
+    n_failed = run_solider_embedding_pipeline(
+        metadata_path=metadata_path,
+        crop_dir=crop_dir,
+        output_path=output_path,
+        batch_size=16,
+        weights_path=solider_weights,
+        solider_config=solider_config,
+        solider_root=_repo_root / "SOLIDER-REID",
+        expected_dim=settings.solider_embedding_dim,
+        min_crop_width=32,
+        min_crop_height=64,
+        device=device,
+        overwrite=True,
+    )
+    logger.info(f"[solider] Gallery overwrite done, {n_failed} failed crop(s)")
+
+
 def _run_kpr_embed(
     metadata_path: Path,
     crop_dir: Path,
@@ -302,39 +382,62 @@ def _run_kpr_embed(
     kpr_config: Path,
 ) -> None:
     """
-    Thin synchronous wrapper around embed_kpr.run_kpr_embedding_pipeline().
+    Run KPR embedding in a FRESH subprocess via embed_kpr.py's CLI.
+
+    KPR's torchreid fork uses the same top-level package name as the
+    standard torchreid (already imported server-wide for OSNet), so an
+    in-process call can never resolve the fork's modules. A clean
+    interpreter with the KPR root first on sys.path imports the fork
+    correctly. Mirrors the TrackerService/CropService subprocess pattern.
     Runs in a thread-pool executor so it doesn't block the event loop.
     """
-    # Lazy import — KPR requires its own torchreid fork; keep startup clean
+    import subprocess
+
     _repo_root = Path(__file__).resolve().parents[3]
-    if str(_repo_root) not in sys.path:
-        sys.path.insert(0, str(_repo_root))
+    _script = _repo_root / "ai_pipeline" / "reid" / "embed_kpr.py"
 
-    from ai_pipeline.reid.embed_kpr import run_kpr_embedding_pipeline  # noqa: PLC0415
+    # kpr_root is the cloned KPR repo root. Prefer the standard clone
+    # location at the repo root, then fall back to walking up from the
+    # config path (covers configs stored inside the KPR repo itself).
+    kpr_root = None
+    _candidate = _repo_root / "keypoint_promptable_reidentification"
+    if (_candidate / "torchreid" / "scripts" / "builder.py").exists():
+        kpr_root = _candidate
+    if kpr_root is None:
+        kpr_root = kpr_config.resolve().parents[
+            next(
+                i for i, p in enumerate(kpr_config.resolve().parents)
+                if (p / "setup.py").exists() or (p / "torchreid").exists()
+            )
+        ]
 
-    import torch
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # kpr_root is the cloned KPR repo root — expected one level above kpr_config
-    # e.g.  kpr_config = /path/to/keypoint_promptable_reidentification/configs/...yaml
-    #        kpr_root  = /path/to/keypoint_promptable_reidentification
-    kpr_root = kpr_config.resolve().parents[
-        next(
-            i for i, p in enumerate(kpr_config.resolve().parents)
-            if (p / "setup.py").exists() or (p / "torchreid").exists()
-        )
+    cmd = [
+        sys.executable,
+        str(_script),
+        "--metadata", str(metadata_path),
+        "--crop-dir", str(crop_dir),
+        "--output", str(output_path),
+        "--kpr-weights", str(kpr_weights),
+        "--kpr-config", str(kpr_config),
+        "--kpr-root", str(kpr_root),
+        "--overwrite",
     ]
-
-    run_kpr_embedding_pipeline(
-        metadata_path=metadata_path,
-        crop_dir=crop_dir,
-        output_path=output_path,
-        batch_size=16,
-        kpr_weights=kpr_weights,
-        kpr_config=kpr_config,
-        kpr_root=kpr_root,
-        min_crop_width=32,
-        min_crop_height=64,
-        device=device,
-        overwrite=True,
+    logger.info(f"[upload] Starting KPR subprocess: {' '.join(cmd)}")
+    proc = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        cwd=str(_repo_root),
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+        timeout=1800,  # 30 min cap for CPU embedding of long videos
     )
+    out = proc.stdout.decode(errors="replace") if proc.stdout else "(no output)"
+    # Echo the tail so progress stays visible in the server log
+    for line in out.strip().splitlines()[-15:]:
+        logger.info(f"[kpr] {line}")
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"KPR subprocess exited with code {proc.returncode}.\n"
+            f"Command: {' '.join(cmd)}\n"
+            f"Output:\n{out}"
+        )

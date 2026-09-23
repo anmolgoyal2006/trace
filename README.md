@@ -552,6 +552,57 @@ Only C01, C02, C03 are valid for upload. C04 and C05 are stretch cameras not yet
 
 ---
 
+## Changelog — September 2026 Stabilisation
+
+Production-hardening pass over the full upload → query loop
+(Python 3.9, CPU-only, torch 2.8, Ultralytics 8.2.27).
+
+### Pipeline reliability
+
+- **YOLOv8 load fix** (`ai_pipeline/detection/detect.py`, `ai_pipeline/tracking/track.py`):
+  torch ≥ 2.6 defaults `torch.load(weights_only=True)`, which rejects
+  Ultralytics checkpoints. Both scripts now force `weights_only=False`
+  for the trusted local `yolov8n.pt` during init only.
+- **Added missing `lapx` dependency** (`backend/requirements.txt`,
+  `ai_pipeline/requirements.txt`) — required by the BoT-SORT tracker.
+- **Python 3.9 compat**: `from __future__ import annotations` in
+  `crop_extractor.py` (and `embed.py`); the `X | Y` annotation syntax
+  needs 3.10+ and crashed crop extraction at import time.
+
+### KPR part-based matching now runs locally
+
+- **Root cause of the stuck `[5/5]` step**: KPR's torchreid fork shares its
+  package name with the standard torchreid (pre-imported for OSNet), so an
+  in-process import could never resolve the fork's modules — and its
+  `sys.exit()` escaped every `except Exception`, freezing the upload job at
+  `processing` forever.
+- **Fix**: gallery embedding (`routers/upload.py`) and query embedding
+  (`services/pipeline_service.py`) both run `embed_kpr.py`'s CLI in a fresh
+  subprocess with the KPR root first on `sys.path`. Verified: 97/97 C01
+  crops in ~18s on CPU, triple fusion (`body+face+KPR`) live in queries.
+- Optional steps (SOLIDER / face / KPR) now catch `(Exception, SystemExit)`
+  so a failing optional signal is a non-fatal warning, never a stuck job.
+  (Deliberately not bare `BaseException` — task cancellation still works.)
+- Probed KPR output corrected in `ai_pipeline/config.yaml`: 8 parts × 512-d
+  (was documented as 5 × 768-d).
+- **Query-time person auto-crop** (`pipeline_service.py`): full-frame snaps
+  (e.g. video screenshots with several people) are YOLO-cropped to the
+  largest detected person before embedding — previously they embedded the
+  whole scene and silently scored 0. Falls back to the original image when
+  no person is detected.
+
+### Search UI honesty fix (`frontend/src/app.js`)
+
+- The search form defaulted to the Registered Person tab with only
+  placeholder options, and every fallback path played a canned demo
+  animation (hardcoded 94.2%). Different photos produced the same fake
+  output — uploads often never reached the backend. Submit is now
+  tab-aware (person tab needs a real enrolled person, photo tab needs a
+  photo file), shows real errors (e.g. "query already running"), and never
+  fabricates results.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
