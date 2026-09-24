@@ -97,6 +97,11 @@ from ai_pipeline.reid.kpr_similarity import aggregate_kpr_by_track         # noq
 # Minimum face_coverage for a track before its face signal is trusted.
 _FACE_COVERAGE_MIN: float = 0.3
 
+# Soft floor: tracks with effective score in [SOFT_FLOOR, NO_MATCH_THRESHOLD)
+# are returned as possible matches (is_confident=False) rather than dropped.
+# Tracks below SOFT_FLOOR are still discarded — they are pure noise.
+_SOFT_FLOOR: float = 0.55
+
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -139,6 +144,10 @@ class CameraMatch:
     # KPR fusion fields — None when kpr_gallery not provided
     kpr_sim: Optional[float] = None
     mean_visible_parts: Optional[float] = None
+    # Confidence tier:
+    #   True  → effective score ≥ NO_MATCH_THRESHOLD (hard confident match)
+    #   False → effective score in [SOFT_FLOOR, NO_MATCH_THRESHOLD) (possible match)
+    is_confident: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -480,14 +489,17 @@ class MatchingService:
         for track_id, stats in ranked_tracks:
             effective = _effective_score(track_id, stats["max_similarity"])
 
-            if effective < self._threshold:
-                break   # sorted — nothing below qualifies
+            if effective < _SOFT_FLOOR:
+                break   # sorted — nothing below qualifies even as a possible match
             if len(matches) >= candidate_tracks:
                 break
+
+            is_confident = effective >= self._threshold
 
             match = self._build_camera_match(
                 camera_id, track_id, stats, crop_sims, crops_top_k
             )
+            match.is_confident = is_confident
 
             # Populate face fields
             if use_face:
@@ -506,6 +518,7 @@ class MatchingService:
 
             matches.append(match)
 
+            tier_label = "confident" if is_confident else "possible"
             logger.info(
                 f"[MatchingService] camera={camera_id} "
                 f"track={track_id} "
@@ -514,6 +527,7 @@ class MatchingService:
                 f"face_sim={match.face_sim} "
                 f"effective={effective:.4f} "
                 f"conf={match.best_confidence:.1f} "
+                f"tier={tier_label} "
                 f"(candidate {len(matches)}/{candidate_tracks})"
             )
 
@@ -528,7 +542,7 @@ class MatchingService:
             logger.info(
                 f"[MatchingService] camera={camera_id} "
                 f"best_effective={best_eff:.4f} "
-                f"< threshold={self._threshold} → no confident match"
+                f"< soft_floor={_SOFT_FLOOR} → no match at all"
             )
 
         return matches

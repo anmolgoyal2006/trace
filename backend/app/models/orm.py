@@ -191,6 +191,10 @@ class Sighting(Base):
     temporal_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     # Weighted fusion of above three signals
     fusion_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    # Confidence tier: "confident" | "possible"
+    # "confident"  → effective score ≥ NO_MATCH_THRESHOLD (0.74)
+    # "possible"   → effective score in [SOFT_FLOOR, 0.74)
+    match_tier: Mapped[str] = mapped_column(Text, nullable=False, default="confident")
 
     # Relationships
     session: Mapped["QuerySession"] = relationship(

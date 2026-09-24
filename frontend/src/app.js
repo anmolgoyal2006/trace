@@ -306,8 +306,12 @@ function onProgress(msg) {
 function onSighting(msg) {
   if (msg.session_id !== State.activeQueryId) return;
   const s = msg.sighting;
-  toast(`Camera ${s.camera_id} — target match confirmed (${s.best_confidence.toFixed(1)}%)`, 'info');
-  if (State.view === 'map') highlightCamNode(s.camera_id, 'matched');
+  const isPossible = s.match_tier === 'possible';
+  const label = isPossible
+    ? `Camera ${s.camera_id} — possible match (${s.best_confidence.toFixed(1)}%)`
+    : `Camera ${s.camera_id} — target match confirmed (${s.best_confidence.toFixed(1)}%)`;
+  toast(label, isPossible ? 'warning' : 'info');
+  if (State.view === 'map') highlightCamNode(s.camera_id, isPossible ? 'possible-match' : 'matched');
 }
 
 function onRouteComplete(msg) {
@@ -1079,13 +1083,20 @@ function renderMapRoute(route) {
     </div>
     <div class="section-label" style="font-family:var(--font-mono);font-size:.72rem;color:var(--cyan);margin-bottom:.5rem;font-weight:800">SEQUENCE STEPS</div>
     <div style="display:flex;flex-direction:column;gap:.45rem">
-      ${route.steps.map((s, i) => `
-        <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;padding:.5rem .75rem;border-radius:6px;background:rgba(255,255,255,0.05);border:1px solid var(--border)">
+      ${route.steps.map((s, i) => {
+        const isPossible = s.match_tier === 'possible';
+        const badgeStyle = isPossible
+          ? 'background:var(--amber);color:#000'
+          : '';
+        const tierLabel = isPossible ? '⚠ Possible' : `${s.confidence.toFixed(1)}%`;
+        return `
+        <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;padding:.5rem .75rem;border-radius:6px;background:rgba(255,255,255,0.05);border:1px solid ${isPossible ? 'var(--amber)' : 'var(--border)'}">
           <span style="background:var(--accent-grad);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;flex-shrink:0">${i + 1}</span>
           <span style="color:#fff;font-weight:800;font-family:var(--font-heading)">${s.camera_id}</span>
           <span style="color:var(--text-3);font-size:.75rem;font-family:var(--font-mono)">${s.timestamp || '—'}</span>
-          <span class="badge-pill badge-poi" style="margin-left:auto">${s.confidence.toFixed(1)}%</span>
-        </div>`).join('')}
+          <span class="badge-pill badge-poi" style="margin-left:auto;${badgeStyle}">${tierLabel}</span>
+        </div>`;
+      }).join('')}
     </div>`;
 }
 
@@ -1129,7 +1140,7 @@ function showCamDetail(id) {
     </div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap">
       <span class="badge-pill badge-poi">${s.best_confidence.toFixed(1)}% Match</span>
-      <span class="chip chip-done">Confirmed</span>
+      <span class="chip ${s.match_tier === 'possible' ? 'chip-warning' : 'chip-done'}">${s.match_tier === 'possible' ? '⚠ Possible Match' : 'Confirmed'}</span>
     </div>`;
 }
 

@@ -156,6 +156,10 @@ class SightingOut(_Base):
     spatial_score: float
     temporal_score: float
     fusion_score: float
+    match_tier: str = Field(
+        default="confident",
+        description='"confident" (≥0.74) or "possible" (0.55–0.74)',
+    )
 
 
 # ===========================================================================
@@ -171,6 +175,10 @@ class RouteStepOut(_Base):
     confidence: float               # best_confidence
     fusion_score: float
     crop_path: Optional[str]
+    match_tier: str = Field(
+        default="confident",
+        description='"confident" (≥0.74) or "possible" (0.55–0.74)',
+    )
 
 
 # ===========================================================================

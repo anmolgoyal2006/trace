@@ -853,6 +853,7 @@ class PipelineService:
                 confidence=ms.best_confidence,
                 fusion_score=ms.fusion_score,
                 crop_path=ms.crop_path,
+                match_tier=ms.match_tier,
             ))
 
         route_out = QueryRouteOut(
@@ -940,6 +941,7 @@ class PipelineService:
         fusion: float,
     ) -> Sighting:
         """Create and flush a Sighting ORM record (does not commit)."""
+        tier = "confident" if match.is_confident else "possible"
         sighting = Sighting(
             session_id=session_id,
             camera_id=match.camera_id,
@@ -953,6 +955,7 @@ class PipelineService:
             spatial_score=round(spatial, 6),
             temporal_score=round(temporal, 6),
             fusion_score=round(fusion, 6),
+            match_tier=tier,
         )
         db.add(sighting)
         await db.flush()
