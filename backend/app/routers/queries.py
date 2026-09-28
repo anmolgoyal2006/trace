@@ -233,6 +233,8 @@ async def get_route(
         sightings=[SightingOut.model_validate(s) for s in sightings],
         total_cameras_matched=len(sightings),
         route_confidence=route_confidence,
+        match_decision=getattr(session, "match_decision", "NO_CONFIDENT_MATCH"),
+        top_candidates=[],   # top_candidates are pushed live via WS; not stored in DB
     )
 
 

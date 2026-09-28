@@ -641,9 +641,10 @@ class PipelineService:
         )
 
         # ── Step 9: mark complete ──────────────────────────────────────────
-        session.status       = "done"
-        session.progress_pct = 100
-        session.completed_at = datetime.utcnow()
+        session.status        = "done"
+        session.progress_pct  = 100
+        session.completed_at  = datetime.utcnow()
+        session.match_decision = match_decision
         await db.commit()
 
         await self._ws.broadcast(WsRouteComplete(

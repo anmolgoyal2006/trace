@@ -131,6 +131,11 @@ class QuerySession(Base):
     )
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Overall identity decision written by pipeline on completion
+    # CONFIDENT_MATCH | POSSIBLE_MATCH_REVIEW | NO_CONFIDENT_MATCH
+    match_decision: Mapped[str] = mapped_column(
+        Text, nullable=False, default="NO_CONFIDENT_MATCH"
+    )
 
     # Relationships
     person: Mapped[Optional["Person"]] = relationship(
