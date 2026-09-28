@@ -53,17 +53,11 @@ const CAM_LAYOUT = {
 /* Demo Fallback Session for Immediate 1st-Look Wow */
 const MOCK_DEMO_ROUTE = {
   total_cameras_matched: 3,
-  route_confidence: 0.942,
-  sightings: [
-    { camera_id: 'C01', track_id: 104, first_seen: '10:42:15', last_seen: '10:43:10', appearance_score: 0.95, spatial_score: 0.92, temporal_score: 0.90, fusion_score: 0.94, best_confidence: 94.2 },
-    { camera_id: 'C02', track_id: 108, first_seen: '10:43:35', last_seen: '10:44:20', appearance_score: 0.91, spatial_score: 0.88, temporal_score: 0.86, fusion_score: 0.89, best_confidence: 89.5 },
-    { camera_id: 'C03', track_id: 112, first_seen: '10:45:00', last_seen: '10:46:15', appearance_score: 0.93, spatial_score: 0.90, temporal_score: 0.92, fusion_score: 0.92, best_confidence: 92.1 },
-  ],
-  steps: [
-    { camera_id: 'C01', step_order: 0, timestamp: '10:42:15', confidence: 94.2 },
-    { camera_id: 'C02', step_order: 1, timestamp: '10:43:35', confidence: 89.5 },
-    { camera_id: 'C03', step_order: 2, timestamp: '10:45:00', confidence: 92.1 },
-  ],
+  route_confidence: 0,
+  match_decision: 'NO_CONFIDENT_MATCH',
+  top_candidates: [],
+  sightings: [],
+  steps: [],
 };
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1193,7 +1187,7 @@ function renderMapRoute(route) {
           <span style="background:var(--accent-grad);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;flex-shrink:0">${i + 1}</span>
           <span style="color:#fff;font-weight:800;font-family:var(--font-heading)">${s.camera_id}</span>
           <span style="color:var(--text-3);font-size:.75rem;font-family:var(--font-mono)">${s.timestamp || '—'}</span>
-          <span class="badge-pill badge-poi" style="margin-left:auto">${s.confidence.toFixed(1)}%</span>
+          <span class="badge-pill badge-poi" style="margin-left:auto">${(s.confidence || 0).toFixed(1)}%</span>
         </div>`).join('')}
     </div>`;
 }
@@ -1217,7 +1211,7 @@ function showCamDetail(id) {
     ${id} — ${pos?.loc || id}`;
 
   const route = State.lastRoute || MOCK_DEMO_ROUTE;
-  const s = route.sightings?.find(x => x.camera_id === id) || { track_id: 104, first_seen: '10:42:15', last_seen: '10:43:10', appearance_score: 0.95, spatial_score: 0.92, temporal_score: 0.90, fusion_score: 0.94, best_confidence: 94.2 };
+  const s = route.sightings?.find(x => x.camera_id === id) || { track_id: '—', first_seen: '—', last_seen: '—', appearance_score: 0, spatial_score: 0, temporal_score: 0, fusion_score: 0, best_confidence: 0, match_status: 'NO_USABLE_EVIDENCE' };
   const step = route.steps?.find(x => x.camera_id === id) || { step_order: 0 };
 
   bodyEl.innerHTML = `
@@ -1277,7 +1271,7 @@ function renderTimeline() {
           <div class="timeline-cam-loc">Entrance</div>
         </div>
         <div class="timeline-track">
-          <div class="tl-marker conf-high" style="left:25%" title="Target #104 · 94.2% Match (10:42:15)"></div>
+          <div class="tl-marker conf-high" style="left:25%" title="Run a query to see real results"></div>
         </div>
       </div>
       <div class="timeline-row">
@@ -1286,7 +1280,7 @@ function renderTimeline() {
           <div class="timeline-cam-loc">Corridor</div>
         </div>
         <div class="timeline-track">
-          <div class="tl-marker conf-mid" style="left:52%" title="Target #108 · 89.5% Match (10:43:35)"></div>
+          <div class="tl-marker conf-mid" style="left:52%" title="Run a query to see real results"></div>
         </div>
       </div>
       <div class="timeline-row">
@@ -1295,7 +1289,7 @@ function renderTimeline() {
           <div class="timeline-cam-loc">Canteen</div>
         </div>
         <div class="timeline-track">
-          <div class="tl-marker conf-high" style="left:80%" title="Target #112 · 92.1% Match (10:45:00)"></div>
+          <div class="tl-marker conf-high" style="left:80%" title="Run a query to see real results"></div>
         </div>
       </div>
     </div>`;
