@@ -1,5 +1,5 @@
 """
-test_target_search.py — Phase 5.5
+test_target_search.py — Phase 5.5 / Phase 5.8
 Unit tests for target_search.py
 
 Tests:
@@ -36,6 +36,7 @@ from ai_pipeline.reid.target_search import (
     compute_similarities,
     rank_and_convert,
     format_output,
+    format_full_output,
 )
 
 
@@ -695,3 +696,203 @@ class TestNoMatchThreshold:
         assert output["status"] == "matches_found"
         assert candidate_count == 2
         assert output["candidates"][0]["confidence"] is not None
+
+
+# ---------------------------------------------------------------------------
+# Test Phase 5.8 full output format
+# ---------------------------------------------------------------------------
+
+class TestFullOutputFormat:
+    """Test Phase 5.8 full output format with rank, similarity, and metadata."""
+
+    def _build_candidates(self):
+        """Build synthetic ranked candidates for testing."""
+        results = compute_similarities(SYNTHETIC_QUERY_EMBEDDING, SYNTHETIC_GALLERY)
+        return rank_and_convert(results, top_k=5)
+
+    def test_full_format_includes_rank(self):
+        """Full format should include rank starting at 1."""
+        candidates = self._build_candidates()
+        output = format_full_output(
+            candidates=candidates,
+            query_path="dataset/query_photos/test_query_1.jpg",
+            gallery_path="dataset/new_video_test/embeddings_C01.json",
+            top_k=5,
+            model_name="osnet_x1_0",
+            embedding_dim=512,
+            gallery_size=5,
+            threshold=0.74,
+            status="matches_found",
+        )
+
+        assert "results" in output
+        assert len(output["results"]) == 5
+        for i, result in enumerate(output["results"], start=1):
+            assert result["rank"] == i
+
+    def test_full_format_includes_similarity(self):
+        """Full format should include raw similarity values."""
+        candidates = self._build_candidates()
+        output = format_full_output(
+            candidates=candidates,
+            query_path="q.jpg",
+            gallery_path="g.json",
+            top_k=5,
+            model_name="osnet_x1_0",
+            embedding_dim=512,
+            gallery_size=5,
+            threshold=0.74,
+            status="matches_found",
+        )
+
+        for result in output["results"]:
+            assert "similarity" in result
+            assert isinstance(result["similarity"], float)
+            assert -1.0 <= result["similarity"] <= 1.0
+
+    def test_full_format_includes_track_id_and_frame(self):
+        """Full format should include track_id and frame from gallery records."""
+        candidates = self._build_candidates()
+        output = format_full_output(
+            candidates=candidates,
+            query_path="q.jpg",
+            gallery_path="g.json",
+            top_k=5,
+            model_name="osnet_x1_0",
+            embedding_dim=512,
+            gallery_size=5,
+            threshold=0.74,
+            status="matches_found",
+        )
+
+        for result in output["results"]:
+            assert "track_id" in result
+            assert "frame" in result
+            assert isinstance(result["track_id"], int)
+            assert isinstance(result["frame"], int)
+
+    def test_full_format_includes_query_and_gallery_metadata(self):
+        """Full format should include query, gallery, model, and threshold metadata."""
+        candidates = self._build_candidates()
+        output = format_full_output(
+            candidates=candidates,
+            query_path="dataset/query_photos/test_query_1.jpg",
+            gallery_path="dataset/new_video_test/embeddings_C01.json",
+            top_k=10,
+            model_name="osnet_x1_0",
+            embedding_dim=512,
+            gallery_size=67,
+            threshold=0.74,
+            status="matches_found",
+        )
+
+        assert output["query"] == "dataset/query_photos/test_query_1.jpg"
+        assert output["gallery"] == "dataset/new_video_test/embeddings_C01.json"
+        assert output["top_k"] == 10
+        assert output["model"] == "osnet_x1_0"
+        assert output["embedding_dim"] == 512
+        assert output["gallery_size"] == 67
+        assert output["threshold"] == 0.74
+        assert output["status"] == "matches_found"
+
+    def test_full_format_ranking_starts_at_1(self):
+        """Rank numbering must start at 1, not 0."""
+        candidates = self._build_candidates()[:3]
+        output = format_full_output(
+            candidates=candidates,
+            query_path="q.jpg",
+            gallery_path="g.json",
+            top_k=3,
+            model_name="osnet_x1_0",
+            embedding_dim=512,
+            gallery_size=5,
+            threshold=0.74,
+            status="matches_found",
+        )
+
+        ranks = [r["rank"] for r in output["results"]]
+        assert ranks == [1, 2, 3]
+
+    def test_full_format_empty_results(self):
+        """Full format with no candidates should have empty results list."""
+        output = format_full_output(
+            candidates=[],
+            query_path="q.jpg",
+            gallery_path="g.json",
+            top_k=5,
+            model_name="osnet_x1_0",
+            embedding_dim=512,
+            gallery_size=67,
+            threshold=0.74,
+            status="no_confident_match",
+        )
+
+        assert output["status"] == "no_confident_match"
+        assert output["results"] == []
+        assert output["gallery_size"] == 67
+
+    def test_full_format_no_match_preserves_metadata(self):
+        """Even when no match, full format should still include query/gallery metadata."""
+        output = format_full_output(
+            candidates=[],
+            query_path="dataset/query_photos/test_query_1.jpg",
+            gallery_path="dataset/new_video_test/embeddings_C01.json",
+            top_k=10,
+            model_name="osnet_x1_0",
+            embedding_dim=512,
+            gallery_size=67,
+            threshold=0.74,
+            status="no_confident_match",
+        )
+
+        assert output["query"] == "dataset/query_photos/test_query_1.jpg"
+        assert output["gallery"] == "dataset/new_video_test/embeddings_C01.json"
+        assert output["model"] == "osnet_x1_0"
+
+    def test_full_format_similarity_rounded_to_6_decimals(self):
+        """Similarity should be rounded to 6 decimal places for readability."""
+        candidates = [
+            {
+                "similarity": 0.81480123456789,
+                "confidence": 75.3,
+                "camera_id": "C01",
+                "timestamp": "10:02:20.50",
+                "crop_path": "path1",
+                "track_id": 100,
+                "frame": 607,
+            }
+        ]
+        output = format_full_output(
+            candidates=candidates,
+            query_path="q.jpg",
+            gallery_path="g.json",
+            top_k=1,
+            model_name="osnet_x1_0",
+            embedding_dim=512,
+            gallery_size=1,
+            threshold=0.74,
+            status="matches_found",
+        )
+
+        sim = output["results"][0]["similarity"]
+        # Should be rounded to 6 decimal places
+        assert sim == round(0.81480123456789, 6)
+
+    def test_full_format_result_field_completeness(self):
+        """Each result record should have exactly the expected fields."""
+        candidates = self._build_candidates()[:1]
+        output = format_full_output(
+            candidates=candidates,
+            query_path="q.jpg",
+            gallery_path="g.json",
+            top_k=1,
+            model_name="osnet_x1_0",
+            embedding_dim=512,
+            gallery_size=5,
+            threshold=0.74,
+            status="matches_found",
+        )
+
+        expected_keys = {"rank", "similarity", "confidence", "crop_path",
+                         "camera_id", "track_id", "frame"}
+        assert set(output["results"][0].keys()) == expected_keys

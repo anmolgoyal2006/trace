@@ -41,9 +41,9 @@ reid:
 
   kpr:
     model: "kpr_swin_small"    # KPR Swin-Small backbone (ECCV 2024)
-    holistic_dim: 768          # holistic embedding dimension
-    num_parts: 5               # update after probing actual model output (embed_kpr.py logs this)
-    part_dim: 768              # per-part embedding dimension
+    holistic_dim: 512          # holistic embedding dimension (probed from kpr_occ_pt weights)
+    num_parts: 8               # probed from kpr_occ_pt weights via embed_kpr.py
+    part_dim: 512              # per-part embedding dimension (probed)
     vis_threshold: 0.3         # minimum per-part visibility score to include in similarity
     weights: ""                # path to .pth.tar checkpoint
                                # download: https://drive.google.com/file/d/1Np5wu3nQa_Fl_z7Zw2kchJNC8JZVwsh5/view

@@ -1,4 +1,5 @@
 ultralytics
+lapx>=0.5.2
 torchreid
 opencv-python
 numpy

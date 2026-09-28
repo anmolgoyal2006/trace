@@ -6,6 +6,7 @@ PATCH /{id} lets the user update location, start_time, and transit times
 without editing any config files — the changes are persisted to the DB
 and written back to camera_graph.json so the route service picks them up.
 """
+from __future__ import annotations
 
 import json
 

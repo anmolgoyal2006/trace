@@ -17,9 +17,14 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None  # type: ignore[no-redef]
+    # OSNet model unavailable — EmbeddingService stays not-ready and
+    # embedding/search endpoints return 503 until torch is installed.
 from loguru import logger
 from PIL import Image
 
@@ -44,8 +49,8 @@ class EmbeddingService:
     """
 
     def __init__(self) -> None:
-        self._model: Optional[torch.nn.Module] = None
-        self._device: Optional[torch.device] = None
+        self._model: Optional[Any] = None
+        self._device: Optional[Any] = None
         self._transform = None   # set when model loads
 
     # ------------------------------------------------------------------ #
@@ -59,6 +64,11 @@ class EmbeddingService:
         This is intentionally synchronous — it runs during the FastAPI
         lifespan startup phase before the event loop handles requests.
         """
+        if torch is None:
+            raise RuntimeError(
+                "torch is not installed — OSNet model unavailable. "
+                "Install torch to enable embedding/search endpoints."
+            )
         from ai_pipeline.reid.embed import load_model, select_device, _TRANSFORM
 
         logger.info("[EmbeddingService] Loading OSNet x1_0...")

@@ -41,6 +41,7 @@ Expected result on the TRACE MVP dataset:
     Failed                 : 0
     Embedding dimension    : 512
 """
+from __future__ import annotations
 
 import argparse
 import json

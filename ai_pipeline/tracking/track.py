@@ -35,6 +35,30 @@ from ultralytics import YOLO  # noqa: E402
 CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.yaml"
 
 
+def _load_yolo_model(model_name: str):
+    """
+    Load a YOLO checkpoint with PyTorch>=2.6 compatibility.
+
+    torch.load defaults to weights_only=True since 2.6, which rejects
+    Ultralytics checkpoints (DetectionModel, Conv, Sequential, ...).
+    yolov8n.pt is a trusted local checkpoint, so temporarily force
+    weights_only=False for the duration of YOLO() init only.
+    """
+    import torch
+
+    _orig_load = torch.load
+
+    def _patched_load(*args, **kwargs):
+        kwargs.setdefault("weights_only", False)
+        return _orig_load(*args, **kwargs)
+
+    torch.load = _patched_load
+    try:
+        return YOLO(model_name)
+    finally:
+        torch.load = _orig_load
+
+
 # ---------------------------------------------------------------------------
 # Tracking
 # ---------------------------------------------------------------------------
@@ -57,7 +81,7 @@ def run_tracking(
     model_name = det_cfg["model"]
     print(f"[INFO] Loading model : {model_name}")
     try:
-        model = YOLO(model_name)
+        model = _load_yolo_model(model_name)
     except Exception as e:
         sys.exit(f"[ERROR] Could not load YOLO model '{model_name}': {e}")
 
