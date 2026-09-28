@@ -179,7 +179,7 @@
         <div class="telem-divider"></div>
         <div class="hero-stat-item">
           <span class="hero-stat-lbl">MATRIX PRECISION:</span>
-          <span class="hero-stat-val" style="color:var(--green)">94.8% ACCURACY</span>
+          <span class="hero-stat-val" style="color:var(--green)">EVIDENCE-BASED SCORING</span>
         </div>
       </div>
 
@@ -208,7 +208,7 @@
               <div class="vp-crosshair bottom-right">+</div>
               
               <div class="vp-bbox bbox-active" style="top:25%; left:35%; width:28%; height:55%;">
-                <span class="bbox-label">TARGET #104 · 94.2% MATCH</span>
+                <span class="bbox-label">CAMERA C01 ACTIVE</span>
                 <span class="bbox-corner tl"></span>
                 <span class="bbox-corner tr"></span>
                 <span class="bbox-corner bl"></span>
@@ -408,9 +408,9 @@
             <div class="alert-item">
               <div class="alert-severity-dot sev-HIGH"></div>
               <div class="alert-content">
-                <div class="alert-title">Suspect Match Detected</div>
-                <div class="alert-msg">Subject #104 matched on Camera C01 (Entrance) with 94.2% confidence</div>
-                <div class="alert-time">10:42:15 UTC</div>
+                <div class="alert-title">System Ready</div>
+                <div class="alert-msg">Upload a video and run a query to generate real sightings and alerts</div>
+                <div class="alert-time">—</div>
               </div>
               <button class="btn btn-ghost btn-xs">Acknowledge</button>
             </div>
@@ -471,7 +471,7 @@
         <div class="telem-divider"></div>
         <div class="hero-stat-item">
           <span class="hero-stat-lbl">CONFIDENCE THRESHOLD:</span>
-          <span class="hero-stat-val" style="color:var(--green)">0.65 (65.0%)</span>
+          <span class="hero-stat-val" style="color:var(--green)">0.74 (OSNet) — similarity-derived</span>
         </div>
       </div>
 
@@ -557,30 +557,9 @@
             </h2>
           </div>
           <div class="card-body" id="query-result-body">
-            <div class="result-banner ok">Re-ID Match Trajectory Confirmed — 3 Camera Nodes Matched (94.2% Confidence)</div>
-            <div style="font-family:var(--font-mono);font-size:.8rem;color:var(--cyan);margin-top:1.25rem;font-weight:800">MATCH CANDIDATE GALLERIES</div>
-            <div class="matches-grid">
-              <div class="match-card">
-                <div style="width:100%;height:105px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;border:1.5px solid var(--green)">👤</div>
-                <div class="match-conf" style="margin-top:.5rem">94.2%</div>
-                <div class="match-cam">C01 — Entrance</div>
-                <div style="font-size:.75rem;color:var(--text-3);font-family:var(--font-mono)">10:42:15 UTC</div>
-              </div>
-              <div class="match-card">
-                <div style="width:100%;height:105px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;border:1.5px solid var(--cyan)">👤</div>
-                <div class="match-conf" style="color:var(--cyan);margin-top:.5rem">89.5%</div>
-                <div class="match-cam">C02 — Corridor</div>
-                <div style="font-size:.75rem;color:var(--text-3);font-family:var(--font-mono)">10:43:35 UTC</div>
-              </div>
-              <div class="match-card">
-                <div style="width:100%;height:105px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;border:1.5px solid var(--green)">👤</div>
-                <div class="match-conf" style="margin-top:.5rem">92.1%</div>
-                <div class="match-cam">C03 — Canteen</div>
-                <div style="font-size:.75rem;color:var(--text-3);font-family:var(--font-mono)">10:45:00 UTC</div>
-              </div>
-            </div>
-            <div style="margin-top:1.5rem;display:flex;gap:.85rem">
-              <button class="btn btn-primary btn-sm" onclick="loadDemoRoute()">Inspect 3D Vector Route →</button>
+            <div style="padding:2rem;text-align:center;color:var(--text-3);font-family:var(--font-mono);font-size:.85rem">
+              Submit a query above to see real match results.<br/>
+              No fabricated scores are shown here.
             </div>
           </div>
         </div>
@@ -756,33 +735,27 @@
                 <div class="timeline-cam-name">C01</div>
                 <div class="timeline-cam-loc">Entrance</div>
               </div>
-              <div class="timeline-track">
-                <div class="tl-marker conf-high" style="left:25%" title="Target #104 · 94.2% Match (10:42:15)"></div>
-              </div>
+              <div class="timeline-track"></div>
             </div>
             <div class="timeline-row">
               <div class="timeline-cam">
                 <div class="timeline-cam-name">C02</div>
                 <div class="timeline-cam-loc">Corridor</div>
               </div>
-              <div class="timeline-track">
-                <div class="tl-marker conf-mid" style="left:52%" title="Target #108 · 89.5% Match (10:43:35)"></div>
-              </div>
+              <div class="timeline-track"></div>
             </div>
             <div class="timeline-row">
               <div class="timeline-cam">
                 <div class="timeline-cam-name">C03</div>
                 <div class="timeline-cam-loc">Canteen</div>
               </div>
-              <div class="timeline-track">
-                <div class="tl-marker conf-high" style="left:80%" title="Target #112 · 92.1% Match (10:45:00)"></div>
-              </div>
+              <div class="timeline-track"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Extra Timeline Sighting Gallery Strip -->
+      <!-- Candidate snapshots populated by JS after session loads -->
       <div class="card hud-card">
         <div class="card-header">
           <h2 class="card-title">
@@ -790,23 +763,9 @@
             Selected Session Candidate Snapshots
           </h2>
         </div>
-        <div class="card-body">
-          <div class="matches-grid">
-            <div class="match-card">
-              <div style="width:100%;height:100px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;border:1.5px solid var(--green)">👤</div>
-              <div class="match-conf" style="margin-top:.4rem">94.2%</div>
-              <div class="match-cam">C01 — 10:42:15 UTC</div>
-            </div>
-            <div class="match-card">
-              <div style="width:100%;height:100px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;border:1.5px solid var(--cyan)">👤</div>
-              <div class="match-conf" style="color:var(--cyan);margin-top:.4rem">89.5%</div>
-              <div class="match-cam">C02 — 10:43:35 UTC</div>
-            </div>
-            <div class="match-card">
-              <div style="width:100%;height:100px;background:var(--surface3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;border:1.5px solid var(--green)">👤</div>
-              <div class="match-conf" style="margin-top:.4rem">92.1%</div>
-              <div class="match-cam">C03 — 10:45:00 UTC</div>
-            </div>
+        <div class="card-body" id="timeline-candidates">
+          <div style="padding:1.5rem;text-align:center;color:var(--text-3);font-family:var(--font-mono);font-size:.82rem">
+            Select a completed session above to see real candidate snapshots.
           </div>
         </div>
       </div>
