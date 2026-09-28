@@ -1,78 +1,81 @@
 """
 matching_service.py — MatchingService
-Cross-camera Re-ID matching using appearance embeddings.
+Cross-camera Re-ID matching with evidence hierarchy and face identity veto.
 
-Given a query embedding and one or more per-camera gallery files, this
-service finds matching tracks in each camera and returns them ranked by
-appearance score.
+Evidence hierarchy (highest to lowest weight):
+  1. Face identity veto   — ArcFace biometric identity check
+  2. KPR part-based sim   — appearance, part-aligned, occlusion-robust
+  3. Body sim (OSNet)     — global appearance baseline
+  Spatial + temporal      — handled by RouteService after candidate selection
 
-Embedding backbone compatibility
----------------------------------
-This service is dimension-agnostic.  cosine_similarity() (similarity.py)
-operates on plain NumPy arrays and accepts any vector length, so it works
-identically with:
+Match status model
+------------------
+Every candidate track gets one of five statuses:
 
-  • OSNet x1_0  (embed.py)              → 512-dim embeddings
-  • SOLIDER Swin-Small (embed_solider.py) → 768-dim embeddings
+  CONFIDENT_MATCH
+      Fused score >= backbone no_match_threshold AND
+      no reliable face contradiction.
 
-Cross-camera ranking fix (Phase 5.4):
-    search_camera_top_k() returns up to `candidate_tracks` CameraMatch
-    objects per camera (one per qualifying track, sorted by effective score
-    descending).  RouteService evaluates all candidates against spatial and
-    temporal context during the greedy walk.
+  POSSIBLE_MATCH_REVIEW
+      Fused score >= soft_floor but < no_match_threshold.
+      Returned for human review but NOT as a confirmed identity.
+      Also used when face evidence is absent/unreliable and appearance
+      score clears soft_floor but not the full threshold.
 
-    search_camera() is retained for backwards compatibility.
+  FACE_MISMATCH
+      Query and gallery face are BOTH reliable (coverage >= min_coverage
+      AND detection confidence >= face_min_query_confidence) AND
+      face_sim < face_match_threshold.
+      Body/KPR similarity no matter how high CANNOT override this.
 
-Face fusion (Step 2):
-    When face_gallery and query_face_embedding are both provided, a face
-    signal is fused with the body score per track:
+  NO_CONFIDENT_MATCH
+      No track cleared even soft_floor. Returned with top candidates
+      for human visual review.
 
-        fused = (body_w * body_sim + face_w * face_sim) / (body_w + face_w)
+  NO_USABLE_EVIDENCE
+      Gallery is empty or all crops failed preprocessing.
 
-    Face is only used when face_coverage >= 0.3 for that track.
-    face_gallery=None is a strict no-op.
+Face veto design
+----------------
+The face veto is applied ONLY when BOTH sides have reliable face evidence:
+  - Query face: detected with confidence >= face_min_query_confidence
+  - Gallery track: face_coverage >= face_min_coverage (default 0.3)
 
-KPR part-based fusion (Step 3):
-    When kpr_gallery and query_kpr are both provided, part-aware similarity
-    (kpr_similarity.part_aware_similarity) replaces the body signal as the
-    primary appearance term.  KPR dominates because it is strictly better
-    at partial / occluded bodies.
+When face evidence is absent or unreliable on either side, the veto is
+NOT applied — we do not penalise occluded or rear-facing persons.
 
-    Triple fusion formula (all three signals active simultaneously):
+A FACE_MISMATCH candidate is still returned in the top-N for human review.
+It is never promoted to CONFIDENT_MATCH regardless of body/KPR scores.
 
-        fused = (kpr_w * kpr_sim
-                 + face_w * face_flag * face_sim
-                 + body_w * body_sim)
-                /
-                (kpr_w + face_w * face_flag + body_w)
+Backbone-aware thresholds
+-------------------------
+OSNet (512-dim)  : no_match_threshold=0.74,  soft_floor=0.60
+SOLIDER (768-dim): no_match_threshold=0.94,  soft_floor=0.90
 
-        kpr_w    = settings.fusion_kpr_weight   (default 0.60)
-        face_w   = settings.fusion_face_weight  (default 0.30)
-        body_w   = settings.fusion_body_weight  (default 0.40)
-        face_flag = 1 if face_coverage >= 0.3 else 0
+The active threshold is selected from the embedding dimension of the first
+gallery record.  Using OSNet thresholds for SOLIDER is incorrect because
+SOLIDER different-track similarities cluster at 0.83–0.92.
 
-    Each signal can be active independently:
-        body only          : kpr_gallery=None, face_gallery=None  → unchanged
-        body + face        : kpr_gallery=None, face provided
-        body + KPR         : face_gallery=None, kpr provided
-        body + face + KPR  : all three provided
+All thresholds are EMPIRICAL / MVP values — NOT calibrated probabilities.
 
-    kpr_gallery=None AND face_gallery=None reproduces byte-for-byte identical
-    output to the pre-fusion codebase. Zero regressions.
+Confidence score terminology
+-----------------------------
+best_confidence is a "similarity-derived match score" in [0, 100].
+It is NOT "P(same person) = X%".  It is not displayed as "accuracy".
+See confidence_scaling.py for the full disclaimer.
 
-Uses:
-  - ai_pipeline/reid/similarity.py        → cosine_similarity
-  - ai_pipeline/reid/track_aggregation.py → aggregate_by_track
-  - ai_pipeline/reid/confidence_scaling.py→ similarity_to_confidence
-  - ai_pipeline/reid/face_similarity.py   → face_cosine_similarity,
-                                            aggregate_face_by_track
-  - ai_pipeline/reid/kpr_similarity.py    → aggregate_kpr_by_track
-  - config.no_match_threshold             (0.74)
-  - config.fusion_kpr_weight / fusion_face_weight / fusion_body_weight
+Zero-regression guarantee
+--------------------------
+face_gallery=None AND kpr_gallery=None → body-only path is taken.
+The body-only path produces byte-for-byte identical results to pre-fusion
+code because _effective_score() returns body_sim unchanged in that case.
 """
+
+from __future__ import annotations
 
 import sys
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -86,15 +89,35 @@ if str(settings.repo_root) not in sys.path:
 
 from ai_pipeline.reid.similarity import cosine_similarity                  # noqa: E402
 from ai_pipeline.reid.track_aggregation import aggregate_by_track          # noqa: E402
-from ai_pipeline.reid.confidence_scaling import similarity_to_confidence   # noqa: E402
+from ai_pipeline.reid.confidence_scaling import (                          # noqa: E402
+    similarity_to_confidence,
+    get_backbone_config,
+    BACKBONE_OSNET_512,
+)
 from ai_pipeline.reid.face_similarity import (                             # noqa: E402
     face_cosine_similarity,
     aggregate_face_by_track,
 )
 from ai_pipeline.reid.kpr_similarity import aggregate_kpr_by_track         # noqa: E402
 
-# Minimum face_coverage for a track before its face signal is trusted.
-_FACE_COVERAGE_MIN: float = 0.3
+
+# ---------------------------------------------------------------------------
+# Match status enum
+# ---------------------------------------------------------------------------
+
+class MatchStatus(str, Enum):
+    """
+    Identity decision for a single candidate track.
+
+    Statuses are mutually exclusive and ordered by confidence.
+    FACE_MISMATCH overrides CONFIDENT_MATCH when reliable face evidence
+    contradicts the appearance match.
+    """
+    CONFIDENT_MATCH       = "CONFIDENT_MATCH"
+    POSSIBLE_MATCH_REVIEW = "POSSIBLE_MATCH_REVIEW"
+    FACE_MISMATCH         = "FACE_MISMATCH"
+    NO_CONFIDENT_MATCH    = "NO_CONFIDENT_MATCH"
+    NO_USABLE_EVIDENCE    = "NO_USABLE_EVIDENCE"
 
 
 # ---------------------------------------------------------------------------
@@ -104,40 +127,72 @@ _FACE_COVERAGE_MIN: float = 0.3
 @dataclass
 class CameraMatch:
     """
-    A matching track found in a single camera's gallery.
+    A candidate track found in a single camera's gallery.
 
-    All scores are in [0.0, 1.0] unless noted.
-    confidence is in [0.0, 100.0].
+    Scores
+    ------
+    appearance_score   : max cosine body similarity for this track
+    mean_top3_similarity: mean of top-3 crops (body backbone)
+    best_confidence    : similarity-derived match score [0, 100]
+                         NOT an identity probability — label as "Match score"
+    mean_confidence    : mean_top3 scaled the same way
 
-    Optional fusion fields (populated only when the relevant gallery is
-    provided to search_camera_top_k):
+    Identity decision
+    -----------------
+    match_status       : MatchStatus enum — the primary identity decision
+    face_veto_applied  : True when a reliable face mismatch was detected
+    face_veto_reason   : human-readable explanation when veto was applied
 
-        face_sim         — face cosine similarity, or None (coverage < 0.3
-                           or face_gallery not provided).
-        face_weight      — weight applied to face_sim in the fusion
-                           (0.0 when face not used).
-        kpr_sim          — part-aware similarity from KPR, or None
-                           (kpr_gallery not provided).
-        mean_visible_parts — mean number of mutually visible KPR parts across
-                             gallery crops for this track, or None.
+    Face fusion fields (None when face_gallery not provided)
+    ---------------------------------------------------------
+    face_sim           : ArcFace cosine sim, or None
+    face_weight        : weight applied in fusion (0 when not used)
+    face_coverage      : fraction of gallery crops with detected face
+    query_face_reliable: True when query face met quality threshold
+    gallery_face_reliable: True when gallery track met coverage threshold
+
+    KPR fusion fields (None when kpr_gallery not provided)
+    -------------------------------------------------------
+    kpr_sim            : part-aware similarity, or None
+    mean_visible_parts : avg mutually-visible parts per crop pair
+
+    Debug
+    -----
+    fused_score        : raw weighted-average score before threshold check
+    active_backbone    : name of body backbone used (e.g. "OSNet x1_0")
+    embedding_dim      : dimension of body embeddings
     """
     camera_id: str
     track_id: int
-    appearance_score: float          # max cosine similarity for this track
-    mean_top3_similarity: float      # mean of top-3 crops for this track
-    best_confidence: float           # similarity_to_confidence(appearance_score), [0,100]
-    mean_confidence: float           # similarity_to_confidence(mean_top3), [0,100]
+    appearance_score: float
+    mean_top3_similarity: float
+    best_confidence: float           # similarity-derived score, NOT probability
+    mean_confidence: float
     first_seen: Optional[str] = None
     last_seen: Optional[str] = None
     best_crop_path: Optional[str] = None
-    # crop-level records for this track (sorted by similarity desc)
     top_crops: list[dict] = field(default_factory=list)
-    # face fusion fields — None when face_gallery not provided
+
+    # Identity decision
+    match_status: MatchStatus = MatchStatus.POSSIBLE_MATCH_REVIEW
+    face_veto_applied: bool = False
+    face_veto_reason: Optional[str] = None
+
+    # Face fusion
     face_sim: Optional[float] = None
     face_weight: float = 0.0
-    # KPR fusion fields — None when kpr_gallery not provided
+    face_coverage: Optional[float] = None
+    query_face_reliable: bool = False
+    gallery_face_reliable: bool = False
+
+    # KPR fusion
     kpr_sim: Optional[float] = None
     mean_visible_parts: Optional[float] = None
+
+    # Debug
+    fused_score: float = 0.0
+    active_backbone: str = "OSNet x1_0"
+    embedding_dim: int = 512
 
 
 # ---------------------------------------------------------------------------
@@ -146,33 +201,61 @@ class CameraMatch:
 
 class MatchingService:
     """
-    Cross-camera appearance matching with optional face and KPR fusion.
+    Cross-camera appearance matching with evidence hierarchy.
 
-    Fusion modes (controlled by optional params to search_camera_top_k):
+    Evidence hierarchy (most authoritative first):
+      1. Face identity veto  — overrides body/KPR if both faces are reliable
+      2. KPR part-aware sim  — best for occluded / partial bodies
+      3. Body cosine sim     — always computed, always present
 
-        body only          → kpr_gallery=None, face_gallery=None (default)
-        body + face        → face_gallery + query_face_embedding provided
-        body + KPR         → kpr_gallery + query_kpr provided
-        body + face + KPR  → all four optional params provided
+    Fusion modes (controlled by optional params):
+      body only          : kpr_gallery=None, face_gallery=None  → unchanged
+      body + face        : face_gallery + query_face_embedding provided
+      body + KPR         : kpr_gallery + query_kpr provided
+      body + face + KPR  : all four provided
 
-    All modes degrade gracefully: a missing or erroring signal is dropped
-    and the remaining active signals are re-normalised. The body signal is
-    always present and is never dropped.
-
-    Legacy methods search_camera() and search_all_cameras() call
-    search_camera_top_k() with no optional params — identical to pre-fusion
-    behaviour, byte-for-byte.
+    Zero-regression: face_gallery=None AND kpr_gallery=None → identical
+    output to pre-fusion code (body-only path, byte-for-byte).
     """
 
     def __init__(self) -> None:
-        self._threshold   = settings.no_match_threshold
-        self._body_weight = settings.fusion_body_weight
-        self._face_weight = settings.fusion_face_weight
-        self._kpr_weight  = settings.fusion_kpr_weight
-        self._kpr_vis_thr = settings.kpr_vis_threshold
+        self._body_weight   = settings.fusion_body_weight
+        self._face_weight   = settings.fusion_face_weight
+        self._kpr_weight    = settings.fusion_kpr_weight
+        self._kpr_vis_thr   = settings.kpr_vis_threshold
+        # Face veto parameters
+        self._face_match_thr        = settings.face_match_threshold
+        self._face_min_coverage     = settings.face_min_coverage
+        self._face_min_query_conf   = settings.face_min_query_confidence
 
     # ------------------------------------------------------------------ #
-    # Shared internals                                                     #
+    # Backbone detection                                                   #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _detect_backbone(gallery: list[dict]) -> tuple[str, int, float, float]:
+        """
+        Infer active body backbone from gallery embedding dimension.
+
+        Returns (backbone_name, embedding_dim, no_match_threshold, soft_floor).
+        Falls back to OSNet if gallery is empty or embedding is missing.
+        """
+        for rec in gallery:
+            emb = rec.get("embedding")
+            if emb:
+                dim = len(emb)
+                cfg = get_backbone_config(dim)
+                return cfg.name, dim, cfg.no_match_threshold, cfg.soft_floor
+        # Fallback to OSNet defaults
+        return (
+            BACKBONE_OSNET_512.name,
+            BACKBONE_OSNET_512.embedding_dim,
+            BACKBONE_OSNET_512.no_match_threshold,
+            BACKBONE_OSNET_512.soft_floor,
+        )
+
+    # ------------------------------------------------------------------ #
+    # Similarity computation helpers                                       #
     # ------------------------------------------------------------------ #
 
     def _compute_crop_similarities(
@@ -183,10 +266,8 @@ class MatchingService:
     ) -> list[dict]:
         """
         Compute cosine similarity between query and every gallery crop.
-
-        Returns a flat list of dicts with keys:
-            track_id, similarity, timestamp, crop_path, frame
-        Crops matching source_crop_path are excluded (anti-leakage).
+        Excludes source_crop_path (anti-leakage).
+        Returns list of {track_id, similarity, timestamp, crop_path, frame}.
         """
         crop_sims: list[dict] = []
         for rec in gallery:
@@ -217,11 +298,11 @@ class MatchingService:
         face_gallery: list[dict],
     ) -> dict[int | str, dict]:
         """
-        Return per-track face similarity info.
+        Compute per-track face similarity info from gallery.
 
         Returns dict keyed by track_id:
-            face_sim      float | None  — query-vs-track-centroid cosine sim
-            face_coverage float         — fraction of crops with detected face
+            face_sim      float | None
+            face_coverage float
         """
         import numpy as np
 
@@ -230,7 +311,7 @@ class MatchingService:
 
         for track_id, stats in face_track_stats.items():
             coverage = stats["face_coverage"]
-            if coverage < _FACE_COVERAGE_MIN or stats["num_face_detected"] == 0:
+            if coverage < self._face_min_coverage or stats["num_face_detected"] == 0:
                 result[track_id] = {"face_sim": None, "face_coverage": coverage}
                 continue
 
@@ -262,11 +343,11 @@ class MatchingService:
         kpr_gallery: list[dict],
     ) -> dict[int | str, dict]:
         """
-        Return per-track KPR part-aware similarity info.
+        Compute per-track KPR part-aware similarity info.
 
         Returns dict keyed by track_id:
-            kpr_sim             float  — max part-aware similarity
-            mean_visible_parts  float  — average visible-parts count per crop
+            kpr_sim            float
+            mean_visible_parts float
         """
         try:
             track_stats = aggregate_kpr_by_track(
@@ -276,13 +357,66 @@ class MatchingService:
             logger.warning(f"[MatchingService] aggregate_kpr_by_track failed: {exc}")
             return {}
 
-        result: dict[int | str, dict] = {}
-        for track_id, stats in track_stats.items():
-            result[track_id] = {
-                "kpr_sim":           stats["max_part_aware_sim"],
+        return {
+            track_id: {
+                "kpr_sim":            stats["max_part_aware_sim"],
                 "mean_visible_parts": stats["mean_visible_parts"],
             }
-        return result
+            for track_id, stats in track_stats.items()
+        }
+
+    # ------------------------------------------------------------------ #
+    # Face veto logic                                                      #
+    # ------------------------------------------------------------------ #
+
+    def _check_face_veto(
+        self,
+        track_id: int | str,
+        face_info: dict[int | str, dict],
+        query_face_reliable: bool,
+    ) -> tuple[bool, Optional[str], Optional[float], Optional[float]]:
+        """
+        Determine whether this track should be vetoed on face evidence.
+
+        A veto fires ONLY when:
+          - query face is reliable (detected with sufficient confidence)
+          - gallery track has sufficient face coverage (>= face_min_coverage)
+          - face similarity is below face_match_threshold
+
+        Returns (veto, reason, face_sim, face_coverage).
+        veto=False means either evidence is absent/unreliable (no veto) OR
+        face similarity is high enough (no mismatch).
+        """
+        if not query_face_reliable:
+            return False, None, None, None
+
+        fi = face_info.get(track_id, {})
+        face_sim     = fi.get("face_sim")
+        face_coverage = fi.get("face_coverage", 0.0)
+        gallery_face_reliable = (
+            face_sim is not None
+            and face_coverage is not None
+            and face_coverage >= self._face_min_coverage
+        )
+
+        if not gallery_face_reliable:
+            # Gallery track has no reliable face — cannot veto, cannot confirm
+            return False, None, face_sim, face_coverage
+
+        if face_sim < self._face_match_thr:
+            reason = (
+                f"face_sim={face_sim:.4f} < face_match_threshold={self._face_match_thr:.4f} "
+                f"(coverage={face_coverage:.2f}). "
+                f"Query and gallery face evidence is reliable but contradicts appearance match. "
+                f"Note: face_match_threshold is an initial empirical value — NOT calibrated."
+            )
+            return True, reason, face_sim, face_coverage
+
+        return False, None, face_sim, face_coverage
+
+    # ------------------------------------------------------------------ #
+    # Camera match builder                                                 #
+    # ------------------------------------------------------------------ #
 
     def _build_camera_match(
         self,
@@ -291,8 +425,10 @@ class MatchingService:
         stats: dict,
         crop_sims: list[dict],
         crops_top_k: int,
+        embedding_dim: int,
+        backbone_name: str,
     ) -> CameraMatch:
-        """Build a CameraMatch for one track given its aggregated body stats."""
+        """Build a CameraMatch for one track from its aggregated body stats."""
         track_crops = sorted(
             [c for c in crop_sims if c["track_id"] == track_id],
             key=lambda c: c["similarity"],
@@ -312,14 +448,20 @@ class MatchingService:
             track_id=int(track_id),
             appearance_score=round(appearance_score, 6),
             mean_top3_similarity=round(stats["mean_top3_similarity"], 6),
-            best_confidence=round(similarity_to_confidence(appearance_score), 1),
+            best_confidence=round(
+                similarity_to_confidence(appearance_score, embedding_dim=embedding_dim), 1
+            ),
             mean_confidence=round(
-                similarity_to_confidence(stats["mean_top3_similarity"]), 1
+                similarity_to_confidence(
+                    stats["mean_top3_similarity"], embedding_dim=embedding_dim
+                ), 1
             ),
             first_seen=first_seen,
             last_seen=last_seen,
             best_crop_path=best_crop,
             top_crops=top_crops,
+            active_backbone=backbone_name,
+            embedding_dim=embedding_dim,
         )
 
     # ------------------------------------------------------------------ #
@@ -334,57 +476,57 @@ class MatchingService:
         source_crop_path: Optional[str] = None,
         candidate_tracks: int = 3,
         crops_top_k: int = 5,
-        # ---- Step 2: face fusion (optional) ----------------------------
+        # ---- face fusion (optional) -----------------------------------
         face_gallery: Optional[list[dict]] = None,
         query_face_embedding: Optional[list[float]] = None,
-        # ---- Step 3: KPR fusion (optional) ----------------------------
+        query_face_confidence: Optional[float] = None,
+        # ---- KPR fusion (optional) ------------------------------------
         kpr_gallery: Optional[list[dict]] = None,
         query_kpr: Optional[dict] = None,
     ) -> list[CameraMatch]:
         """
         Return up to *candidate_tracks* CameraMatch objects for *camera_id*,
-        one per qualifying track, sorted by effective fused score descending.
+        sorted by fused score descending.
 
-        When all optional gallery parameters are None (the default) this
-        method is byte-for-byte identical to the pre-fusion implementation.
+        Every returned candidate includes a match_status field:
+          CONFIDENT_MATCH, POSSIBLE_MATCH_REVIEW, or FACE_MISMATCH.
 
-        Fusion modes
-        ------------
-        Signals present at call time determine the active fusion:
+        Even below the no_match threshold, up to candidate_tracks tracks
+        above soft_floor are returned as POSSIBLE_MATCH_REVIEW so the
+        caller can show them for human review.
 
-            body only:         kpr_gallery=None, face_gallery=None
-            body + face:       face_gallery + query_face_embedding provided
-            body + KPR:        kpr_gallery + query_kpr provided
-            body + face + KPR: all four provided
-
-        Triple-fusion formula:
-            fused = (kpr_w * kpr_sim
-                     + face_w * face_flag * face_sim
-                     + body_w * body_sim)
-                    / (kpr_w + face_w * face_flag + body_w)
-
-            face_flag = 1 if face_coverage >= 0.3, else 0.
-            Each inactive signal (gallery=None) contributes 0 weight.
+        When all optional gallery parameters are None (default), the method
+        is byte-for-byte identical to pre-fusion behaviour (body only).
 
         Args:
-            query_embedding:      Body embedding (any dim, matches gallery).
-            gallery:              Body embedding records for this camera.
-            camera_id:            Camera identifier string.
-            source_crop_path:     Crop to exclude for anti-leakage.
-            candidate_tracks:     Max qualifying tracks to return (default 3).
-            crops_top_k:          Crop records to keep per track (default 5).
-            face_gallery:         Face embedding records, or None.
-            query_face_embedding: ArcFace query embedding, or None.
-            kpr_gallery:          KPR embedding records, or None.
-            query_kpr:            KPR query record dict, or None.
+            query_embedding:        Body embedding (any dim, matches gallery).
+            gallery:                Body embedding records for this camera.
+            camera_id:              Camera identifier.
+            source_crop_path:       Crop to exclude (anti-leakage).
+            candidate_tracks:       Max tracks to return (default 3).
+            crops_top_k:            Crop records per track (default 5).
+            face_gallery:           Face embedding records, or None.
+            query_face_embedding:   ArcFace query embedding, or None.
+            query_face_confidence:  SCRFD detection score for the query face.
+                                    Used to determine if query face is reliable.
+                                    Pass None when face signal is absent.
+            kpr_gallery:            KPR embedding records, or None.
+            query_kpr:              KPR query record dict, or None.
 
         Returns:
-            List of CameraMatch sorted by effective score descending.
-            Empty list when no track clears no_match_threshold.
+            List of CameraMatch, best first.  May be empty if no track
+            clears soft_floor.  The caller must check match_status on
+            each returned match — FACE_MISMATCH must not be treated as
+            CONFIDENT_MATCH.
         """
         if not gallery:
             logger.warning(f"[MatchingService] Empty gallery for camera {camera_id}")
             return []
+
+        # ---- detect backbone + select thresholds -------------------------
+        backbone_name, embedding_dim, no_match_thr, soft_floor = (
+            self._detect_backbone(gallery)
+        )
 
         # ---- body similarities (always computed) -------------------------
         crop_sims = self._compute_crop_similarities(
@@ -401,7 +543,14 @@ class MatchingService:
         # ---- optional face similarities ----------------------------------
         use_face = face_gallery is not None and query_face_embedding is not None
         face_info: dict[int | str, dict] = {}
+        query_face_reliable = False
+
         if use_face:
+            # Query face is reliable only if it was detected with sufficient confidence
+            query_face_reliable = (
+                query_face_confidence is not None
+                and query_face_confidence >= self._face_min_query_conf
+            )
             try:
                 face_info = self._compute_face_similarities(
                     query_face_embedding, face_gallery  # type: ignore[arg-type]
@@ -428,106 +577,152 @@ class MatchingService:
                 )
                 use_kpr = False
 
-        # ---- effective (possibly fused) score per track ------------------
-        def _effective_score(track_id: int | str, body_sim: float) -> float:
+        # ---- compute fused score per track -------------------------------
+        def _fused_score(track_id: int | str, body_sim: float) -> float:
             """
-            Compute fused score for one track.
+            Weighted fusion of body + KPR (+ face when available).
 
-            Body-only path:
-                Returns body_sim unchanged — identical to pre-fusion output.
+            DESIGN: Face is intentionally EXCLUDED from the threshold gating
+            score when a face veto is expected to fire. The gating score uses
+            body+KPR only, so a FACE_MISMATCH candidate is NOT silently dropped
+            below soft_floor — it is returned with status=FACE_MISMATCH for
+            human review. Face only contributes to ranking when face_sim > 0
+            (i.e. it agrees with the appearance match).
 
-            Dual / triple fusion path:
-                fused = (kpr_w * kpr_sim + face_w * face_flag * face_sim
-                         + body_w * body_sim)
-                        / (kpr_w + face_w * face_flag + body_w)
+            More precisely: we include face in fused_score only when face_sim
+            is positive (supportive evidence), not when it contradicts.
+            This prevents the face signal from dragging a high-body-sim track
+            below soft_floor while still using it for positive reinforcement.
             """
-            # Fast path: no optional signals active
+            # Fast path: body only — no new computation
             if not use_face and not use_kpr:
                 return body_sim
 
             numerator   = self._body_weight * body_sim
             denominator = self._body_weight
 
-            # KPR term
             if use_kpr:
                 k_sim = kpr_info.get(track_id, {}).get("kpr_sim")
                 if k_sim is not None:
                     numerator   += self._kpr_weight * k_sim
                     denominator += self._kpr_weight
 
-            # Face term
+            # Face: include in ranking score only when positive (supportive).
+            # When face_sim < 0, it will trigger the veto but must NOT
+            # suppress the candidate below soft_floor before the veto fires.
             if use_face:
                 fi    = face_info.get(track_id, {})
                 f_sim = fi.get("face_sim")
-                if f_sim is not None:
-                    # face_flag = 1 (coverage already verified inside
-                    # _compute_face_similarities; None means flag=0)
+                if f_sim is not None and f_sim > 0:
                     numerator   += self._face_weight * f_sim
                     denominator += self._face_weight
 
-            # denominator is always >= body_weight > 0
             return float(numerator / denominator)
 
-        # ---- rank all tracks by effective score --------------------------
+        # ---- rank by fused score, collect all above soft_floor -----------
         ranked_tracks = sorted(
             track_stats.items(),
-            key=lambda kv: _effective_score(kv[0], kv[1]["max_similarity"]),
+            key=lambda kv: _fused_score(kv[0], kv[1]["max_similarity"]),
             reverse=True,
         )
 
-        matches: list[CameraMatch] = []
-        for track_id, stats in ranked_tracks:
-            effective = _effective_score(track_id, stats["max_similarity"])
+        # Log startup message
+        active_signals = ["body"]
+        if use_face:   active_signals.append("face")
+        if use_kpr:    active_signals.append("KPR")
+        logger.info(
+            f"[MatchingService] camera={camera_id} "
+            f"backbone={backbone_name} dim={embedding_dim} "
+            f"threshold={no_match_thr} soft_floor={soft_floor} "
+            f"signals={'+'.join(active_signals)} "
+            f"query_face_reliable={query_face_reliable}"
+        )
 
-            if effective < self._threshold:
-                break   # sorted — nothing below qualifies
+        matches: list[CameraMatch] = []
+
+        for track_id, stats in ranked_tracks:
             if len(matches) >= candidate_tracks:
                 break
 
+            body_sim = stats["max_similarity"]
+            fused    = _fused_score(track_id, body_sim)
+
+            # Skip tracks below soft_floor entirely
+            if fused < soft_floor:
+                break   # list is sorted — nothing below qualifies
+
+            # Build the base match object
             match = self._build_camera_match(
-                camera_id, track_id, stats, crop_sims, crops_top_k
+                camera_id, track_id, stats, crop_sims,
+                crops_top_k, embedding_dim, backbone_name
+            )
+            match.fused_score = round(fused, 6)
+
+            # ---- face veto check ----------------------------------------
+            veto, veto_reason, f_sim, f_cov = self._check_face_veto(
+                track_id, face_info, query_face_reliable
             )
 
-            # Populate face fields
+            # ---- populate face fields -----------------------------------
             if use_face:
-                fi       = face_info.get(track_id, {})
-                f_sim    = fi.get("face_sim")
-                f_weight = self._face_weight if f_sim is not None else 0.0
-                match.face_sim    = round(f_sim, 6) if f_sim is not None else None
-                match.face_weight = f_weight
+                fi = face_info.get(track_id, {})
+                raw_f_sim = fi.get("face_sim")
+                f_coverage = fi.get("face_coverage", 0.0)
+                match.face_sim    = round(raw_f_sim, 6) if raw_f_sim is not None else None
+                match.face_weight = self._face_weight if raw_f_sim is not None else 0.0
+                match.face_coverage = f_coverage
+                match.query_face_reliable  = query_face_reliable
+                match.gallery_face_reliable = (
+                    raw_f_sim is not None
+                    and f_coverage is not None
+                    and f_coverage >= self._face_min_coverage
+                )
 
-            # Populate KPR fields
+            # ---- populate KPR fields ------------------------------------
             if use_kpr:
                 ki    = kpr_info.get(track_id, {})
                 k_sim = ki.get("kpr_sim")
                 match.kpr_sim            = round(k_sim, 6) if k_sim is not None else None
                 match.mean_visible_parts = ki.get("mean_visible_parts")
 
+            # ---- assign match_status ------------------------------------
+            if veto:
+                match.match_status      = MatchStatus.FACE_MISMATCH
+                match.face_veto_applied = True
+                match.face_veto_reason  = veto_reason
+            elif fused >= no_match_thr:
+                match.match_status = MatchStatus.CONFIDENT_MATCH
+            else:
+                match.match_status = MatchStatus.POSSIBLE_MATCH_REVIEW
+
             matches.append(match)
 
+            # ---- debug log per candidate --------------------------------
             logger.info(
-                f"[MatchingService] camera={camera_id} "
-                f"track={track_id} "
-                f"body_sim={stats['max_similarity']:.4f} "
+                f"[MatchingService] CANDIDATE "
+                f"camera={camera_id} track={track_id} "
+                f"backbone={backbone_name} dim={embedding_dim} | "
+                f"body_sim={body_sim:.4f} "
                 f"kpr_sim={match.kpr_sim} "
                 f"face_sim={match.face_sim} "
-                f"effective={effective:.4f} "
-                f"conf={match.best_confidence:.1f} "
-                f"(candidate {len(matches)}/{candidate_tracks})"
+                f"face_coverage={match.face_coverage} "
+                f"query_face_reliable={query_face_reliable} "
+                f"gallery_face_reliable={match.gallery_face_reliable} | "
+                f"fused={fused:.4f} "
+                f"threshold={no_match_thr} "
+                f"soft_floor={soft_floor} "
+                f"face_veto={veto} | "
+                f"confidence={match.best_confidence:.1f} "
+                f"status={match.match_status.value}"
             )
 
         if not matches:
-            best_body = (
-                ranked_tracks[0][1]["max_similarity"] if ranked_tracks else 0.0
-            )
-            best_eff = (
-                _effective_score(ranked_tracks[0][0], best_body)
-                if ranked_tracks else 0.0
-            )
+            best_body = ranked_tracks[0][1]["max_similarity"] if ranked_tracks else 0.0
+            best_fused = _fused_score(ranked_tracks[0][0], best_body) if ranked_tracks else 0.0
             logger.info(
                 f"[MatchingService] camera={camera_id} "
-                f"best_effective={best_eff:.4f} "
-                f"< threshold={self._threshold} → no confident match"
+                f"best_fused={best_fused:.4f} < soft_floor={soft_floor} "
+                f"→ NO_USABLE_EVIDENCE"
             )
 
         return matches
@@ -545,14 +740,11 @@ class MatchingService:
         top_k: int = 5,
     ) -> Optional[CameraMatch]:
         """
-        Find the single best matching track in *gallery* for *query_embedding*.
+        Return the single best CONFIDENT_MATCH track, or None.
 
-        Returns None if no track exceeds the no-match threshold.
-        Used by the /api/persons/search endpoint and reference-photo enrollment.
+        Used by /api/persons/search and reference-photo enrollment.
+        Only returns a track if its match_status is CONFIDENT_MATCH.
         For the main query pipeline use search_camera_top_k() instead.
-
-        Does NOT accept face_gallery / kpr_gallery — fusion is only available
-        via search_camera_top_k() to keep this legacy method a strict no-op.
         """
         results = self.search_camera_top_k(
             query_embedding=query_embedding,
@@ -562,7 +754,10 @@ class MatchingService:
             candidate_tracks=1,
             crops_top_k=top_k,
         )
-        return results[0] if results else None
+        # Only return a match if it is actually confident
+        if results and results[0].match_status == MatchStatus.CONFIDENT_MATCH:
+            return results[0]
+        return None
 
     def search_all_cameras(
         self,
@@ -572,9 +767,8 @@ class MatchingService:
     ) -> dict[str, Optional[CameraMatch]]:
         """
         Run search_camera() for every camera in *galleries*.
-
         Returns {camera_id: CameraMatch | None}.
-        Retained for backwards compatibility; pipeline uses search_camera_top_k.
+        Retained for backwards compatibility.
         """
         results: dict[str, Optional[CameraMatch]] = {}
         for camera_id, gallery in galleries.items():

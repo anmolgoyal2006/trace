@@ -41,12 +41,29 @@ class Settings(BaseSettings):
     debug: bool = True
 
     # ------------------------------------------------------------------ #
-    # Re-ID / matching                                                     #
+    # Re-ID / matching — OSNet (512-dim)                                  #
     # ------------------------------------------------------------------ #
     reid_model: str = "osnet_x1_0"
     embedding_dim: int = 512
-    no_match_threshold: float = 0.74      # Phase 5.7 evidence-based value
+    # Phase 5.7 evidence-based threshold (small validation set only).
+    # NOT a universally calibrated decision boundary.
+    no_match_threshold: float = 0.74
+    # Candidates above soft_floor but below no_match_threshold are returned
+    # as POSSIBLE_MATCH for human review (not as CONFIDENT_MATCH).
+    soft_floor: float = 0.60
     top_k: int = 5
+
+    # ------------------------------------------------------------------ #
+    # Re-ID / matching — SOLIDER (768-dim)                                #
+    # IMPORTANT: These are INITIAL EMPIRICAL values, NOT calibrated.      #
+    # Different-track pairs cluster at 0.83-0.92 for SOLIDER — OSNet's   #
+    # 0.74 threshold is completely invalid here.                          #
+    # Recalibrate with labelled genuine/impostor data before production.  #
+    # ------------------------------------------------------------------ #
+    solider_no_match_threshold: float = 0.94   # initial empirical — NOT calibrated
+    solider_soft_floor: float = 0.90           # initial empirical — NOT calibrated
+    solider_observed_min: float = 0.83         # empirical lower bound
+    solider_observed_max: float = 0.995        # empirical upper bound
 
     # ------------------------------------------------------------------ #
     # Fusion weights (appearance + spatial + temporal = 1.0)              #
@@ -56,21 +73,36 @@ class Settings(BaseSettings):
     fusion_temporal_weight: float = 0.15
 
     # ------------------------------------------------------------------ #
-    # Fusion weights                                                       #
-    # Body + face (Step 2):  body=0.70, face=0.30                        #
-    # Body + face + KPR (Step 3): KPR dominates; body reduced to 0.40    #
-    # Weights are re-normalised at runtime by the active signal count,    #
-    # so these values only need to reflect relative importance.           #
+    # Fusion weights — body + face + KPR                                  #
+    # Re-normalised at runtime by active signal count.                    #
     # ------------------------------------------------------------------ #
     fusion_body_weight: float = 0.40   # reduced: KPR handles body better
     fusion_face_weight: float = 0.30
     fusion_kpr_weight: float = 0.60   # KPR dominates — best at partial bodies
 
     # ------------------------------------------------------------------ #
+    # Face identity veto                                                   #
+    # When both the query and gallery track have reliable face evidence,   #
+    # a low face similarity can VETO a confident body/KPR match.          #
+    #                                                                      #
+    # face_match_threshold: face similarity must EXCEED this for a        #
+    #   reliable face to be considered a match rather than a mismatch.    #
+    #   INITIAL EMPIRICAL value — not statistically calibrated.           #
+    #                                                                      #
+    # face_min_coverage: minimum fraction of gallery track crops where     #
+    #   a face was detected before the track's face signal is trusted.    #
+    #   Below this → face evidence is unreliable → no veto applied.      #
+    #                                                                      #
+    # face_min_query_confidence: minimum SCRFD detection confidence for   #
+    #   the query face to be considered reliable.                         #
+    # ------------------------------------------------------------------ #
+    face_match_threshold: float = 0.38      # initial empirical — NOT calibrated
+    face_min_coverage: float = 0.30         # ≥30% crops must have a detected face
+    face_min_query_confidence: float = 0.50 # SCRFD score for query face
+
+    # ------------------------------------------------------------------ #
     # KPR (Keypoint Promptable Re-Identification, ECCV 2024)              #
     # ------------------------------------------------------------------ #
-    # Paths are intentionally empty — supply at runtime via environment
-    # variables (KPR_WEIGHTS_PATH, KPR_CONFIG_PATH) or a .env file.
     kpr_weights_path: str = ""   # path to .pth.tar checkpoint
     kpr_config_path: str = ""    # path to KPR yaml config
     kpr_vis_threshold: float = 0.30  # minimum per-part visibility to include
@@ -79,13 +111,12 @@ class Settings(BaseSettings):
     # Face detection / recognition (SCRFD + ArcFace, ONNX Runtime)        #
     # ------------------------------------------------------------------ #
     face_det_threshold: float = 0.50
-    # Paths are intentionally empty by default — supply at runtime via
-    # environment variables (FACE_DET_MODEL, FACE_REC_MODEL) or a .env file.
     face_det_model: str = ""     # path to det_10g.onnx
     face_rec_model: str = ""     # path to w600k_r50.onnx
 
     # ------------------------------------------------------------------ #
     # Confidence scaling (from Phase 4.5 observed distributions)          #
+    # These are OSNet-specific — SOLIDER uses its own range above.        #
     # ------------------------------------------------------------------ #
     similarity_observed_min: float = 0.3315049352393543
     similarity_observed_max: float = 0.9730031552165505

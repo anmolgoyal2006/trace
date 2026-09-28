@@ -178,7 +178,7 @@ class Sighting(Base):
     track_id: Mapped[int] = mapped_column(Integer, nullable=False)
     first_seen: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # HH:MM:SS.ff
     last_seen: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    # Confidence values derived from OSNet similarity
+    # Confidence values derived from body similarity
     best_confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     mean_confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     # Best crop image path for thumbnail display
@@ -191,6 +191,21 @@ class Sighting(Base):
     temporal_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     # Weighted fusion of above three signals
     fusion_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    # Identity decision: CONFIDENT_MATCH | POSSIBLE_MATCH_REVIEW |
+    #                    FACE_MISMATCH | NO_CONFIDENT_MATCH | NO_USABLE_EVIDENCE
+    match_status: Mapped[str] = mapped_column(
+        Text, nullable=False, default="POSSIBLE_MATCH_REVIEW"
+    )
+    # Face veto details (populated when match_status = FACE_MISMATCH)
+    face_veto_applied: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    face_veto_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Optional signals for debugging / display
+    face_sim: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    face_coverage: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    kpr_sim: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    fused_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    active_backbone: Mapped[str] = mapped_column(Text, nullable=False, default="OSNet x1_0")
+    embedding_dim: Mapped[int] = mapped_column(Integer, nullable=False, default=512)
 
     # Relationships
     session: Mapped["QuerySession"] = relationship(

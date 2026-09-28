@@ -149,6 +149,8 @@ class SightingOut(_Base):
     track_id: int
     first_seen: Optional[str]
     last_seen: Optional[str]
+    # Similarity-derived match score [0,100] — NOT an identity probability.
+    # Label as "Match score" or "Similarity score" in the UI, NOT "Accuracy".
     best_confidence: float
     mean_confidence: float
     crop_path: Optional[str]
@@ -156,6 +158,42 @@ class SightingOut(_Base):
     spatial_score: float
     temporal_score: float
     fusion_score: float
+    # Identity decision fields
+    match_status: str = "POSSIBLE_MATCH_REVIEW"
+    face_veto_applied: bool = False
+    face_veto_reason: Optional[str] = None
+    # Signal breakdown for debugging / display
+    face_sim: Optional[float] = None
+    face_coverage: Optional[float] = None
+    kpr_sim: Optional[float] = None
+    fused_score: float = 0.0
+    active_backbone: str = "OSNet x1_0"
+    embedding_dim: int = 512
+
+
+class CandidateTrackOut(BaseModel):
+    """
+    A top candidate track returned for human review even when there is no
+    confident match.  These are the strongest body/KPR/face candidates so
+    an operator can visually verify them.
+
+    Note: best_confidence is a similarity-derived match score, NOT a
+    probability of identity.
+    """
+    camera_id: str
+    track_id: int
+    # Similarity-derived match score [0,100] — NOT identity probability
+    best_confidence: float
+    appearance_score: float
+    fused_score: float
+    match_status: str
+    face_veto_applied: bool = False
+    face_sim: Optional[float] = None
+    face_coverage: Optional[float] = None
+    kpr_sim: Optional[float] = None
+    first_seen: Optional[str] = None
+    crop_path: Optional[str] = None
+    active_backbone: str = "OSNet x1_0"
 
 
 # ===========================================================================
@@ -211,6 +249,16 @@ class QueryRouteOut(BaseModel):
     route_confidence: float = Field(
         description="Mean fusion score across all route steps"
     )
+    # Overall identity decision for this query session.
+    # CONFIDENT_MATCH   : ≥1 camera returned a CONFIDENT_MATCH sighting
+    # POSSIBLE_MATCH_REVIEW: some candidates above soft_floor but none confident
+    # NO_CONFIDENT_MATCH : no track cleared even the soft_floor threshold
+    # Note: even when match_decision != CONFIDENT_MATCH, top_candidates are
+    # returned so an operator can visually verify the strongest tracks.
+    match_decision: str = "NO_CONFIDENT_MATCH"
+    # Up to 3 unique top candidate tracks for human review.
+    # Always populated regardless of match_decision.
+    top_candidates: list[CandidateTrackOut] = Field(default_factory=list)
 
 
 # ===========================================================================
