@@ -764,15 +764,24 @@ async function submitQuery() {
   msg.textContent  = '';
   msg.className    = 'status-inline';
 
-  const pid = document.getElementById('person-select')?.value;
-  if (pid === 'demo-1' || pid === 'demo-2' || (!pid && !_queryPhotoFile)) {
+  // Only read person-select when on the registered-person tab
+  const pid = activeTab === 'tab-person'
+    ? document.getElementById('person-select')?.value
+    : null;
+
+  // Fall into demo only when genuinely no real data is available
+  const isDemoPersonSelected = pid === 'demo-1' || pid === 'demo-2';
+  const hasRealPhoto = activeTab === 'tab-photo' && _queryPhotoFile != null;
+  const hasRealPerson = activeTab === 'tab-person' && pid && !isDemoPersonSelected;
+
+  if (!hasRealPhoto && !hasRealPerson) {
     runDemoSearchAnimation();
     return;
   }
 
   const fd = new FormData();
   if (activeTab === 'tab-person') {
-    if (!pid) { msg.textContent = 'Select a registered target first.'; msg.className = 'status-inline err'; return; }
+    if (!hasRealPerson) { msg.textContent = 'Select a registered target first.'; msg.className = 'status-inline err'; return; }
     fd.append('person_id', pid);
   } else {
     if (!_queryPhotoFile) { msg.textContent = 'Select a reference photo first.'; msg.className = 'status-inline err'; return; }
