@@ -1,0 +1,100 @@
+@startuml UML_Sequence
+!theme plain
+skinparam backgroundColor white
+skinparam sequenceMessageAlign center
+
+title UML Sequence Diagram — Search Person Across Cameras
+
+actor "Operator" as User
+participant "Frontend\n(app.js)" as FE
+participant "FastAPI\n(queries.py)" as API
+participant "PipelineService" as PS
+participant "EmbeddingService" as ES
+participant "MatchingService" as MS
+participant "RouteService" as RS
+database "SQLite DB" as DB
+participant "WebSocketManager" as WS
+
+== Query Submission ==
+
+User -> FE : Upload reference photo\nor select registered person
+FE -> API : POST /api/queries\n(multipart: image or person_id)
+API -> DB : Check no other query is running
+DB --> API : No running session
+API -> DB : Create QuerySession (status=pending)
+DB --> API : session_id
+API --> FE : 202 Accepted {session_id}
+API -> PS : BackgroundTask: run_session(session_id)
+
+== Query Processing ==
+
+PS -> DB : Set status=running, progress=0
+PS -> WS : broadcast query_progress (5%)
+
+alt Query image provided
+    PS -> PS : Auto-crop to largest person (YOLOv8)
+    PS -> ES : embed_single(cropped_image)
+    ES --> PS : 512-d body embedding
+else Registered person
+    PS -> DB : Load person.reference_embedding
+    DB --> PS : Stored 512-d vector
+end
+
+PS -> PS : Face embedding (optional, SCRFD+ArcFace)
+PS -> PS : KPR embedding (optional, subprocess)
+
+PS -> WS : broadcast query_progress (20%)
+
+== Gallery Loading ==
+
+PS -> PS : Load body galleries\n(embeddings_C01.json, C02, C03)
+PS -> PS : Load face galleries (if face signal active)
+PS -> PS : Load KPR galleries (if KPR signal active)
+
+== Per-Camera Matching ==
+
+loop For each camera (C01, C02, C03)
+    PS -> WS : broadcast query_progress (30-70%)
+    PS -> MS : search_camera_top_k(\n  query_embedding, gallery, camera_id,\n  face_gallery, kpr_gallery)
+    MS -> MS : Cosine similarity per crop
+    MS -> MS : aggregate_by_track()
+    MS -> MS : Triple fusion scoring
+    MS -> MS : Threshold check (>= 0.74)
+    MS --> PS : list[CameraMatch] (0..3 tracks)
+end
+
+== Route Reconstruction ==
+
+PS -> WS : broadcast query_progress (75%)
+PS -> RS : reconstruct_route(camera_candidates)
+RS -> RS : Build adjacency from camera_graph.json
+RS -> RS : Select anchor camera
+RS -> RS : Greedy extension\n(spatial + temporal fusion)
+RS --> PS : list[FusedSighting]
+
+== Persistence ==
+
+loop For each route step
+    PS -> DB : INSERT Sighting
+    PS -> WS : broadcast sighting_found
+    PS -> DB : INSERT RouteStep
+end
+
+PS -> DB : UPDATE sightings with\nspatial/temporal/fusion scores
+PS -> DB : COMMIT
+
+== Watchlist Alert ==
+
+opt Person watchlist_status != "none"
+    PS -> DB : INSERT Alert
+    PS -> WS : broadcast alert
+end
+
+== Completion ==
+
+PS -> DB : Set status=done, progress=100
+PS -> WS : broadcast route_complete\n{steps, sightings, confidence}
+WS -> FE : route_complete event
+FE -> User : Display route map,\ntimeline, match crops,\nconfidence scores
+
+@enduml

@@ -627,6 +627,9 @@ class PipelineService:
                 confidence=s.best_confidence,
                 fusion_score=s.fusion_score,
                 crop_path=s.crop_path,
+                matching_mode=getattr(s, "matching_mode", "body"),
+                face_used=getattr(s, "face_used", False),
+                identity_score=getattr(s, "identity_score", s.appearance_score),
             ))
 
         route_out = QueryRouteOut(
@@ -724,6 +727,12 @@ class PipelineService:
             fused_score=match.fused_score,
             active_backbone=match.active_backbone,
             embedding_dim=match.embedding_dim,
+            # Phase 4: face-first identity fields
+            matching_mode=match.matching_mode,
+            face_used=match.face_used,
+            face_similarity=match.face_similarity,
+            body_similarity=match.body_similarity,
+            identity_score=match.appearance_score,
         )
         db.add(sighting)
         await db.flush()

@@ -218,6 +218,9 @@ async def get_route(
             confidence=s.best_confidence,
             fusion_score=s.fusion_score,
             crop_path=s.crop_path,
+            matching_mode=getattr(s, "matching_mode", "body"),
+            face_used=getattr(s, "face_used", False),
+            identity_score=getattr(s, "identity_score", s.appearance_score),
         ))
 
     # Route confidence = mean fusion score

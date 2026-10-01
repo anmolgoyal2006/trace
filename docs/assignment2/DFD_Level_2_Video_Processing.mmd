@@ -1,0 +1,56 @@
+---
+title: "DFD Level 2 — Process 1.0–3.0: Video Processing Pipeline"
+---
+graph TD
+    %% External
+    OP[Operator]
+
+    %% Sub-processes
+    P1_1((1.1<br/>Validate Camera<br/>& Format))
+    P1_2((1.2<br/>Save Video<br/>& Create Job))
+    P2_1((2.1<br/>YOLOv8 Person<br/>Detection))
+    P2_2((2.2<br/>BoT-SORT<br/>Tracking))
+    P3_1((3.1<br/>Frame Sampling<br/>per Track))
+    P3_2((3.2<br/>Quality Filter<br/>Evaluation))
+    P3_3((3.3<br/>Crop Extraction<br/>& Save JPEG))
+    P3_4((3.4<br/>OSNet Batch<br/>Embedding))
+    P3_5((3.5<br/>Optional: Face<br/>Embedding))
+    P3_6((3.6<br/>Optional: KPR<br/>Embedding))
+
+    %% Data Stores
+    DS1[/D1: Raw Videos/]
+    DS2[/D2: Tracks JSON/]
+    DS3[/D3: Crops Directory/]
+    DS3M[/D3M: Crops Metadata JSON/]
+    DS4[/D4: Body Gallery JSON/]
+    DS4F[/D4F: Face Gallery JSON/]
+    DS4K[/D4K: KPR Gallery JSON/]
+
+    %% Flows
+    OP -->|"video + camera_id"| P1_1
+    P1_1 -->|"valid video"| P1_2
+    P1_2 -->|"saved video"| DS1
+    P1_2 -->|"video path + camera_id"| P2_1
+
+    P2_1 -->|"person detections per frame"| P2_2
+    P2_2 -->|"track records"| DS2
+
+    DS2 -->|"track bounding boxes"| P3_1
+    DS1 -->|"video frames"| P3_3
+    P3_1 -->|"sampled frames per track"| P3_2
+    P3_2 -->|"accepted crops"| P3_3
+    P3_2 -->|"rejected crops (reason logged)"| DS3M
+    P3_3 -->|"crop JPEG files"| DS3
+    P3_3 -->|"crop metadata"| DS3M
+
+    DS3M -->|"metadata records"| P3_4
+    DS3 -->|"crop images"| P3_4
+    P3_4 -->|"512-d embeddings"| DS4
+
+    DS3M -->|"metadata records"| P3_5
+    DS3 -->|"crop images"| P3_5
+    P3_5 -->|"face embeddings"| DS4F
+
+    DS3M -->|"metadata records"| P3_6
+    DS3 -->|"crop images"| P3_6
+    P3_6 -->|"part embeddings"| DS4K

@@ -1,0 +1,40 @@
+---
+title: "DFD Level 2 — Process 5.0: Route Reconstruction"
+---
+graph TD
+    %% Input
+    MATCHES[Per-camera candidate matches]
+
+    %% Sub-processes
+    P5_1((5.1<br/>Build Adjacency<br/>from Graph))
+    P5_2((5.2<br/>Anchor Camera<br/>Selection))
+    P5_3((5.3<br/>Spatial Score<br/>Computation))
+    P5_4((5.4<br/>Temporal Score<br/>Computation))
+    P5_5((5.5<br/>Fusion Score<br/>Computation))
+    P5_6((5.6<br/>Greedy Route<br/>Extension))
+    P5_7((5.7<br/>Route Confidence<br/>Aggregation))
+
+    %% Data Stores
+    DS6[/D6: Camera Graph JSON/]
+    DS5[/D5: SQLite DB/]
+
+    %% Output
+    ROUTE[Ordered route with timestamps]
+    WS[WebSocket: route_complete]
+
+    %% Flows
+    DS6 -->|"camera adjacency + transit times"| P5_1
+    MATCHES -->|"candidate tracks per camera"| P5_2
+    P5_1 -->|"adjacency map"| P5_3
+    P5_2 -->|"anchor camera selected"| P5_6
+
+    P5_6 -->|"current camera context"| P5_3
+    P5_3 -->|"spatial score [0,1]"| P5_5
+    P5_6 -->|"timestamp gap"| P5_4
+    P5_4 -->|"temporal score [0,1]"| P5_5
+    P5_5 -->|"fused = 0.60×app + 0.25×spa + 0.15×tem"| P5_6
+
+    P5_6 -->|"ordered FusedSighting list"| P5_7
+    P5_7 -->|"mean fusion confidence"| ROUTE
+    ROUTE -->|"persist sightings + route steps"| DS5
+    ROUTE -->|"route_complete event"| WS

@@ -1,0 +1,120 @@
+@startuml UML_Component
+!theme plain
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+
+title UML Component Diagram — Trace System Architecture
+
+package "Frontend (Vanilla JS SPA)" {
+    [index.html] as HTML
+    [app.js\nDashboard Logic] as APPJS
+    [api.js\nREST + WS Client] as APIJS
+    [styles.css\nHUD Theme] as CSS
+}
+
+package "Backend API (FastAPI)" {
+    [upload.py\n/api/upload] as R_UPLOAD
+    [queries.py\n/api/queries] as R_QUERIES
+    [persons.py\n/api/persons] as R_PERSONS
+    [cameras.py\n/api/cameras] as R_CAMERAS
+    [analytics.py\n/api/analytics] as R_ANALYTICS
+    [WebSocketManager\n/ws] as WS_MGR
+}
+
+package "Service Layer" {
+    [PipelineService\nQuery Orchestrator] as SVC_PIPELINE
+    [MatchingService\nTriple Fusion] as SVC_MATCH
+    [RouteService\nSpatial-Temporal] as SVC_ROUTE
+    [EmbeddingService\nOSNet Inference] as SVC_EMBED
+    [DetectionService\nYOLOv8 Wrapper] as SVC_DET
+    [TrackerService\nBoT-SORT Wrapper] as SVC_TRACK
+    [CropService\nCrop Extraction] as SVC_CROP
+}
+
+package "AI Pipeline (Python Scripts)" {
+    [detect.py\nYOLOv8n Detection] as AI_DET
+    [track.py\nBoT-SORT Tracking] as AI_TRACK
+    [crop_extractor.py\nQuality Filter + Extraction] as AI_CROP
+    [embed.py\nOSNet x1_0 Embedding] as AI_EMBED
+    [face_embed.py\nSCRFD + ArcFace] as AI_FACE
+    [embed_kpr.py\nKPR Part-Based] as AI_KPR
+    [similarity.py\nCosine Similarity] as AI_SIM
+    [track_aggregation.py\nPer-Track Stats] as AI_AGG
+    [confidence_scaling.py\nSimilarity → Confidence] as AI_CONF
+}
+
+package "Data Layer" {
+    database "SQLite\n(db/trace.db)" as DB
+    folder "dataset/" {
+        file "camera_graph.json" as GRAPH
+        file "embeddings_Cxx.json" as GALLERY
+        file "face_embeddings_Cxx.json" as FACE_GAL
+        file "kpr_embeddings_Cxx.json" as KPR_GAL
+        file "crops_metadata_Cxx.json" as META
+        folder "crops/Cxx/" as CROPS
+        folder "raw_videos/" as VIDEOS
+    }
+}
+
+package "Model Weights" {
+    file "yolov8n.pt" as W_YOLO
+    file "OSNet x1_0\n(auto-download)" as W_OSNET
+    file "det_10g.onnx\n(optional)" as W_SCRFD
+    file "w600k_r50.onnx\n(optional)" as W_ARCFACE
+    file "KPR checkpoint\n(optional)" as W_KPR
+}
+
+' Frontend connections
+HTML --> APPJS
+HTML --> APIJS
+HTML --> CSS
+APIJS --> R_UPLOAD : REST
+APIJS --> R_QUERIES : REST
+APIJS --> R_PERSONS : REST
+APIJS --> R_CAMERAS : REST
+APIJS --> R_ANALYTICS : REST
+APIJS --> WS_MGR : WebSocket
+
+' Router → Service
+R_UPLOAD --> SVC_TRACK
+R_UPLOAD --> SVC_CROP
+R_UPLOAD --> SVC_EMBED
+R_QUERIES --> SVC_PIPELINE
+R_PERSONS --> SVC_EMBED
+R_CAMERAS --> SVC_ROUTE
+R_ANALYTICS --> DB
+
+' Pipeline orchestration
+SVC_PIPELINE --> SVC_MATCH
+SVC_PIPELINE --> SVC_ROUTE
+SVC_PIPELINE --> SVC_EMBED
+SVC_PIPELINE --> WS_MGR
+SVC_PIPELINE --> DB
+
+' Service → AI Pipeline
+SVC_DET --> AI_DET : subprocess
+SVC_TRACK --> AI_TRACK : subprocess
+SVC_CROP --> AI_CROP : subprocess
+SVC_EMBED --> AI_EMBED : subprocess/in-process
+SVC_MATCH --> AI_SIM
+SVC_MATCH --> AI_AGG
+SVC_MATCH --> AI_CONF
+
+' AI Pipeline → Data
+AI_DET --> W_YOLO
+AI_EMBED --> W_OSNET
+AI_FACE --> W_SCRFD
+AI_FACE --> W_ARCFACE
+AI_KPR --> W_KPR
+AI_TRACK --> VIDEOS : read
+AI_CROP --> CROPS : write
+AI_EMBED --> GALLERY : write
+AI_FACE --> FACE_GAL : write
+AI_KPR --> KPR_GAL : write
+SVC_ROUTE --> GRAPH : read
+
+' Database
+DB --> R_QUERIES
+DB --> R_PERSONS
+
+@enduml

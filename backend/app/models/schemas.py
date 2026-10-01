@@ -169,6 +169,12 @@ class SightingOut(_Base):
     fused_score: float = 0.0
     active_backbone: str = "OSNet x1_0"
     embedding_dim: int = 512
+    # ---- Phase 4: face-first identity fields ----------------------------
+    matching_mode: str = "body"            # "face" | "body"
+    face_used: bool = False                # True when ArcFace was the identity signal
+    face_similarity: Optional[float] = None  # ArcFace cosine sim, None = no face
+    body_similarity: float = 0.0           # OSNet / SOLIDER body cosine sim
+    identity_score: float = 0.0            # face_sim OR body_sim, never blended
 
 
 class CandidateTrackOut(BaseModel):
@@ -209,6 +215,10 @@ class RouteStepOut(_Base):
     confidence: float               # best_confidence
     fusion_score: float
     crop_path: Optional[str]
+    # ---- Phase 4: face-first identity fields ----------------------------
+    matching_mode: str = "body"    # "face" | "body"
+    face_used: bool = False         # True when ArcFace was the identity signal
+    identity_score: float = 0.0    # face_sim OR body_sim, never blended
 
 
 # ===========================================================================

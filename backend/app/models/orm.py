@@ -212,6 +212,18 @@ class Sighting(Base):
     active_backbone: Mapped[str] = mapped_column(Text, nullable=False, default="OSNet x1_0")
     embedding_dim: Mapped[int] = mapped_column(Integer, nullable=False, default=512)
 
+    # ---- Phase 4: face-first identity fields ----------------------------
+    # "face" when ArcFace was the sole identity signal; "body" for Re-ID fallback
+    matching_mode: Mapped[str] = mapped_column(Text, nullable=False, default="body")
+    # True when face mode was used for this sighting
+    face_used: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # ArcFace cosine similarity against the track centroid (None = no face)
+    face_similarity: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    # OSNet / SOLIDER body cosine similarity (always populated)
+    body_similarity: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    # The selected identity score: face_similarity OR body_similarity, never blended
+    identity_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+
     # Relationships
     session: Mapped["QuerySession"] = relationship(
         "QuerySession", back_populates="sightings", lazy="selectin"

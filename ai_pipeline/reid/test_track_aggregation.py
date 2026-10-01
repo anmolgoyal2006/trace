@@ -1,6 +1,7 @@
 """
-Phase 5.3.1 — Pytest Tests for track_aggregation.py
-=====================================================
+Phase 5.3.1 — Pytest Tests for track_aggregation.py (face-first update)
+===========================================================================
+
 All tests use synthetic, controlled similarity records.
 No real embeddings, no GPU, no torchreid required.
 
@@ -14,12 +15,10 @@ from pathlib import Path
 
 import pytest
 
-# Ensure the workspace root is on sys.path so that the ai_pipeline package
-# resolves correctly regardless of where pytest is invoked from.
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPO_ROOT))
 
-from ai_pipeline.reid.track_aggregation import aggregate_by_track
+from ai_pipeline.reid.track_aggregation import aggregate_by_track, resolve_track_identity
 
 
 # ---------------------------------------------------------------------------
@@ -46,9 +45,9 @@ def spec_records():
     ]
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 1. One track with several observations
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestSingleTrack:
     def test_single_track_returns_one_key(self):
@@ -76,11 +75,14 @@ class TestSingleTrack:
         assert "mean_similarity" in result[1]
         assert "mean_top3_similarity" in result[1]
         assert "num_observations" in result[1]
+        # New face-first fields
+        assert "face_coverage" in result[1]
+        assert "face_primary" in result[1]
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 2. Multiple tracks remain independent
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestMultipleTracks:
     def test_correct_number_of_tracks(self, spec_records):
@@ -105,9 +107,9 @@ class TestMultipleTracks:
         assert result[66]["num_observations"] == 2
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 3. Track with exactly 3 observations — top-3 mean == overall mean
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestExactlyThreeObservations:
     def test_mean_top3_equals_mean_when_exactly_3(self):
@@ -134,9 +136,9 @@ class TestExactlyThreeObservations:
         assert result[5]["num_observations"] == 3
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 4. Track with fewer than 3 observations — top-3 uses all available
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestFewerThanThreeObservations:
     def test_one_observation_top3_equals_that_value(self):
@@ -166,9 +168,9 @@ class TestFewerThanThreeObservations:
         )
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 5. Track with more than 3 observations — top-3 ignores lower similarities
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestMoreThanThreeObservations:
     def test_top3_ignores_lowest_values(self):
@@ -208,9 +210,9 @@ class TestMoreThanThreeObservations:
         assert result[9]["num_observations"] == 5
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 6. Correct max similarity
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestMaxSimilarity:
     def test_max_is_highest_value(self):
@@ -231,9 +233,9 @@ class TestMaxSimilarity:
         assert _approx(result[66]["max_similarity"], 0.81)
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 7. Correct mean similarity
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestMeanSimilarity:
     def test_mean_is_arithmetic_mean(self):
@@ -257,9 +259,9 @@ class TestMeanSimilarity:
         assert _approx(result[66]["mean_similarity"], expected)
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 8. Correct top-3 mean
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestTop3Mean:
     def test_top3_uses_three_highest(self):
@@ -285,9 +287,9 @@ class TestTop3Mean:
         assert _approx(result[66]["mean_top3_similarity"], expected)
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 9. Correct num_observations
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestNumObservations:
     def test_single_record(self):
@@ -304,9 +306,9 @@ class TestNumObservations:
         assert isinstance(result[1]["num_observations"], int)
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 10. Tracks remain independent
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestTrackIndependence:
     def test_adding_track_does_not_affect_other(self):
@@ -337,9 +339,9 @@ class TestTrackIndependence:
         assert _approx(result["B"]["max_similarity"], 0.10)
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 11. Empty input
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestEmptyInput:
     def test_empty_list_returns_empty_dict(self):
@@ -350,9 +352,9 @@ class TestEmptyInput:
         assert isinstance(aggregate_by_track([]), dict)
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 12. Output contains plain Python numbers (not NumPy scalars)
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestOutputTypes:
     def test_max_similarity_is_plain_float(self, spec_records):
@@ -383,9 +385,9 @@ class TestOutputTypes:
         assert isinstance(serialised, str)
 
 
-# ---------------------------------------------------------------------------
+# =========================================================================
 # 13. Error handling
-# ---------------------------------------------------------------------------
+# =========================================================================
 
 class TestErrorHandling:
     def test_non_list_input_raises_typeerror(self):
@@ -404,3 +406,232 @@ class TestErrorHandling:
         records = [{"track_id": 1, "similarity": 0.75, "extra": "ignored"}]
         result = aggregate_by_track(records)
         assert _approx(result[1]["max_similarity"], 0.75)
+
+
+# =========================================================================
+# 14. Face-first policy — face_coverage and face_primary
+# =========================================================================
+
+class TestFaceCoverage:
+    """face_coverage is computed correctly from face_detected flags."""
+
+    def test_all_faces_detected(self):
+        records = [
+            {"track_id": 1, "similarity": 0.5, "face_detected": True, "face_similarity": 0.9},
+            {"track_id": 1, "similarity": 0.6, "face_detected": True, "face_similarity": 0.85},
+        ]
+        result = aggregate_by_track(records)
+        assert result[1]["face_coverage"] == pytest.approx(1.0)
+
+    def test_half_faces_detected(self):
+        records = [
+            {"track_id": 1, "similarity": 0.5, "face_detected": True, "face_similarity": 0.9},
+            {"track_id": 1, "similarity": 0.6, "face_detected": False, "face_similarity": None},
+        ]
+        result = aggregate_by_track(records)
+        assert result[1]["face_coverage"] == pytest.approx(0.5)
+
+    def test_no_faces_detected(self):
+        records = [
+            {"track_id": 1, "similarity": 0.5, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.6, "face_detected": False, "face_similarity": None},
+        ]
+        result = aggregate_by_track(records)
+        assert result[1]["face_coverage"] == 0.0
+
+    def test_face_coverage_default_without_face_fields(self):
+        # Body-only records — no face fields present
+        records = [
+            {"track_id": 1, "similarity": 0.5},
+            {"track_id": 1, "similarity": 0.6},
+        ]
+        result = aggregate_by_track(records)
+        assert result[1]["face_coverage"] == 0.0
+
+
+class TestFacePrimary:
+    """face_primary is True only when coverage >= 0.3 AND valid face_sim exists."""
+
+    def test_sufficient_face_evidence(self):
+        # 2 of 3 crops have face → coverage 0.667 >= 0.3
+        records = [
+            {"track_id": 1, "similarity": 0.5, "face_detected": True, "face_similarity": 0.9},
+            {"track_id": 1, "similarity": 0.6, "face_detected": True, "face_similarity": 0.85},
+            {"track_id": 1, "similarity": 0.7, "face_detected": False, "face_similarity": None},
+        ]
+        result = aggregate_by_track(records)
+        assert result[1]["face_primary"] is True
+
+    def test_insufficient_face_coverage(self):
+        # 1 of 5 crops has face → coverage 0.2 < 0.3
+        records = [
+            {"track_id": 1, "similarity": 0.5, "face_detected": True, "face_similarity": 0.9},
+            {"track_id": 1, "similarity": 0.6, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.7, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.8, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.9, "face_detected": False, "face_similarity": None},
+        ]
+        result = aggregate_by_track(records)
+        assert result[1]["face_primary"] is False
+
+    def test_face_primary_exactly_at_threshold(self):
+        # 3 of 10 crops have face → coverage 0.3 >= 0.3
+        records = [
+            {"track_id": 1, "similarity": 0.5, "face_detected": True, "face_similarity": 0.9},
+            {"track_id": 1, "similarity": 0.6, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.7, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.8, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.9, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.5, "face_detected": True, "face_similarity": 0.8},
+            {"track_id": 1, "similarity": 0.6, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.7, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.8, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.9, "face_detected": True, "face_similarity": 0.85},
+        ]
+        result = aggregate_by_track(records)
+        assert result[1]["face_primary"] is True
+
+    def test_face_primary_no_valid_face_sim(self):
+        # Coverage is 1.0 but all face_similarity are None
+        records = [
+            {"track_id": 1, "similarity": 0.5, "face_detected": True, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.6, "face_detected": True, "face_similarity": None},
+        ]
+        result = aggregate_by_track(records)
+        assert result[1]["face_primary"] is False
+
+    def test_face_primary_body_only(self):
+        # No face fields at all → face_primary is False
+        records = [
+            {"track_id": 1, "similarity": 0.5},
+            {"track_id": 1, "similarity": 0.6},
+        ]
+        result = aggregate_by_track(records)
+        assert result[1]["face_primary"] is False
+
+
+# =========================================================================
+# 15. resolve_track_identity — face-first per-track decision
+# =========================================================================
+
+class TestResolveTrackIdentity:
+    """resolve_track_identity applies the face-first policy per track."""
+
+    def test_face_primary_uses_face_score(self):
+        stats = {"face_primary": True, "face_coverage": 0.6}
+        mode, score = resolve_track_identity(stats, face_sim=0.91, body_sim=0.42)
+        assert mode == "face"
+        assert score == 0.91
+
+    def test_body_fallback_when_not_face_primary(self):
+        stats = {"face_primary": False, "face_coverage": 0.2}
+        mode, score = resolve_track_identity(stats, face_sim=0.91, body_sim=0.82)
+        assert mode == "body"
+        assert score == 0.82
+
+    def test_body_fallback_when_face_sim_none(self):
+        # face_primary True but no valid face_sim → body fallback
+        stats = {"face_primary": True, "face_coverage": 0.6}
+        mode, score = resolve_track_identity(stats, face_sim=None, body_sim=0.82)
+        assert mode == "body"
+        assert score == 0.82
+
+    def test_body_fallback_when_face_sim_invalid(self):
+        # face_sim is a string (invalid) → body fallback
+        stats = {"face_primary": True, "face_coverage": 0.6}
+        mode, score = resolve_track_identity(stats, face_sim="invalid", body_sim=0.82)
+        assert mode == "body"
+        assert score == 0.82
+
+    def test_body_mode_returns_body_score(self):
+        # Even with a valid face_sim, body mode uses body score
+        stats = {"face_primary": False, "face_coverage": 0.0}
+        mode, score = resolve_track_identity(stats, face_sim=0.91, body_sim=0.75)
+        assert mode == "body"
+        assert score == 0.75
+
+    def test_deterministic(self):
+        stats = {"face_primary": True, "face_coverage": 0.6}
+        r1 = resolve_track_identity(stats, face_sim=0.91, body_sim=0.42)
+        r2 = resolve_track_identity(stats, face_sim=0.91, body_sim=0.42)
+        assert r1 == r2
+
+
+# =========================================================================
+# 16. Face-first track aggregation with mixed face/body records
+# =========================================================================
+
+class TestFaceFirstAggregation:
+    """Integration: aggregate_by_track with face fields across multiple tracks."""
+
+    def test_mixed_tracks(self):
+        # Track 1: sufficient face → face_primary
+        # Track 2: no face → body fallback
+        # Track 3: insufficient face coverage → body fallback
+        records = [
+            # Track 1 (3 face, 2 body → coverage 0.6)
+            {"track_id": 1, "similarity": 0.40, "face_detected": True, "face_similarity": 0.92},
+            {"track_id": 1, "similarity": 0.45, "face_detected": True, "face_similarity": 0.88},
+            {"track_id": 1, "similarity": 0.50, "face_detected": True, "face_similarity": 0.95},
+            {"track_id": 1, "similarity": 0.55, "face_detected": False, "face_similarity": None},
+            {"track_id": 1, "similarity": 0.60, "face_detected": False, "face_similarity": None},
+            # Track 2 (0 face → body)
+            {"track_id": 2, "similarity": 0.70, "face_detected": False, "face_similarity": None},
+            {"track_id": 2, "similarity": 0.82, "face_detected": False, "face_similarity": None},
+            # Track 3 (1 face of 5 → coverage 0.2 < 0.3 → body)
+            {"track_id": 3, "similarity": 0.30, "face_detected": True, "face_similarity": 0.91},
+            {"track_id": 3, "similarity": 0.40, "face_detected": False, "face_similarity": None},
+            {"track_id": 3, "similarity": 0.50, "face_detected": False, "face_similarity": None},
+            {"track_id": 3, "similarity": 0.60, "face_detected": False, "face_similarity": None},
+            {"track_id": 3, "similarity": 0.70, "face_detected": False, "face_similarity": None},
+        ]
+        result = aggregate_by_track(records)
+
+        # Track 1: face_primary
+        assert result[1]["face_primary"] is True
+        assert result[1]["face_coverage"] == pytest.approx(3 / 5)
+        assert _approx(result[1]["max_similarity"], 0.60)  # body max
+
+        # Track 2: body fallback
+        assert result[2]["face_primary"] is False
+        assert result[2]["face_coverage"] == 0.0
+        assert _approx(result[2]["max_similarity"], 0.82)
+
+        # Track 3: body fallback (insufficient coverage)
+        assert result[3]["face_primary"] is False
+        assert result[3]["face_coverage"] == pytest.approx(1 / 5)
+        assert _approx(result[3]["max_similarity"], 0.70)
+
+    def test_face_primary_string_track_id(self):
+        # Works with string track IDs too
+        records = [
+            {"track_id": "A", "similarity": 0.5, "face_detected": True, "face_similarity": 0.9},
+            {"track_id": "A", "similarity": 0.6, "face_detected": True, "face_similarity": 0.85},
+        ]
+        result = aggregate_by_track(records)
+        assert result["A"]["face_primary"] is True
+        assert result["A"]["face_coverage"] == pytest.approx(1.0)
+
+    def test_empty_face_fields_defaults(self):
+        # Records with no face fields at all
+        records = [
+            {"track_id": 1, "similarity": 0.5},
+            {"track_id": 1, "similarity": 0.6},
+        ]
+        result = aggregate_by_track(records)
+        assert result[1]["face_coverage"] == 0.0
+        assert result[1]["face_primary"] is False
+
+    def test_resolve_track_identity_with_face_primary(self):
+        """When face_primary is True, resolve_track_identity returns face mode."""
+        stats = {"face_primary": True, "face_coverage": 0.6}
+        mode, score = resolve_track_identity(stats, face_sim=0.92, body_sim=0.40)
+        assert mode == "face"
+        assert score == 0.92
+
+    def test_resolve_track_identity_without_face_primary(self):
+        """When face_primary is False, resolve_track_identity returns body mode."""
+        stats = {"face_primary": False, "face_coverage": 0.2}
+        mode, score = resolve_track_identity(stats, face_sim=0.92, body_sim=0.84)
+        assert mode == "body"
+        assert score == 0.84

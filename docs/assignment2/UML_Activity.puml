@@ -1,0 +1,81 @@
+@startuml UML_Activity
+!theme plain
+skinparam backgroundColor white
+skinparam ActivityBackgroundColor #f0f4ff
+skinparam ActivityBorderColor #334155
+
+title UML Activity Diagram — Person Search & Route Reconstruction
+
+start
+
+:Operator submits reference image\nor selects registered person;
+
+if (Input type?) then (Reference image)
+    :Auto-crop query image\nto largest detected person (YOLOv8);
+    :Generate body embedding (OSNet);
+else (Registered person)
+    :Load enrolled embedding\nfrom database;
+endif
+
+:Generate optional face embedding\n(SCRFD + ArcFace, if weights configured);
+
+:Generate optional KPR embedding\n(subprocess, if weights configured);
+
+:Load body galleries for all\nactive cameras (C01, C02, C03);
+
+if (Face query embedding available?) then (yes)
+    :Load face galleries;
+else (no)
+    :Face signal deactivated;
+endif
+
+if (KPR query embedding available?) then (yes)
+    :Load KPR galleries;
+else (no)
+    :KPR signal deactivated;
+endif
+
+:For each camera gallery:\nCompute crop-level cosine similarity;
+
+:Aggregate per track\n(max similarity, mean top-3);
+
+:Apply triple fusion\n(body + face + KPR weighted average);
+
+if (Effective score >= 0.74?) then (yes)
+    :Track qualifies as candidate;
+else (no)
+    :Track rejected\n(no confident match);
+endif
+
+:Collect qualifying candidates\nper camera;
+
+if (Any camera has candidates?) then (yes)
+    :Route reconstruction:\nSelect anchor camera\n(highest fused first-hop score);
+
+    while (Unvisited cameras with candidates?) is (yes)
+        :Score all candidates against\nspatial + temporal context;
+        :Select best (camera, track) pair;
+        :Extend route;
+    endwhile (no)
+
+    :Compute route confidence\n(mean fusion score);
+
+    :Persist sightings + route steps\nto SQLite database;
+
+    if (Person is on watchlist?) then (yes)
+        :Generate watchlist alert;
+        :Push alert via WebSocket;
+    else (no)
+    endif
+
+    :Push route_complete\nvia WebSocket;
+
+    :Display route on dashboard\n(map, timeline, crops);
+
+else (no)
+    :Report: No confident match found;
+endif
+
+stop
+
+@enduml

@@ -1,0 +1,69 @@
+@startuml UML_Use_Case
+!theme plain
+skinparam backgroundColor white
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+
+left to right direction
+
+actor "Operator" as Op
+
+rectangle "Trace — AI-Powered Multi-Camera Person Tracking & Re-Identification" {
+
+    package "Video Processing" {
+        usecase "Upload CCTV Video" as UC1
+        usecase "Validate Camera & Format" as UC2
+        usecase "Poll Upload Job Status" as UC3
+    }
+
+    package "Person Management" {
+        usecase "Register Person" as UC4
+        usecase "Enroll Reference Photo" as UC5
+        usecase "Update Person" as UC6
+        usecase "Delete Person" as UC7
+        usecase "Search Person by Image" as UC8
+    }
+
+    package "Re-ID Query" {
+        usecase "Submit Search Query" as UC9
+        usecase "View Query Progress" as UC10
+        usecase "View Route Result" as UC11
+        usecase "View Match Crops" as UC12
+    }
+
+    package "Monitoring" {
+        usecase "View Dashboard Analytics" as UC13
+        usecase "View Watchlist Alerts" as UC14
+        usecase "Acknowledge Alert" as UC15
+        usecase "View Camera Sightings" as UC16
+    }
+
+    package "Configuration" {
+        usecase "Configure Camera" as UC17
+    }
+}
+
+Op --> UC1
+Op --> UC3
+Op --> UC4
+Op --> UC5
+Op --> UC6
+Op --> UC7
+Op --> UC8
+Op --> UC9
+Op --> UC10
+Op --> UC11
+Op --> UC12
+Op --> UC13
+Op --> UC14
+Op --> UC15
+Op --> UC16
+Op --> UC17
+
+UC1 ..> UC2 : <<include>>
+UC9 ..> UC10 : <<include>>
+UC9 ..> UC11 : <<extend>>
+UC9 ..> UC12 : <<extend>>
+UC9 ..> UC14 : <<extend>>
+
+@enduml

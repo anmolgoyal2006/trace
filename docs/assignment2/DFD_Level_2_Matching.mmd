@@ -1,0 +1,43 @@
+---
+title: "DFD Level 2 — Process 4.0: Person Re-ID / Matching"
+---
+graph TD
+    %% External
+    OP[Operator]
+
+    %% Sub-processes
+    P4_1((4.1<br/>Query Image<br/>Auto-Crop))
+    P4_2((4.2<br/>Query Body<br/>Embedding))
+    P4_2F((4.2F<br/>Query Face<br/>Embedding))
+    P4_2K((4.2K<br/>Query KPR<br/>Embedding))
+    P4_3((4.3<br/>Load Camera<br/>Galleries))
+    P4_4((4.4<br/>Per-Camera<br/>Similarity Search))
+    P4_5((4.5<br/>Triple Fusion<br/>Scoring))
+    P4_6((4.6<br/>Threshold<br/>Decision))
+
+    %% Data Stores
+    DS4[/D4: Body Gallery JSON/]
+    DS4F[/D4F: Face Gallery JSON/]
+    DS4K[/D4K: KPR Gallery JSON/]
+    DS5[/D5: SQLite DB/]
+
+    %% Flows
+    OP -->|"query image / person_id"| P4_1
+    P4_1 -->|"person-cropped image"| P4_2
+    P4_1 -->|"person-cropped image"| P4_2F
+    P4_1 -->|"person-cropped image"| P4_2K
+    DS5 -->|"enrolled embedding (if person_id)"| P4_2
+
+    P4_2 -->|"query body vector"| P4_4
+    P4_2F -->|"query face vector (optional)"| P4_5
+    P4_2K -->|"query KPR parts (optional)"| P4_5
+
+    DS4 -->|"body embeddings"| P4_3
+    DS4F -->|"face embeddings"| P4_3
+    DS4K -->|"KPR embeddings"| P4_3
+    P4_3 -->|"loaded galleries"| P4_4
+
+    P4_4 -->|"crop-level cosine similarities"| P4_5
+    P4_5 -->|"fused score per track"| P4_6
+    P4_6 -->|"tracks above threshold"| P4_6
+    P4_6 -->|"no confident match (below 0.74)"| OP

@@ -1,0 +1,21 @@
+---
+title: "DFD Level 0 — Context Diagram: Trace System"
+---
+graph LR
+    %% External Entities (rectangles)
+    OP[Operator]
+    CAM[CCTV Camera Videos]
+
+    %% Central Process
+    TRACE((0<br/>Trace System))
+
+    %% Data Flows
+    OP -->|"Reference photo / Person ID"| TRACE
+    OP -->|"Camera config updates"| TRACE
+    CAM -->|"Video files (MP4/AVI/MOV/MKV)"| TRACE
+    OP -->|"Search request"| TRACE
+
+    TRACE -->|"Route + timestamps + matches"| OP
+    TRACE -->|"Watchlist alerts"| OP
+    TRACE -->|"Dashboard analytics"| OP
+    TRACE -->|"Processing status"| OP

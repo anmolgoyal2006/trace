@@ -42,9 +42,12 @@ async def lifespan(app: FastAPI):
     logger.info("  Trace — Unified Surveillance Intelligence")
     logger.info("=" * 60)
 
-    # 1. Create DB schema
+    # 1. Create DB schema (new tables) + migrate existing tables
+    #    Both run inside a single connection to guarantee migration
+    #    completes before any session or eager-load opens the DB.
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await _migrate_sightings_schema(conn)
     logger.info("[startup] Database schema ready")
 
     # 2. Seed cameras from camera_graph.json
@@ -181,6 +184,61 @@ else:
 # ---------------------------------------------------------------------------
 # Camera seeding
 # ---------------------------------------------------------------------------
+
+async def _migrate_sightings_schema(conn) -> None:
+    """
+    Idempotent column migration for sightings and query_sessions tables.
+    Accepts an existing AsyncConnection so it runs inside the same
+    transaction as create_all — guaranteeing all columns exist before
+    any ORM session (and its selectin eager-loads) touches the DB.
+    """
+    from sqlalchemy import text as _text
+
+    _sighting_columns = [
+        # Phase 4 — face-first identity fields
+        ("matching_mode",      "TEXT    NOT NULL DEFAULT 'body'"),
+        ("face_used",          "INTEGER NOT NULL DEFAULT 0"),
+        ("face_similarity",    "FLOAT"),
+        ("body_similarity",    "FLOAT   NOT NULL DEFAULT 0.0"),
+        ("identity_score",     "FLOAT   NOT NULL DEFAULT 0.0"),
+        # origin/dev — evidence hierarchy / MatchStatus fields
+        ("match_status",       "TEXT    NOT NULL DEFAULT 'POSSIBLE_MATCH_REVIEW'"),
+        ("face_veto_applied",  "INTEGER NOT NULL DEFAULT 0"),
+        ("face_veto_reason",   "TEXT"),
+        ("face_sim",           "FLOAT"),
+        ("face_coverage",      "FLOAT"),
+        ("kpr_sim",            "FLOAT"),
+        ("fused_score",        "FLOAT   NOT NULL DEFAULT 0.0"),
+        ("active_backbone",    "TEXT    NOT NULL DEFAULT 'OSNet x1_0'"),
+        ("embedding_dim",      "INTEGER NOT NULL DEFAULT 512"),
+    ]
+
+    _session_columns = [
+        ("match_decision",     "TEXT    NOT NULL DEFAULT 'NO_CONFIDENT_MATCH'"),
+    ]
+
+    result = await conn.execute(_text("PRAGMA table_info(sightings)"))
+    existing = {row[1] for row in result.fetchall()}
+    for col_name, col_def in _sighting_columns:
+        if col_name not in existing:
+            await conn.execute(_text(
+                f"ALTER TABLE sightings ADD COLUMN {col_name} {col_def}"
+            ))
+            logger.info(f"[migrate] Added sightings.{col_name}")
+        else:
+            logger.debug(f"[migrate] sightings.{col_name} already exists — skipped")
+
+    result2 = await conn.execute(_text("PRAGMA table_info(query_sessions)"))
+    existing2 = {row[1] for row in result2.fetchall()}
+    for col_name, col_def in _session_columns:
+        if col_name not in existing2:
+            await conn.execute(_text(
+                f"ALTER TABLE query_sessions ADD COLUMN {col_name} {col_def}"
+            ))
+            logger.info(f"[migrate] Added query_sessions.{col_name}")
+        else:
+            logger.debug(f"[migrate] query_sessions.{col_name} already exists — skipped")
+
 
 async def _seed_cameras() -> None:
     """

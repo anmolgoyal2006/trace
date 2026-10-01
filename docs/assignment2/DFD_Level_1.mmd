@@ -1,0 +1,60 @@
+---
+title: "DFD Level 1 — Trace System Decomposition"
+---
+graph TD
+    %% External Entities
+    OP[Operator]
+
+    %% Processes
+    P1((1.0<br/>Video Upload<br/>& Validation))
+    P2((2.0<br/>Detection &<br/>Tracking))
+    P3((3.0<br/>Crop Extraction<br/>& Embedding))
+    P4((4.0<br/>Query Submission<br/>& Matching))
+    P5((5.0<br/>Route<br/>Reconstruction))
+    P6((6.0<br/>Persistence<br/>& Alerts))
+    P7((7.0<br/>Dashboard &<br/>Result Delivery))
+
+    %% Data Stores
+    DS1[/D1: Raw Videos/]
+    DS2[/D2: Tracks JSON/]
+    DS3[/D3: Crops & Metadata/]
+    DS4[/D4: Embedding Galleries/]
+    DS5[/D5: SQLite DB/]
+    DS6[/D6: Camera Graph/]
+
+    %% Flows from Operator
+    OP -->|"Video + camera_id"| P1
+    OP -->|"Reference photo / person_id"| P4
+    OP -->|"Camera config"| P7
+
+    %% Process 1: Upload & Validation
+    P1 -->|"Validated video file"| DS1
+    P1 -->|"Video path + camera_id"| P2
+
+    %% Process 2: Detection & Tracking
+    DS1 -->|"Video frames"| P2
+    P2 -->|"Track records (track_id, bbox, timestamp)"| DS2
+
+    %% Process 3: Crop & Embedding
+    DS2 -->|"Track bounding boxes"| P3
+    DS1 -->|"Video for crop extraction"| P3
+    P3 -->|"Crop images"| DS3
+    P3 -->|"Embedding vectors"| DS4
+
+    %% Process 4: Query & Matching
+    DS4 -->|"Camera galleries"| P4
+    DS5 -->|"Person embedding (if registered)"| P4
+    P4 -->|"Per-camera candidate matches"| P5
+
+    %% Process 5: Route Reconstruction
+    DS6 -->|"Adjacency + transit times"| P5
+    P5 -->|"Ordered fused route"| P6
+
+    %% Process 6: Persistence & Alerts
+    P6 -->|"Sightings + RouteSteps + Alerts"| DS5
+    DS5 -->|"Watchlist status"| P6
+
+    %% Process 7: Dashboard & Delivery
+    DS5 -->|"Analytics data"| P7
+    P6 -->|"WebSocket events"| P7
+    P7 -->|"Route, timeline, alerts, analytics"| OP

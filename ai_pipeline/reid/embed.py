@@ -311,6 +311,37 @@ def validate_and_preprocess(
 
 
 # ---------------------------------------------------------------------------
+# preprocess_image — public convenience wrapper used by tests
+# ---------------------------------------------------------------------------
+
+def preprocess_image(image_path: Path) -> "torch.Tensor | tuple[str, str]":
+    """
+    Load and preprocess a single crop image using the pipeline's _TRANSFORM.
+
+    This is a thin public wrapper around _TRANSFORM so test code can call
+    ``emb.preprocess_image(path)`` without constructing a full pipeline.
+
+    Args:
+        image_path: Path to the crop image file.
+
+    Returns:
+        A float32 tensor of shape (3, INPUT_HEIGHT, INPUT_WIDTH) on success.
+        A tuple (crop_path_str, reason_code) on failure (mirrors the
+        failure signature of validate_and_preprocess).
+    """
+    from PIL import Image as _Image  # local to avoid heavy import at module level
+
+    p = Path(image_path)
+    if not p.exists():
+        return (str(p), REASON_MISSING_FILE)
+    try:
+        img = _Image.open(p).convert("RGB")
+        return _TRANSFORM(img)
+    except Exception:
+        return (str(p), REASON_PREPROCESSING_ERROR)
+
+
+# ---------------------------------------------------------------------------
 # Embedding validation
 # ---------------------------------------------------------------------------
 

@@ -1,0 +1,270 @@
+@startuml UML_Class
+!theme plain
+skinparam backgroundColor white
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam packageFontSize 14
+
+title UML Class Diagram — Trace Backend & AI Pipeline
+
+' =========================================================================
+' DATABASE ENTITIES (SQLAlchemy ORM)
+' =========================================================================
+
+package "Database Entities (SQLAlchemy ORM)" #f0f9ff {
+
+    class Person {
+        + id : int <<PK>>
+        + name : str
+        + alias : str?
+        + description : str?
+        + watchlist_status : str
+        + reference_embedding : str? (JSON)
+        + reference_image_path : str?
+        + is_active : bool
+        + created_at : datetime
+        --
+        + embedding_vector : list[float]? <<property>>
+    }
+
+    class Camera {
+        + id : str <<PK>>
+        + location : str
+        + description : str?
+        + start_time : str?
+        + is_active : bool
+    }
+
+    class QuerySession {
+        + id : int <<PK>>
+        + person_id : int? <<FK>>
+        + query_image_path : str?
+        + status : str
+        + progress_pct : int
+        + submitted_at : datetime
+        + completed_at : datetime?
+        + error_message : str?
+    }
+
+    class Sighting {
+        + id : int <<PK>>
+        + session_id : int <<FK>>
+        + camera_id : str <<FK>>
+        + track_id : int
+        + first_seen : str?
+        + last_seen : str?
+        + best_confidence : float
+        + mean_confidence : float
+        + crop_path : str?
+        + appearance_score : float
+        + spatial_score : float
+        + temporal_score : float
+        + fusion_score : float
+    }
+
+    class RouteStep {
+        + id : int <<PK>>
+        + session_id : int <<FK>>
+        + step_order : int
+        + sighting_id : int <<FK>>
+    }
+
+    class Alert {
+        + id : int <<PK>>
+        + session_id : int <<FK>>
+        + person_id : int? <<FK>>
+        + sighting_id : int? <<FK>>
+        + severity : str
+        + title : str
+        + message : str
+        + acknowledged : bool
+        + created_at : datetime
+    }
+}
+
+' =========================================================================
+' SERVICE LAYER
+' =========================================================================
+
+package "Service Layer" #f0fff4 {
+
+    class PipelineService {
+        - _ws : WebSocketManager
+        --
+        + run_session(session_id: int) : void
+        - _execute(session, db) : void
+        - _resolve_query_image_path(session) : Path?
+        - _resolve_query_embedding(session, img_path) : list[float]?
+        - _persist_sighting(db, session_id, match, ...) : Sighting
+        - _fire_alert(db, session, sighting) : void
+        - _push_progress(session, db, pct, message) : void
+    }
+
+    class MatchingService {
+        - _threshold : float
+        - _body_weight : float
+        - _face_weight : float
+        - _kpr_weight : float
+        --
+        + search_camera_top_k(query_embedding, gallery, camera_id, ...) : list[CameraMatch]
+        + search_camera(query_embedding, gallery, camera_id, ...) : CameraMatch?
+        + search_all_cameras(query_embedding, galleries, ...) : dict
+        - _compute_crop_similarities(...) : list[dict]
+        - _compute_face_similarities(...) : dict
+        - _compute_kpr_similarities(...) : dict
+        - _build_camera_match(...) : CameraMatch
+    }
+
+    class RouteService {
+        - _adjacency : dict
+        - _graph : dict
+        - _w_app : float
+        - _w_spa : float
+        - _w_tem : float
+        --
+        + reconstruct_route(camera_candidates) : list[FusedSighting]
+        + compute_route_confidence(route) : float
+        + get_adjacency() : dict
+        + get_graph() : dict
+        - _fuse(appearance, spatial, temporal) : float
+        - _min_transit_2hop(from_cam, to_cam) : int
+    }
+
+    class EmbeddingService {
+        - _model : Any?
+        - _device : Any?
+        - _transform : Any?
+        --
+        + load_model() : void
+        + is_ready : bool <<property>>
+        + embed_single(image_path: Path) : list[float]
+        + batch_embed(metadata_path, crop_dir, output_path, ...) : Path
+        + {static} load_gallery(path) : list[dict]
+        + {static} save_gallery(records, path) : void
+    }
+
+    class DetectionService {
+        + run(video_path, camera_id, output_path?) : Path
+        + {static} load_detections(path) : list[dict]
+    }
+
+    class TrackerService {
+        + run(video_path, camera_id, output_path?) : Path
+        + {static} load_tracks(path) : list[dict]
+        + {static} group_by_track(tracks) : dict
+    }
+
+    class CropService {
+        + run(video_path, tracks_path, camera_id, ...) : Path
+        + {static} load_metadata(path) : list[dict]
+    }
+
+    class WebSocketManager {
+        - _connections : list[WebSocket]
+        --
+        + connect(websocket) : void
+        + disconnect(websocket) : void
+        + broadcast(data: dict) : void
+        + connection_count : int <<property>>
+    }
+}
+
+' =========================================================================
+' DATA CLASSES
+' =========================================================================
+
+package "Data Classes" #fffbeb {
+
+    class CameraMatch <<dataclass>> {
+        + camera_id : str
+        + track_id : int
+        + appearance_score : float
+        + mean_top3_similarity : float
+        + best_confidence : float
+        + mean_confidence : float
+        + first_seen : str?
+        + last_seen : str?
+        + best_crop_path : str?
+        + top_crops : list[dict]
+        + face_sim : float?
+        + face_weight : float
+        + kpr_sim : float?
+        + mean_visible_parts : float?
+    }
+
+    class FusedSighting <<dataclass>> {
+        + match : CameraMatch
+        + spatial : float
+        + temporal : float
+        + fusion : float
+        + expected_transit_sec : int
+    }
+}
+
+' =========================================================================
+' CONFIGURATION
+' =========================================================================
+
+package "Configuration" #fef2f2 {
+
+    class Settings <<BaseSettings>> {
+        + repo_root : Path
+        + db_path : Path
+        + data_dir : Path
+        + host : str
+        + port : int
+        + reid_model : str
+        + embedding_dim : int
+        + no_match_threshold : float
+        + fusion_appearance_weight : float
+        + fusion_spatial_weight : float
+        + fusion_temporal_weight : float
+        + fusion_body_weight : float
+        + fusion_face_weight : float
+        + fusion_kpr_weight : float
+        + yolo_model : str
+        + detection_confidence : float
+        ...
+    }
+}
+
+' =========================================================================
+' RELATIONSHIPS
+' =========================================================================
+
+' ORM Relationships (composition/aggregation)
+Person "1" *-- "0..*" QuerySession : sessions >
+Person "1" *-- "0..*" Alert : alerts >
+Camera "1" *-- "0..*" Sighting : sightings >
+QuerySession "1" *-- "0..*" Sighting : sightings >
+QuerySession "1" *-- "0..*" RouteStep : route_steps >
+QuerySession "1" *-- "0..*" Alert : alerts >
+Sighting "1" -- "0..1" RouteStep : route_step >
+Sighting "0..*" --> "1" Camera : camera >
+QuerySession "0..*" --> "0..1" Person : person >
+Alert "0..*" --> "0..1" Person : person >
+
+' Service dependencies
+PipelineService --> WebSocketManager : uses
+PipelineService --> MatchingService : uses
+PipelineService --> RouteService : uses
+PipelineService --> EmbeddingService : uses
+PipelineService --> QuerySession : manages
+PipelineService --> Sighting : creates
+PipelineService --> Alert : creates
+
+MatchingService --> CameraMatch : produces
+RouteService --> FusedSighting : produces
+RouteService --> CameraMatch : consumes
+FusedSighting *-- CameraMatch : contains
+
+' Service → Settings
+MatchingService --> Settings : reads config
+RouteService --> Settings : reads config
+EmbeddingService --> Settings : reads config
+DetectionService --> Settings : reads config
+TrackerService --> Settings : reads config
+CropService --> Settings : reads config
+PipelineService --> Settings : reads config
+
+@enduml
