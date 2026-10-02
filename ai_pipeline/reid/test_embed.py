@@ -56,11 +56,18 @@ def _skip_if_mac_paths(embeddings: list[dict]) -> None:
     """
     if not embeddings:
         return
-    sample = Path(embeddings[0]["crop_path"])
-    if sample.is_absolute() and not sample.exists():
+    sample_path = embeddings[0]["crop_path"]
+    # Mac absolute paths start with '/' but on Windows Path('/...').is_absolute()
+    # returns False (no drive letter).  Check the raw string instead.
+    sample = Path(sample_path)
+    path_is_foreign = (
+        str(sample_path).startswith("/")   # Unix/Mac absolute
+        or (sample.is_absolute() and not sample.exists())
+    )
+    if path_is_foreign and not sample.exists():
         pytest.skip(
             "Embeddings contain absolute paths from another machine "
-            f"({embeddings[0]['crop_path']}). Run on the Mac with the full dataset."
+            f"({sample_path}). Run on the Mac with the full dataset."
         )
 
 REQUIRED_FIELDS = (
@@ -173,7 +180,6 @@ class TestCropFilesExist:
         for rec in embeddings:
             p = Path(rec["crop_path"])
             if not p.exists():
-                # Fallback: try relative to repo root
                 p2 = _REPO_ROOT / rec["crop_path"]
                 if not p2.exists():
                     missing.append(rec["crop_path"])
@@ -316,10 +322,15 @@ class TestMetadataAlignment:
     def test_every_input_crop_has_an_embedding(
         self, metadata_paths: set[str], embeddings_by_path: dict[str, dict]
     ):
-        # Skip on Windows when paths are Mac-absolute
+        # Skip when embeddings contain Mac-absolute paths not on this machine
+        if embeddings_by_path:
+            sample = next(iter(embeddings_by_path))
+            if str(sample).startswith("/") and not Path(sample).exists():
+                pytest.skip("Mac-absolute embedding paths not resolvable on this machine")
+        # Skip on Windows when paths are Mac-absolute (start with '/')
         if metadata_paths:
             sample = next(iter(metadata_paths))
-            if Path(sample).is_absolute() and not Path(sample).exists():
+            if str(sample).startswith("/") and not Path(sample).exists():
                 pytest.skip("Mac-absolute paths not resolvable on this machine")
         missing = [p for p in metadata_paths if p not in embeddings_by_path]
         assert not missing, (
@@ -331,9 +342,14 @@ class TestMetadataAlignment:
     def test_no_extra_embeddings_beyond_input_set(
         self, metadata_paths: set[str], embeddings_by_path: dict[str, dict]
     ):
+        # Skip when embeddings contain Mac-absolute paths not on this machine
+        if embeddings_by_path:
+            sample = next(iter(embeddings_by_path))
+            if str(sample).startswith("/") and not Path(sample).exists():
+                pytest.skip("Mac-absolute embedding paths not resolvable on this machine")
         if metadata_paths:
             sample = next(iter(metadata_paths))
-            if Path(sample).is_absolute() and not Path(sample).exists():
+            if str(sample).startswith("/") and not Path(sample).exists():
                 pytest.skip("Mac-absolute paths not resolvable on this machine")
         extra = [p for p in embeddings_by_path if p not in metadata_paths]
         assert not extra, (

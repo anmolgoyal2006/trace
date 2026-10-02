@@ -288,7 +288,8 @@ class TestComputeSimilarities:
 
     def test_handles_missing_embedding_in_gallery(self):
         """Should skip gallery records without embeddings."""
-        gallery_with_missing = SYNTHETIC_GALLERY.copy()
+        import copy
+        gallery_with_missing = copy.deepcopy(SYNTHETIC_GALLERY)
         gallery_with_missing[2]["embedding"] = None
 
         results = compute_similarities(SYNTHETIC_QUERY_EMBEDDING, gallery_with_missing)

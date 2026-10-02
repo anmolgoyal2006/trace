@@ -235,18 +235,25 @@ def test_full_pipeline_synthetic():
             json.dump(tracks, f)
 
         reid_cfg = {"crops_per_track": 3, "min_crop_width": 30, "min_crop_height": 60}
-        extract_crops(video_path, tracks_path, output_dir, metadata_path, reid_cfg)
+        quality_report_path = tmp / "quality_report.json"
+        extract_crops(video_path, tracks_path, output_dir, metadata_path, quality_report_path)
 
         # Verify
         assert_true("output dir exists", output_dir.exists())
         crops = list(output_dir.glob("*.jpg"))
-        assert_true("6 crops saved", len(crops) == 6, f"got {len(crops)}")
+        # crops_per_track comes from config.yaml (default 5); 2 tracks → N crops
+        n_tracks = 2
+        import yaml as _yaml
+        _cfg = _yaml.safe_load(open(CONFIG_PATH))
+        k = _cfg.get("reid", {}).get("crops_per_track", 5)
+        expected_crops = n_tracks * k
+        assert_true(f"{expected_crops} crops saved", len(crops) == expected_crops, f"got {len(crops)}")
 
         with open(metadata_path) as f:
             meta = json.load(f)
-        assert_eq("metadata records", len(meta), 6)
+        assert_eq("metadata records", len(meta), expected_crops)
         required_fields = {"camera_id","track_id","frame","timestamp",
-                           "bbox","confidence","crop_path"}
+                           "bbox","detection_confidence","crop_path"}
         for entry in meta:
             missing = required_fields - entry.keys()
             assert_true("all fields in metadata entry", not missing, str(missing))

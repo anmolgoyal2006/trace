@@ -651,14 +651,13 @@ class TestRealEmbeddingsSmoke:
 
     def test_file_loads_as_list(self, records):
         assert isinstance(records, list)
-        # Skip count check when embeddings contain Mac-absolute paths not
-        # resolvable on this machine (Windows dev environment).
-        # On Mac with the full dataset this will be exactly 353.
-        if records and Path(records[0]["crop_path"]).is_absolute() and \
-                not Path(records[0]["crop_path"]).exists():
-            import pytest as _pytest
-            assert len(records) > 0, "Embeddings file is empty"
-            return
+        assert len(records) > 0, "Embeddings file is empty"
+        # On Mac with full dataset: exactly 353 records with relative paths.
+        # On Windows with partial data: Mac absolute paths starting with '/'
+        # are not resolvable — skip the count assertion gracefully.
+        sample_path = records[0]["crop_path"]
+        if str(sample_path).startswith("/") and not Path(sample_path).exists():
+            return  # Mac-absolute path, not on this machine — count not checked
         assert len(records) == 353
 
     def test_all_embeddings_are_512d(self, records):
