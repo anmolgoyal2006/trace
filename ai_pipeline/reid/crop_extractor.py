@@ -50,6 +50,11 @@ from quality_filter import evaluate_crop_quality, load_quality_config  # noqa: E
 
 CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.yaml"
 
+# Repo root — used to convert absolute crop paths to portable relative paths.
+# crop_extractor.py lives at <repo>/ai_pipeline/reid/crop_extractor.py
+# so parents[2] is the repo root regardless of CWD.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
 # Default location for the quality report (can be overridden via --quality-report)
 DEFAULT_QUALITY_REPORT = Path("dataset/crop_quality_report.json")
 
@@ -284,8 +289,16 @@ def extract_crops(
             continue
 
         n_saved += 1
+        # Store crop_path as a portable POSIX-style path relative to the
+        # repo root so the path resolves correctly on any machine or OS.
+        try:
+            relative_crop = out_path.resolve().relative_to(_REPO_ROOT)
+            crop_path_str = relative_crop.as_posix()   # always forward slashes
+        except ValueError:
+            # out_path is outside repo root (unusual) — fall back to filename only
+            crop_path_str = f"dataset/crops/{out_path.name}"
         saved_metadata.append({
-            "crop_path":            str(out_path).replace("\\", "/"),
+            "crop_path":            crop_path_str,
             "camera_id":            rec["camera_id"],
             "track_id":             track_id,
             "frame":                frame_num,

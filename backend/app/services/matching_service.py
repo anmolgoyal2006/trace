@@ -194,6 +194,16 @@ class CameraMatch:
     active_backbone: str = "OSNet x1_0"
     embedding_dim: int = 512
 
+    # Phase 4 identity fields — consumed by _persist_sighting()
+    # matching_mode: which signal was primary ("body" | "face")
+    # face_used: True when ArcFace embedding participated in the decision
+    # face_similarity: alias for face_sim kept for DB column compatibility
+    # body_similarity: alias for appearance_score kept for DB column compatibility
+    matching_mode: str = "body"
+    face_used: bool = False
+    face_similarity: Optional[float] = None   # set from face_sim after veto check
+    body_similarity: float = 0.0              # set from appearance_score
+
 
 # ---------------------------------------------------------------------------
 # Service
@@ -694,6 +704,14 @@ class MatchingService:
                 match.match_status = MatchStatus.CONFIDENT_MATCH
             else:
                 match.match_status = MatchStatus.POSSIBLE_MATCH_REVIEW
+
+            # ---- populate Phase 4 identity fields -----------------------
+            # These mirror existing fields under the names expected by
+            # _persist_sighting() in pipeline_service.py.
+            match.face_used       = use_face and match.face_sim is not None
+            match.matching_mode   = "face" if match.face_used and not veto else "body"
+            match.face_similarity = match.face_sim          # alias
+            match.body_similarity = match.appearance_score  # alias
 
             matches.append(match)
 

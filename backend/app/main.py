@@ -214,7 +214,8 @@ async def _migrate_sightings_schema(conn) -> None:
     ]
 
     _session_columns = [
-        ("match_decision",     "TEXT    NOT NULL DEFAULT 'NO_CONFIDENT_MATCH'"),
+        ("match_decision",       "TEXT    NOT NULL DEFAULT 'NO_CONFIDENT_MATCH'"),
+        ("top_candidates_json",  "TEXT"),
     ]
 
     result = await conn.execute(_text("PRAGMA table_info(sightings)"))

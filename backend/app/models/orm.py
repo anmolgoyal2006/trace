@@ -136,6 +136,10 @@ class QuerySession(Base):
     match_decision: Mapped[str] = mapped_column(
         Text, nullable=False, default="NO_CONFIDENT_MATCH"
     )
+    # Top candidate tracks serialised as JSON for retrieval via REST GET.
+    # Mirrors what is pushed live over WebSocket so clients that miss the
+    # WS event can still retrieve the candidates from the DB.
+    top_candidates_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Relationships
     person: Mapped[Optional["Person"]] = relationship(

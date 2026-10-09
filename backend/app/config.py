@@ -115,6 +115,43 @@ class Settings(BaseSettings):
     face_rec_model: str = ""     # path to w600k_r50.onnx
 
     # ------------------------------------------------------------------ #
+    # Path resolution helpers                                              #
+    # Resolve model weight paths relative to repo root so the server can  #
+    # be started from any working directory.                               #
+    # ------------------------------------------------------------------ #
+    @property
+    def face_det_model_path(self) -> Path:
+        """Absolute path to SCRFD weights; empty string → disabled."""
+        if not self.face_det_model:
+            return Path("")
+        p = Path(self.face_det_model)
+        return p if p.is_absolute() else _REPO_ROOT / p
+
+    @property
+    def face_rec_model_path(self) -> Path:
+        """Absolute path to ArcFace weights; empty string → disabled."""
+        if not self.face_rec_model:
+            return Path("")
+        p = Path(self.face_rec_model)
+        return p if p.is_absolute() else _REPO_ROOT / p
+
+    @property
+    def kpr_weights_path_abs(self) -> Path:
+        """Absolute path to KPR checkpoint; empty string → disabled."""
+        if not self.kpr_weights_path:
+            return Path("")
+        p = Path(self.kpr_weights_path)
+        return p if p.is_absolute() else _REPO_ROOT / p
+
+    @property
+    def kpr_config_path_abs(self) -> Path:
+        """Absolute path to KPR config yaml; empty string → disabled."""
+        if not self.kpr_config_path:
+            return Path("")
+        p = Path(self.kpr_config_path)
+        return p if p.is_absolute() else _REPO_ROOT / p
+
+    # ------------------------------------------------------------------ #
     # Confidence scaling (from Phase 4.5 observed distributions)          #
     # These are OSNet-specific — SOLIDER uses its own range above.        #
     # ------------------------------------------------------------------ #

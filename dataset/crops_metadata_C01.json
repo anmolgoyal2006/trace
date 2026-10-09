@@ -1,6 +1,6 @@
 [
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track1_frame0000.jpg",
+    "crop_path": "dataset/crops/C01/C01_track1_frame0000.jpg",
     "camera_id": "C01",
     "track_id": 1,
     "frame": 0,
@@ -14,7 +14,7 @@
     "detection_confidence": 0.7515
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track1_frame0005.jpg",
+    "crop_path": "dataset/crops/C01/C01_track1_frame0005.jpg",
     "camera_id": "C01",
     "track_id": 1,
     "frame": 5,
@@ -28,7 +28,7 @@
     "detection_confidence": 0.8141
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track1_frame0010.jpg",
+    "crop_path": "dataset/crops/C01/C01_track1_frame0010.jpg",
     "camera_id": "C01",
     "track_id": 1,
     "frame": 10,
@@ -42,7 +42,7 @@
     "detection_confidence": 0.8845
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track1_frame0015.jpg",
+    "crop_path": "dataset/crops/C01/C01_track1_frame0015.jpg",
     "camera_id": "C01",
     "track_id": 1,
     "frame": 15,
@@ -56,7 +56,7 @@
     "detection_confidence": 0.8555
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track1_frame0020.jpg",
+    "crop_path": "dataset/crops/C01/C01_track1_frame0020.jpg",
     "camera_id": "C01",
     "track_id": 1,
     "frame": 20,
@@ -70,7 +70,7 @@
     "detection_confidence": 0.7263
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track3_frame0079.jpg",
+    "crop_path": "dataset/crops/C01/C01_track3_frame0079.jpg",
     "camera_id": "C01",
     "track_id": 3,
     "frame": 79,
@@ -84,7 +84,7 @@
     "detection_confidence": 0.6275
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track3_frame0130.jpg",
+    "crop_path": "dataset/crops/C01/C01_track3_frame0130.jpg",
     "camera_id": "C01",
     "track_id": 3,
     "frame": 130,
@@ -98,7 +98,7 @@
     "detection_confidence": 0.776
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track3_frame0160.jpg",
+    "crop_path": "dataset/crops/C01/C01_track3_frame0160.jpg",
     "camera_id": "C01",
     "track_id": 3,
     "frame": 160,
@@ -112,7 +112,7 @@
     "detection_confidence": 0.8384
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track3_frame0217.jpg",
+    "crop_path": "dataset/crops/C01/C01_track3_frame0217.jpg",
     "camera_id": "C01",
     "track_id": 3,
     "frame": 217,
@@ -126,7 +126,7 @@
     "detection_confidence": 0.9282
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track3_frame0244.jpg",
+    "crop_path": "dataset/crops/C01/C01_track3_frame0244.jpg",
     "camera_id": "C01",
     "track_id": 3,
     "frame": 244,
@@ -140,7 +140,7 @@
     "detection_confidence": 0.7073
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track4_frame0085.jpg",
+    "crop_path": "dataset/crops/C01/C01_track4_frame0085.jpg",
     "camera_id": "C01",
     "track_id": 4,
     "frame": 85,
@@ -154,7 +154,7 @@
     "detection_confidence": 0.6385
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track4_frame0098.jpg",
+    "crop_path": "dataset/crops/C01/C01_track4_frame0098.jpg",
     "camera_id": "C01",
     "track_id": 4,
     "frame": 98,
@@ -168,7 +168,7 @@
     "detection_confidence": 0.7596
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track4_frame0107.jpg",
+    "crop_path": "dataset/crops/C01/C01_track4_frame0107.jpg",
     "camera_id": "C01",
     "track_id": 4,
     "frame": 107,
@@ -182,7 +182,7 @@
     "detection_confidence": 0.633
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track4_frame0118.jpg",
+    "crop_path": "dataset/crops/C01/C01_track4_frame0118.jpg",
     "camera_id": "C01",
     "track_id": 4,
     "frame": 118,
@@ -196,7 +196,7 @@
     "detection_confidence": 0.693
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track6_frame0218.jpg",
+    "crop_path": "dataset/crops/C01/C01_track6_frame0218.jpg",
     "camera_id": "C01",
     "track_id": 6,
     "frame": 218,
@@ -210,7 +210,7 @@
     "detection_confidence": 0.6951
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track6_frame0228.jpg",
+    "crop_path": "dataset/crops/C01/C01_track6_frame0228.jpg",
     "camera_id": "C01",
     "track_id": 6,
     "frame": 228,
@@ -224,7 +224,7 @@
     "detection_confidence": 0.6251
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track6_frame0229.jpg",
+    "crop_path": "dataset/crops/C01/C01_track6_frame0229.jpg",
     "camera_id": "C01",
     "track_id": 6,
     "frame": 229,
@@ -238,7 +238,7 @@
     "detection_confidence": 0.6837
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track7_frame0314.jpg",
+    "crop_path": "dataset/crops/C01/C01_track7_frame0314.jpg",
     "camera_id": "C01",
     "track_id": 7,
     "frame": 314,
@@ -252,7 +252,7 @@
     "detection_confidence": 0.7257
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track7_frame0331.jpg",
+    "crop_path": "dataset/crops/C01/C01_track7_frame0331.jpg",
     "camera_id": "C01",
     "track_id": 7,
     "frame": 331,
@@ -266,7 +266,7 @@
     "detection_confidence": 0.7507
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track7_frame0347.jpg",
+    "crop_path": "dataset/crops/C01/C01_track7_frame0347.jpg",
     "camera_id": "C01",
     "track_id": 7,
     "frame": 347,
@@ -280,7 +280,7 @@
     "detection_confidence": 0.6554
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track7_frame0363.jpg",
+    "crop_path": "dataset/crops/C01/C01_track7_frame0363.jpg",
     "camera_id": "C01",
     "track_id": 7,
     "frame": 363,
@@ -294,7 +294,7 @@
     "detection_confidence": 0.7307
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track12_frame0334.jpg",
+    "crop_path": "dataset/crops/C01/C01_track12_frame0334.jpg",
     "camera_id": "C01",
     "track_id": 12,
     "frame": 334,
@@ -308,7 +308,7 @@
     "detection_confidence": 0.6761
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track12_frame0363.jpg",
+    "crop_path": "dataset/crops/C01/C01_track12_frame0363.jpg",
     "camera_id": "C01",
     "track_id": 12,
     "frame": 363,
@@ -322,7 +322,7 @@
     "detection_confidence": 0.6977
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track12_frame0386.jpg",
+    "crop_path": "dataset/crops/C01/C01_track12_frame0386.jpg",
     "camera_id": "C01",
     "track_id": 12,
     "frame": 386,
@@ -336,7 +336,7 @@
     "detection_confidence": 0.6955
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track12_frame0404.jpg",
+    "crop_path": "dataset/crops/C01/C01_track12_frame0404.jpg",
     "camera_id": "C01",
     "track_id": 12,
     "frame": 404,
@@ -350,7 +350,7 @@
     "detection_confidence": 0.7202
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track12_frame0433.jpg",
+    "crop_path": "dataset/crops/C01/C01_track12_frame0433.jpg",
     "camera_id": "C01",
     "track_id": 12,
     "frame": 433,
@@ -364,7 +364,7 @@
     "detection_confidence": 0.6927
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track15_frame0410.jpg",
+    "crop_path": "dataset/crops/C01/C01_track15_frame0410.jpg",
     "camera_id": "C01",
     "track_id": 15,
     "frame": 410,
@@ -378,7 +378,7 @@
     "detection_confidence": 0.7415
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track15_frame0412.jpg",
+    "crop_path": "dataset/crops/C01/C01_track15_frame0412.jpg",
     "camera_id": "C01",
     "track_id": 15,
     "frame": 412,
@@ -392,7 +392,7 @@
     "detection_confidence": 0.6838
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track15_frame0413.jpg",
+    "crop_path": "dataset/crops/C01/C01_track15_frame0413.jpg",
     "camera_id": "C01",
     "track_id": 15,
     "frame": 413,
@@ -406,7 +406,7 @@
     "detection_confidence": 0.7275
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track16_frame0442.jpg",
+    "crop_path": "dataset/crops/C01/C01_track16_frame0442.jpg",
     "camera_id": "C01",
     "track_id": 16,
     "frame": 442,
@@ -420,7 +420,7 @@
     "detection_confidence": 0.7996
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track16_frame0461.jpg",
+    "crop_path": "dataset/crops/C01/C01_track16_frame0461.jpg",
     "camera_id": "C01",
     "track_id": 16,
     "frame": 461,
@@ -434,7 +434,7 @@
     "detection_confidence": 0.8881
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track16_frame0479.jpg",
+    "crop_path": "dataset/crops/C01/C01_track16_frame0479.jpg",
     "camera_id": "C01",
     "track_id": 16,
     "frame": 479,
@@ -448,7 +448,7 @@
     "detection_confidence": 0.8814
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track16_frame0497.jpg",
+    "crop_path": "dataset/crops/C01/C01_track16_frame0497.jpg",
     "camera_id": "C01",
     "track_id": 16,
     "frame": 497,
@@ -462,7 +462,7 @@
     "detection_confidence": 0.8958
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track18_frame0469.jpg",
+    "crop_path": "dataset/crops/C01/C01_track18_frame0469.jpg",
     "camera_id": "C01",
     "track_id": 18,
     "frame": 469,
@@ -476,7 +476,7 @@
     "detection_confidence": 0.6663
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track18_frame0471.jpg",
+    "crop_path": "dataset/crops/C01/C01_track18_frame0471.jpg",
     "camera_id": "C01",
     "track_id": 18,
     "frame": 471,
@@ -490,7 +490,7 @@
     "detection_confidence": 0.6243
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track18_frame0473.jpg",
+    "crop_path": "dataset/crops/C01/C01_track18_frame0473.jpg",
     "camera_id": "C01",
     "track_id": 18,
     "frame": 473,
@@ -504,7 +504,7 @@
     "detection_confidence": 0.6507
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track19_frame0513.jpg",
+    "crop_path": "dataset/crops/C01/C01_track19_frame0513.jpg",
     "camera_id": "C01",
     "track_id": 19,
     "frame": 513,
@@ -518,7 +518,7 @@
     "detection_confidence": 0.9134
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track19_frame0529.jpg",
+    "crop_path": "dataset/crops/C01/C01_track19_frame0529.jpg",
     "camera_id": "C01",
     "track_id": 19,
     "frame": 529,
@@ -532,7 +532,7 @@
     "detection_confidence": 0.896
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track19_frame0544.jpg",
+    "crop_path": "dataset/crops/C01/C01_track19_frame0544.jpg",
     "camera_id": "C01",
     "track_id": 19,
     "frame": 544,
@@ -546,7 +546,7 @@
     "detection_confidence": 0.9012
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track19_frame0559.jpg",
+    "crop_path": "dataset/crops/C01/C01_track19_frame0559.jpg",
     "camera_id": "C01",
     "track_id": 19,
     "frame": 559,
@@ -560,7 +560,7 @@
     "detection_confidence": 0.852
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track19_frame0575.jpg",
+    "crop_path": "dataset/crops/C01/C01_track19_frame0575.jpg",
     "camera_id": "C01",
     "track_id": 19,
     "frame": 575,
@@ -574,7 +574,7 @@
     "detection_confidence": 0.748
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track20_frame0645.jpg",
+    "crop_path": "dataset/crops/C01/C01_track20_frame0645.jpg",
     "camera_id": "C01",
     "track_id": 20,
     "frame": 645,
@@ -588,7 +588,7 @@
     "detection_confidence": 0.6488
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track20_frame0671.jpg",
+    "crop_path": "dataset/crops/C01/C01_track20_frame0671.jpg",
     "camera_id": "C01",
     "track_id": 20,
     "frame": 671,
@@ -602,7 +602,7 @@
     "detection_confidence": 0.8534
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track20_frame0693.jpg",
+    "crop_path": "dataset/crops/C01/C01_track20_frame0693.jpg",
     "camera_id": "C01",
     "track_id": 20,
     "frame": 693,
@@ -616,7 +616,7 @@
     "detection_confidence": 0.8215
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track20_frame0716.jpg",
+    "crop_path": "dataset/crops/C01/C01_track20_frame0716.jpg",
     "camera_id": "C01",
     "track_id": 20,
     "frame": 716,
@@ -630,7 +630,7 @@
     "detection_confidence": 0.8254
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track21_frame0686.jpg",
+    "crop_path": "dataset/crops/C01/C01_track21_frame0686.jpg",
     "camera_id": "C01",
     "track_id": 21,
     "frame": 686,
@@ -644,7 +644,7 @@
     "detection_confidence": 0.7127
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track21_frame0694.jpg",
+    "crop_path": "dataset/crops/C01/C01_track21_frame0694.jpg",
     "camera_id": "C01",
     "track_id": 21,
     "frame": 694,
@@ -658,7 +658,7 @@
     "detection_confidence": 0.7679
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track21_frame0699.jpg",
+    "crop_path": "dataset/crops/C01/C01_track21_frame0699.jpg",
     "camera_id": "C01",
     "track_id": 21,
     "frame": 699,
@@ -672,7 +672,7 @@
     "detection_confidence": 0.7319
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track22_frame0695.jpg",
+    "crop_path": "dataset/crops/C01/C01_track22_frame0695.jpg",
     "camera_id": "C01",
     "track_id": 22,
     "frame": 695,
@@ -686,7 +686,7 @@
     "detection_confidence": 0.6529
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track22_frame0696.jpg",
+    "crop_path": "dataset/crops/C01/C01_track22_frame0696.jpg",
     "camera_id": "C01",
     "track_id": 22,
     "frame": 696,
@@ -700,7 +700,7 @@
     "detection_confidence": 0.6716
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track22_frame0697.jpg",
+    "crop_path": "dataset/crops/C01/C01_track22_frame0697.jpg",
     "camera_id": "C01",
     "track_id": 22,
     "frame": 697,
@@ -714,7 +714,7 @@
     "detection_confidence": 0.6936
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track22_frame0699.jpg",
+    "crop_path": "dataset/crops/C01/C01_track22_frame0699.jpg",
     "camera_id": "C01",
     "track_id": 22,
     "frame": 699,
@@ -728,7 +728,7 @@
     "detection_confidence": 0.6895
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track22_frame0700.jpg",
+    "crop_path": "dataset/crops/C01/C01_track22_frame0700.jpg",
     "camera_id": "C01",
     "track_id": 22,
     "frame": 700,
@@ -742,7 +742,7 @@
     "detection_confidence": 0.7033
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track23_frame0729.jpg",
+    "crop_path": "dataset/crops/C01/C01_track23_frame0729.jpg",
     "camera_id": "C01",
     "track_id": 23,
     "frame": 729,
@@ -756,7 +756,7 @@
     "detection_confidence": 0.7026
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track23_frame0739.jpg",
+    "crop_path": "dataset/crops/C01/C01_track23_frame0739.jpg",
     "camera_id": "C01",
     "track_id": 23,
     "frame": 739,
@@ -770,7 +770,7 @@
     "detection_confidence": 0.6738
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track23_frame0752.jpg",
+    "crop_path": "dataset/crops/C01/C01_track23_frame0752.jpg",
     "camera_id": "C01",
     "track_id": 23,
     "frame": 752,
@@ -784,7 +784,7 @@
     "detection_confidence": 0.6416
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track23_frame0759.jpg",
+    "crop_path": "dataset/crops/C01/C01_track23_frame0759.jpg",
     "camera_id": "C01",
     "track_id": 23,
     "frame": 759,
@@ -798,7 +798,7 @@
     "detection_confidence": 0.7935
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track24_frame0735.jpg",
+    "crop_path": "dataset/crops/C01/C01_track24_frame0735.jpg",
     "camera_id": "C01",
     "track_id": 24,
     "frame": 735,
@@ -812,7 +812,7 @@
     "detection_confidence": 0.6815
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track24_frame0736.jpg",
+    "crop_path": "dataset/crops/C01/C01_track24_frame0736.jpg",
     "camera_id": "C01",
     "track_id": 24,
     "frame": 736,
@@ -826,7 +826,7 @@
     "detection_confidence": 0.6177
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track24_frame0738.jpg",
+    "crop_path": "dataset/crops/C01/C01_track24_frame0738.jpg",
     "camera_id": "C01",
     "track_id": 24,
     "frame": 738,
@@ -840,7 +840,7 @@
     "detection_confidence": 0.7358
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track24_frame0739.jpg",
+    "crop_path": "dataset/crops/C01/C01_track24_frame0739.jpg",
     "camera_id": "C01",
     "track_id": 24,
     "frame": 739,
@@ -854,7 +854,7 @@
     "detection_confidence": 0.7193
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track24_frame0740.jpg",
+    "crop_path": "dataset/crops/C01/C01_track24_frame0740.jpg",
     "camera_id": "C01",
     "track_id": 24,
     "frame": 740,
@@ -868,7 +868,7 @@
     "detection_confidence": 0.6128
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track25_frame0820.jpg",
+    "crop_path": "dataset/crops/C01/C01_track25_frame0820.jpg",
     "camera_id": "C01",
     "track_id": 25,
     "frame": 820,
@@ -882,7 +882,7 @@
     "detection_confidence": 0.6923
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track25_frame0887.jpg",
+    "crop_path": "dataset/crops/C01/C01_track25_frame0887.jpg",
     "camera_id": "C01",
     "track_id": 25,
     "frame": 887,
@@ -896,7 +896,7 @@
     "detection_confidence": 0.7914
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track25_frame0953.jpg",
+    "crop_path": "dataset/crops/C01/C01_track25_frame0953.jpg",
     "camera_id": "C01",
     "track_id": 25,
     "frame": 953,
@@ -910,7 +910,7 @@
     "detection_confidence": 0.7629
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track26_frame0801.jpg",
+    "crop_path": "dataset/crops/C01/C01_track26_frame0801.jpg",
     "camera_id": "C01",
     "track_id": 26,
     "frame": 801,
@@ -924,7 +924,7 @@
     "detection_confidence": 0.6635
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track26_frame0830.jpg",
+    "crop_path": "dataset/crops/C01/C01_track26_frame0830.jpg",
     "camera_id": "C01",
     "track_id": 26,
     "frame": 830,
@@ -938,7 +938,7 @@
     "detection_confidence": 0.6728
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track26_frame0836.jpg",
+    "crop_path": "dataset/crops/C01/C01_track26_frame0836.jpg",
     "camera_id": "C01",
     "track_id": 26,
     "frame": 836,
@@ -952,7 +952,7 @@
     "detection_confidence": 0.6745
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track28_frame0826.jpg",
+    "crop_path": "dataset/crops/C01/C01_track28_frame0826.jpg",
     "camera_id": "C01",
     "track_id": 28,
     "frame": 826,
@@ -966,7 +966,7 @@
     "detection_confidence": 0.6882
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track28_frame0827.jpg",
+    "crop_path": "dataset/crops/C01/C01_track28_frame0827.jpg",
     "camera_id": "C01",
     "track_id": 28,
     "frame": 827,
@@ -980,7 +980,7 @@
     "detection_confidence": 0.7424
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track28_frame0828.jpg",
+    "crop_path": "dataset/crops/C01/C01_track28_frame0828.jpg",
     "camera_id": "C01",
     "track_id": 28,
     "frame": 828,
@@ -994,7 +994,7 @@
     "detection_confidence": 0.717
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track28_frame0829.jpg",
+    "crop_path": "dataset/crops/C01/C01_track28_frame0829.jpg",
     "camera_id": "C01",
     "track_id": 28,
     "frame": 829,
@@ -1008,7 +1008,7 @@
     "detection_confidence": 0.7134
   },
   {
-    "crop_path": "/Users/arnavbadal/Desktop/TRACE/trace/dataset/crops/C01/C01_track28_frame0831.jpg",
+    "crop_path": "dataset/crops/C01/C01_track28_frame0831.jpg",
     "camera_id": "C01",
     "track_id": 28,
     "frame": 831,

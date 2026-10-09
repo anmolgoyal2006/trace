@@ -169,8 +169,8 @@ def _embed_query_face(img_path: Path) -> tuple[Optional[list[float]], Optional[f
         logger.debug("[PipelineService] Face weights not configured — skipping face query")
         return None, None
 
-    det_path = Path(det_model)
-    rec_path = Path(rec_model)
+    det_path = settings.face_det_model_path
+    rec_path = settings.face_rec_model_path
 
     if not det_path.exists() or not rec_path.exists():
         missing = [str(p) for p in (det_path, rec_path) if not p.exists()]
@@ -231,8 +231,8 @@ def _embed_query_kpr(img_path: Path) -> Optional[dict]:
         logger.debug("[PipelineService] KPR weights not configured — skipping KPR query")
         return None
 
-    kpr_w = Path(kpr_weights)
-    kpr_c = Path(kpr_config)
+    kpr_w = settings.kpr_weights_path_abs
+    kpr_c = settings.kpr_config_path_abs
 
     if not kpr_w.exists() or not kpr_c.exists():
         missing = [str(p) for p in (kpr_w, kpr_c) if not p.exists()]
@@ -488,8 +488,8 @@ class PipelineService:
             f"BODY DIMENSION: {emb_dim} | "
             f"FACE: {'ENABLED' if 'face' in active_signals else 'DISABLED'} | "
             f"KPR: {'ENABLED' if 'KPR' in active_signals else 'DISABLED'} | "
-            f"FACE WEIGHTS: {settings.face_det_model or 'not set'} | "
-            f"KPR WEIGHTS: {settings.kpr_weights_path or 'not set'} | "
+            f"FACE WEIGHTS: {settings.face_det_model_path or 'not set'} | "
+            f"KPR WEIGHTS: {settings.kpr_weights_path_abs or 'not set'} | "
             f"ACTIVE THRESHOLD: {backbone_cfg.no_match_threshold} | "
             f"SOFT FLOOR: {backbone_cfg.soft_floor} | "
             f"QUERY FACE RELIABLE: {face_reliable} "
@@ -644,10 +644,13 @@ class PipelineService:
         )
 
         # ── Step 9: mark complete ──────────────────────────────────────────
+        import json
         session.status        = "done"
         session.progress_pct  = 100
         session.completed_at  = datetime.utcnow()
         session.match_decision = match_decision
+        # Serialize top_candidates to JSON so GET /api/queries/{id}/route can return them
+        session.top_candidates_json = json.dumps([c.model_dump() for c in top_candidates])
         await db.commit()
 
         await self._ws.broadcast(WsRouteComplete(

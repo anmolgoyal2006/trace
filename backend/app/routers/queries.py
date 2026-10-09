@@ -21,6 +21,7 @@ from backend.app.config import settings
 from backend.app.database import get_db
 from backend.app.models.orm import Person, QuerySession, RouteStep, Sighting
 from backend.app.models.schemas import (
+    CandidateTrackOut,
     QueryRouteOut,
     QueryStatusOut,
     RouteStepOut,
@@ -237,7 +238,10 @@ async def get_route(
         total_cameras_matched=len(sightings),
         route_confidence=route_confidence,
         match_decision=getattr(session, "match_decision", "NO_CONFIDENT_MATCH"),
-        top_candidates=[],   # top_candidates are pushed live via WS; not stored in DB
+        top_candidates=[
+            CandidateTrackOut(**c)
+            for c in json.loads(getattr(session, "top_candidates_json", None) or "[]")
+        ],
     )
 
 

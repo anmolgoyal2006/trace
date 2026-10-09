@@ -210,8 +210,8 @@ async def _run_video_pipeline(job_id: str, video_path: Path, camera_id: str) -> 
             )
 
         # ── Step 4: Face embeddings (SCRFD + ArcFace, optional) ────────
-        face_det   = Path(settings.face_det_model)  if settings.face_det_model  else None
-        face_rec   = Path(settings.face_rec_model)  if settings.face_rec_model  else None
+        face_det = settings.face_det_model_path if settings.face_det_model else None
+        face_rec = settings.face_rec_model_path if settings.face_rec_model else None
 
         if face_det and face_rec and face_det.exists() and face_rec.exists():
             _update("processing", f"[4/5] Generating face embeddings for {camera_id}...")
@@ -247,8 +247,8 @@ async def _run_video_pipeline(job_id: str, video_path: Path, camera_id: str) -> 
             _update("processing", f"[4/5] Skipped face embeddings (weights not set)")
 
         # ── Step 5: KPR part embeddings (optional) ─────────────────────
-        kpr_weights = Path(settings.kpr_weights_path) if settings.kpr_weights_path else None
-        kpr_config  = Path(settings.kpr_config_path)  if settings.kpr_config_path  else None
+        kpr_weights = settings.kpr_weights_path_abs if settings.kpr_weights_path else None
+        kpr_config  = settings.kpr_config_path_abs  if settings.kpr_config_path  else None
 
         if kpr_weights and kpr_config and kpr_weights.exists() and kpr_config.exists():
             _update("processing", f"[5/5] Generating KPR part embeddings for {camera_id}...")
