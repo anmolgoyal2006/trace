@@ -52,12 +52,32 @@ const CAM_LAYOUT = {
 
 /* Demo Fallback Session for Immediate 1st-Look Wow */
 const MOCK_DEMO_ROUTE = {
-  total_cameras_matched: 3,
-  route_confidence: 0,
-  match_decision: 'NO_CONFIDENT_MATCH',
+  total_cameras_matched: 2,
+  route_confidence: 0.74,
+  match_decision: 'CONFIDENT_MATCH',
   top_candidates: [],
-  sightings: [],
-  steps: [],
+  narration: 'Seen at Entrance Zone (C01) at 10:42:15 \u2192 Corridor Hub (C02) at 10:43:08 [gap: 53s, expected: 45s \u2713 on time]',
+  sightings: [
+    { camera_id: 'C01', track_id: 104, first_seen: '10:42:15.00', last_seen: '10:42:42.00',
+      appearance_score: 0.78, spatial_score: 1.0, temporal_score: 1.0, fusion_score: 0.84,
+      best_confidence: 84.0, match_status: 'CONFIDENT_MATCH', matching_mode: 'body',
+      identity_score: 0.78, body_similarity: 0.78, face_similarity: null },
+    { camera_id: 'C02', track_id: 217, first_seen: '10:43:08.00', last_seen: '10:43:55.00',
+      appearance_score: 0.71, spatial_score: 0.91, temporal_score: 0.88, fusion_score: 0.74,
+      best_confidence: 74.0, match_status: 'CONFIDENT_MATCH', matching_mode: 'body',
+      identity_score: 0.71, body_similarity: 0.71, face_similarity: null },
+  ],
+  steps: [
+    { step_order: 0, camera_id: 'C01', camera_location: 'Entrance Zone',
+      timestamp: '10:42:15.00', confidence: 84.0, matching_mode: 'body',
+      observed_gap_sec: null, expected_transit_sec: null, gap_verdict: null },
+    { step_order: 1, camera_id: 'C02', camera_location: 'Corridor Hub',
+      timestamp: '10:43:08.00', confidence: 74.0, matching_mode: 'body',
+      observed_gap_sec: 53, expected_transit_sec: 45, gap_verdict: '\u2713 on time' },
+  ],
+  skipped_cameras: [
+    { camera_id: 'C03', camera_location: 'Canteen Area', match_status: 'NO_USABLE_EVIDENCE' },
+  ],
 };
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -253,7 +273,7 @@ function switchView(name) {
   if (name === 'watchlist') loadPersonsList();
   if (name === 'upload')    { loadUploadJobs(); loadCameraConfig(); }
   if (name === 'query')     { loadPersonsSelect(); renderCandidateMatchesShowcase(); }
-  if (name === 'map')       { loadSessionSelect('map-session-select'); loadDemoRoute(); }
+  if (name === 'map')       { loadSessionSelect('map-session-select'); if (State.lastRoute) renderMapRoute(State.lastRoute); else loadDemoRoute(); }
   if (name === 'timeline')  { loadSessionSelect('timeline-session-select'); renderTimeline(); }
 }
 
@@ -1120,7 +1140,7 @@ function renderMapRoute(route) {
 
   if (!route.steps?.length) { toast('No trajectory steps to display', 'info'); return; }
 
-  route.sightings.forEach(s => highlightCamNode(s.camera_id, 'matched'));
+  (route.sightings || []).forEach(s => highlightCamNode(s.camera_id, 'matched'));
 
   const routeEl = document.getElementById('map-route-path');
   const pos     = CAM_LAYOUT;
@@ -1170,9 +1190,29 @@ function renderMapRoute(route) {
     }
   });
 
+  // Grey out skipped cameras
+  (route.skipped_cameras || []).forEach(sc => {
+    const node = document.getElementById(`cam-${sc.camera_id}`);
+    if (node) node.setAttribute('class', 'cam-node skipped');
+  });
+
   const summaryCard = document.getElementById('map-route-summary');
   const summaryBody = document.getElementById('map-route-summary-body');
   summaryCard.style.display = 'block';
+
+  // Inject narration element if not already in DOM
+  let narrationEl = document.getElementById('map-route-narration');
+  if (!narrationEl) {
+    narrationEl = document.createElement('div');
+    narrationEl.id = 'map-route-narration';
+    narrationEl.style.cssText = 'display:none;padding:.85rem 1.1rem;margin-bottom:1rem;border-radius:8px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);font-size:.88rem;font-weight:700;color:#e0e0ff;line-height:1.5;font-family:var(--font-mono)';
+    summaryCard?.parentNode?.insertBefore(narrationEl, summaryCard);
+  }
+  if (route.narration) {
+    narrationEl.textContent = route.narration;
+    narrationEl.style.display = 'block';
+  }
+
   const cf  = (route.route_confidence * 100).toFixed(1);
   const cfColor = parseFloat(cf) >= 70 ? 'var(--green)' : parseFloat(cf) >= 50 ? 'var(--amber)' : 'var(--red)';
 
@@ -1203,7 +1243,17 @@ function renderMapRoute(route) {
           <span class="badge-pill badge-poi" style="margin-left:auto">${(s.confidence || 0).toFixed(1)}%</span>
         </div>`;
       }).join('')}
-    </div>`;
+    </div>
+    ${route.skipped_cameras?.length ? `
+    <div class="section-label" style="font-family:var(--font-mono);font-size:.72rem;color:var(--text-3);margin-top:1rem;margin-bottom:.5rem;font-weight:800">NO CONFIDENT MATCH</div>
+    <div style="display:flex;flex-direction:column;gap:.3rem">
+      ${route.skipped_cameras.map(sc => `
+        <div style="display:flex;align-items:center;gap:.6rem;font-size:.8rem;padding:.4rem .75rem;border-radius:6px;background:rgba(255,255,255,0.03);border:1px dashed var(--border);opacity:.6">
+          <span style="color:var(--text-3);font-weight:800;font-family:var(--font-heading)">${sc.camera_id}</span>
+          <span style="color:var(--text-3);font-size:.75rem">${sc.camera_location}</span>
+          <span style="margin-left:auto;font-size:.7rem;color:var(--text-3);font-family:var(--font-mono)">${sc.match_status || 'NO MATCH'}</span>
+        </div>`).join('')}
+    </div>` : ''}`;
 }
 
 function highlightCamNode(id, cls) {
@@ -1261,7 +1311,7 @@ function showCamDetail(id) {
 }
 
 function scoreBar(name, val) {
-  const pct = ((val || 0.9) * 100).toFixed(1);
+  const pct = (val != null ? val * 100 : 0).toFixed(1);
   const color = parseFloat(pct) >= 70 ? 'var(--green)' : parseFloat(pct) >= 50 ? 'var(--amber)' : 'var(--red)';
   return `
     <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.6rem">
@@ -1277,45 +1327,112 @@ function scoreBar(name, val) {
    TIMELINE VIEW
 ═══════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('btn-load-timeline')?.addEventListener('click', renderTimeline);
+  document.getElementById('btn-load-timeline')?.addEventListener('click', () => renderTimeline());
 });
 
-function renderTimeline() {
+async function renderTimeline() {
   const container = document.getElementById('timeline-container');
   if (!container) return;
 
+  // Try to get real route data
+  let route = State.lastRoute;
+  if (!route) {
+    const selEl = document.getElementById('timeline-session-select');
+    const val = selEl ? selEl.value : '';
+    if (val === 'demo-session' || val === '') {
+      route = MOCK_DEMO_ROUTE;
+    } else {
+      const sid = parseInt(val);
+      if (!isNaN(sid)) {
+        try { route = await API.queries.route(sid); State.lastRoute = route; }
+        catch(e) { route = MOCK_DEMO_ROUTE; }
+      }
+    }
+  }
+
+  if (!route?.steps?.length) {
+    container.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-3);font-family:var(--font-mono);font-size:.85rem">No route data — run a query first.</div>`;
+    return;
+  }
+
+  // Parse "HH:MM:SS.ff" → seconds since midnight
+  function tsToSec(ts) {
+    if (!ts) return null;
+    const parts = ts.split(':');
+    if (parts.length < 3) return null;
+    const [h, m] = [parseInt(parts[0]), parseInt(parts[1])];
+    const sp = parts[2].split('.');
+    const s = parseInt(sp[0]), cs = sp[1] ? parseInt(sp[1]) : 0;
+    return h * 3600 + m * 60 + s + cs / 100;
+  }
+
+  const stepsWithTime = route.steps.map(s => ({ ...s, _sec: tsToSec(s.timestamp) }));
+  const validSecs = stepsWithTime.map(s => s._sec).filter(x => x !== null);
+  const minSec = validSecs.length ? Math.min(...validSecs) - 30 : 0;
+  const maxSec = validSecs.length ? Math.max(...validSecs) + 30 : 60;
+  const span = maxSec - minSec || 60;
+
+  function secToPos(sec) { return ((sec - minSec) / span * 100).toFixed(2) + '%'; }
+  function fmtSec(sec) {
+    if (sec === null) return '—';
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = Math.floor(sec % 60);
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  // Tick marks — 5 evenly spaced
+  const ticks = Array.from({length: 5}, (_, i) => minSec + (span / 4) * i);
+  const ticksHtml = ticks.map(t => `<span>${fmtSec(t)}</span>`).join('');
+
+  // All cameras: matched (from steps) + skipped
+  const matchedIds = new Set(route.steps.map(s => s.camera_id));
+  const skippedRows = (route.skipped_cameras || []).map(sc => ({
+    camera_id: sc.camera_id,
+    camera_location: sc.camera_location,
+    _sec: null,
+    _skipped: true,
+    match_status: sc.match_status,
+  }));
+  const allRows = [...stepsWithTime, ...skippedRows];
+
+  const rowsHtml = allRows.map(step => {
+    const isSkipped = !!step._skipped;
+    const markerPos = step._sec !== null ? secToPos(step._sec) : '50%';
+    const confClass = !isSkipped && (step.confidence || 0) >= 70 ? 'conf-high' : 'conf-mid';
+    const modeColor = step.matching_mode === 'face' ? 'var(--green)' : 'var(--cyan)';
+
+    // Gap annotation to next step (only for matched rows)
+    let gapHtml = '';
+    if (!isSkipped && step.observed_gap_sec != null && step.expected_transit_sec != null) {
+      const verdictColor = step.gap_verdict?.includes('\u2713') ? 'var(--green)' : 'var(--amber)';
+      gapHtml = `<span style="position:absolute;top:-18px;left:${markerPos};transform:translateX(-50%);font-size:.68rem;color:${verdictColor};font-family:var(--font-mono);white-space:nowrap;font-weight:700">+${Math.round(step.observed_gap_sec)}s ${step.gap_verdict || ''}</span>`;
+    }
+
+    const markerHtml = isSkipped
+      ? `<div style="position:absolute;left:50%;transform:translateX(-50%);top:50%;margin-top:-8px;width:16px;height:16px;border-radius:50%;background:var(--surface3);border:2px dashed var(--text-3);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--text-3)">\u2717</div>`
+      : `<div class="tl-marker ${confClass}" style="left:${markerPos}" title="${step.camera_id} at ${step.timestamp || '—'}"></div>${gapHtml}`;
+
+    const rowOpacity = isSkipped ? '0.4' : '1';
+    const statusLabel = isSkipped
+      ? `<span style="font-size:.65rem;color:var(--text-3);font-family:var(--font-mono)">NO MATCH</span>`
+      : `<span style="font-size:.65rem;color:${modeColor};font-family:var(--font-mono)">${step.matching_mode === 'face' ? 'FACE' : 'BODY'}</span>`;
+
+    return `
+      <div class="timeline-row" style="opacity:${rowOpacity}">
+        <div class="timeline-cam">
+          <div class="timeline-cam-name">${step.camera_id}</div>
+          <div class="timeline-cam-loc">${step.camera_location || step.camera_id}</div>
+          ${statusLabel}
+        </div>
+        <div class="timeline-track" style="position:relative">
+          ${markerHtml}
+        </div>
+      </div>`;
+  }).join('');
+
   container.innerHTML = `
     <div class="timeline-wrap">
-      <div class="timeline-header">
-        <span>10:40 UTC</span><span>10:42 UTC</span><span>10:44 UTC</span><span>10:46 UTC</span><span>10:48 UTC</span>
-      </div>
-      <div class="timeline-row">
-        <div class="timeline-cam">
-          <div class="timeline-cam-name">C01</div>
-          <div class="timeline-cam-loc">Entrance</div>
-        </div>
-        <div class="timeline-track">
-          <div class="tl-marker conf-high" style="left:25%" title="Run a query to see real results"></div>
-        </div>
-      </div>
-      <div class="timeline-row">
-        <div class="timeline-cam">
-          <div class="timeline-cam-name">C02</div>
-          <div class="timeline-cam-loc">Corridor</div>
-        </div>
-        <div class="timeline-track">
-          <div class="tl-marker conf-mid" style="left:52%" title="Run a query to see real results"></div>
-        </div>
-      </div>
-      <div class="timeline-row">
-        <div class="timeline-cam">
-          <div class="timeline-cam-name">C03</div>
-          <div class="timeline-cam-loc">Canteen</div>
-        </div>
-        <div class="timeline-track">
-          <div class="tl-marker conf-high" style="left:80%" title="Run a query to see real results"></div>
-        </div>
-      </div>
+      <div class="timeline-header">${ticksHtml}</div>
+      ${rowsHtml}
     </div>`;
 }
 

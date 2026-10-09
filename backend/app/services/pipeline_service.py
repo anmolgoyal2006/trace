@@ -57,6 +57,7 @@ from backend.app.models.schemas import (
     QueryRouteOut,
     RouteStepOut,
     SightingOut,
+    SkippedCameraOut,
     WsAlert,
     WsError,
     WsQueryProgress,
@@ -69,7 +70,12 @@ from backend.app.services.matching_service import (
     MatchingService,
     MatchStatus,
 )
-from backend.app.services.route_service import FusedSighting, RouteService
+from backend.app.services.route_service import (
+    FusedSighting,
+    ReconstructedRoute,
+    SkippedCamera,
+    RouteService,
+)
 
 if TYPE_CHECKING:
     from backend.app.core.websocket_manager import WebSocketManager
@@ -549,7 +555,12 @@ class PipelineService:
             if any(m.match_status == MatchStatus.CONFIDENT_MATCH for m in cands)
         }
 
-        fused_route = route_service.reconstruct_route(confident_candidates)
+        fused_route_result = route_service.reconstruct_route(
+            confident_candidates,
+            all_camera_candidates=camera_candidates,
+        )
+        fused_route = fused_route_result.steps
+        skipped_cameras = fused_route_result.skipped_cameras
         route_confidence = route_service.compute_route_confidence(fused_route)
 
         for fused in fused_route:
@@ -612,12 +623,34 @@ class PipelineService:
         sighting_map = {s.id: s for s in all_sightings}
         cam_data_map = route_service.get_graph().get("cameras", {})
 
+        # Build fused_map for timing field lookup
+        fused_map: dict[str, FusedSighting] = {f.match.camera_id: f for f in fused_route}
+
         step_outs: list[RouteStepOut] = []
         for step in all_steps:
             s = sighting_map.get(step.sighting_id)
             if s is None:
                 continue
             location = cam_data_map.get(s.camera_id, {}).get("location", s.camera_id)
+            fused = fused_map.get(s.camera_id)
+            if step.step_order == 0 or fused is None:
+                exp_transit = None
+                obs_gap = None
+                gap_verdict = None
+            else:
+                exp_transit = fused.expected_transit_sec or None
+                obs_gap = fused.observed_gap_sec
+                if obs_gap is None:
+                    gap_verdict = None
+                elif exp_transit and exp_transit > 0:
+                    if obs_gap < exp_transit * 0.5:
+                        gap_verdict = "\u26a0 early"
+                    elif obs_gap > exp_transit * 2.0:
+                        gap_verdict = "\u26a0 late"
+                    else:
+                        gap_verdict = "\u2713 on time"
+                else:
+                    gap_verdict = None
             step_outs.append(RouteStepOut(
                 step_order=step.step_order,
                 camera_id=s.camera_id,
@@ -630,7 +663,42 @@ class PipelineService:
                 matching_mode=getattr(s, "matching_mode", "body"),
                 face_used=getattr(s, "face_used", False),
                 identity_score=getattr(s, "identity_score", s.appearance_score),
+                expected_transit_sec=exp_transit,
+                observed_gap_sec=obs_gap,
+                gap_verdict=gap_verdict,
             ))
+
+        # ── Build narration string ────────────────────────────────────────
+        if not step_outs:
+            narration = "No confident match found."
+        elif len(step_outs) == 1:
+            s0 = step_outs[0]
+            narration = (
+                f"Seen at {s0.camera_location} ({s0.camera_id}) "
+                f"at {s0.timestamp or '\u2014'} \u2014 no further cameras matched."
+            )
+        else:
+            parts = [f"Seen at {step_outs[0].camera_location} ({step_outs[0].camera_id}) at {step_outs[0].timestamp or '\u2014'}"]
+            for s in step_outs[1:]:
+                if s.observed_gap_sec is not None:
+                    parts.append(
+                        f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '\u2014'} "
+                        f"[gap: {int(s.observed_gap_sec)}s, expected: {int(s.expected_transit_sec or 0)}s {s.gap_verdict or ''}]"
+                    )
+                else:
+                    parts.append(f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '\u2014'}")
+            narration = " \u2192 ".join(parts)
+
+        # ── Build skipped_out list ────────────────────────────────────────
+        skipped_out = [
+            SkippedCameraOut(
+                camera_id=sc.camera_id,
+                camera_location=sc.camera_location,
+                best_score=sc.best_score,
+                match_status=sc.match_status,
+            )
+            for sc in skipped_cameras
+        ]
 
         route_out = QueryRouteOut(
             session_id=session_id,
@@ -641,6 +709,8 @@ class PipelineService:
             route_confidence=route_confidence,
             match_decision=match_decision,
             top_candidates=top_candidates,
+            narration=narration,
+            skipped_cameras=skipped_out,
         )
 
         # ── Step 9: mark complete ──────────────────────────────────────────

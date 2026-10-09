@@ -189,6 +189,23 @@ class FusedSighting:
     temporal: float
     fusion: float
     expected_transit_sec: int = 0
+    observed_gap_sec: Optional[float] = None   # actual gap from prev last_seen
+
+
+@dataclass
+class SkippedCamera:
+    """A camera that was searched but not included in the final route."""
+    camera_id: str
+    camera_location: str
+    best_score: Optional[float] = None
+    match_status: Optional[str] = None
+
+
+@dataclass
+class ReconstructedRoute:
+    """Return value of reconstruct_route()."""
+    steps: list["FusedSighting"] = field(default_factory=list)
+    skipped_cameras: list[SkippedCamera] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -224,7 +241,8 @@ class RouteService:
     def reconstruct_route(
         self,
         camera_candidates: dict[str, list[CameraMatch]],
-    ) -> list[FusedSighting]:
+        all_camera_candidates: Optional[dict[str, list[CameraMatch]]] = None,
+    ) -> ReconstructedRoute:
         """
         Build an ordered route from per-camera candidate track lists.
 
@@ -234,12 +252,14 @@ class RouteService:
 
         Args:
             camera_candidates: {camera_id: [CameraMatch, ...]}
-                All lists must be non-empty (cameras with no confident match
-                should be absent from the dict entirely).
+                Only CONFIDENT_MATCH tracks — used for the greedy walk.
+            all_camera_candidates: {camera_id: [CameraMatch, ...]}
+                Full candidate dict including POSSIBLE_MATCH_REVIEW cameras,
+                used only to derive skipped_cameras.  If None, falls back to
+                camera_candidates.
 
         Returns:
-            Ordered list of FusedSighting, earliest sighting first.
-            Empty list if camera_candidates is empty.
+            ReconstructedRoute with ordered steps and skipped_cameras list.
         """
         # Drop cameras with no candidates (shouldn't happen, but defensive)
         valid: dict[str, list[CameraMatch]] = {
@@ -250,83 +270,94 @@ class RouteService:
 
         if not valid:
             logger.info("[RouteService] No confident matches — empty route")
-            return []
-
-        if len(valid) == 1:
+            route: list[FusedSighting] = []
+        elif len(valid) == 1:
             cam_id, matches = next(iter(valid.items()))
             best = matches[0]   # already sorted by appearance desc
-            return [FusedSighting(
+            route = [FusedSighting(
                 match=best,
                 spatial=1.0,
                 temporal=1.0,
                 fusion=self._fuse(best.appearance_score, 1.0, 1.0),
             )]
+        else:
+            # ── Phase 1: choose anchor camera ────────────────────────────
+            # Score every camera's best candidate as a first hop (s=1, t=1),
+            # then anchor on the one with the highest fused score.
+            anchor_cam = max(
+                valid.keys(),
+                key=lambda c: self._fuse(valid[c][0].appearance_score, 1.0, 1.0),
+            )
 
-        # ── Phase 1: choose anchor camera ───────────────────────────────
-        # Score every camera's best candidate as a first hop (s=1, t=1),
-        # then anchor on the one with the highest fused score.
-        anchor_cam = max(
-            valid.keys(),
-            key=lambda c: self._fuse(valid[c][0].appearance_score, 1.0, 1.0),
-        )
+            route = []
+            visited: set[str] = set()
 
-        route: list[FusedSighting] = []
-        visited: set[str] = set()
+            anchor_match = valid[anchor_cam][0]
+            route.append(FusedSighting(
+                match=anchor_match,
+                spatial=1.0,
+                temporal=1.0,
+                fusion=self._fuse(anchor_match.appearance_score, 1.0, 1.0),
+            ))
+            visited.add(anchor_cam)
 
-        anchor_match = valid[anchor_cam][0]
-        route.append(FusedSighting(
-            match=anchor_match,
-            spatial=1.0,
-            temporal=1.0,
-            fusion=self._fuse(anchor_match.appearance_score, 1.0, 1.0),
-        ))
-        visited.add(anchor_cam)
+            # ── Phase 2: greedy extension ─────────────────────────────────
+            # At each step, for every unvisited camera score ALL its candidate
+            # tracks against current context; keep the (camera, track) pair
+            # with the highest fused score.
+            while True:
+                prev           = route[-1]
+                prev_cam_id    = prev.match.camera_id
+                prev_last_seen = prev.match.last_seen
 
-        # ── Phase 2: greedy extension ────────────────────────────────────
-        # At each step, for every unvisited camera score ALL its candidate
-        # tracks against current context; keep the (camera, track) pair with
-        # the highest fused score.
-        while True:
-            prev          = route[-1]
-            prev_cam_id   = prev.match.camera_id
-            prev_last_seen = prev.match.last_seen
+                best_next: Optional[tuple[str, FusedSighting]] = None
 
-            best_next: Optional[tuple[str, FusedSighting]] = None
+                for cam_id, matches in valid.items():
+                    if cam_id in visited:
+                        continue
 
-            for cam_id, matches in valid.items():
-                if cam_id in visited:
-                    continue
+                    expected_sec = self._adjacency.get(prev_cam_id, {}).get(cam_id, 0)
+                    if expected_sec == 0:
+                        expected_sec = self._min_transit_2hop(prev_cam_id, cam_id)
 
-                expected_sec = self._adjacency.get(prev_cam_id, {}).get(cam_id, 0)
-                if expected_sec == 0:
-                    expected_sec = self._min_transit_2hop(prev_cam_id, cam_id)
+                    s_score = spatial_score(cam_id, prev_cam_id, self._adjacency)
 
-                s_score = spatial_score(cam_id, prev_cam_id, self._adjacency)
+                    # Score each candidate track for this camera and keep best
+                    for match in matches:
+                        t_score = temporal_score(
+                            match.first_seen, prev_last_seen, expected_sec
+                        )
+                        f_score = self._fuse(match.appearance_score, s_score, t_score)
 
-                # Score each candidate track for this camera and keep the best
-                for match in matches:
-                    t_score = temporal_score(
-                        match.first_seen, prev_last_seen, expected_sec
-                    )
-                    f_score = self._fuse(match.appearance_score, s_score, t_score)
+                        # Compute raw observed gap for this match
+                        if match.first_seen is not None and prev_last_seen is not None:
+                            try:
+                                obs_gap: Optional[float] = _timestamp_diff_seconds(
+                                    match.first_seen, prev_last_seen
+                                )
+                            except Exception:
+                                obs_gap = None
+                        else:
+                            obs_gap = None
 
-                    candidate = FusedSighting(
-                        match=match,
-                        spatial=s_score,
-                        temporal=t_score,
-                        fusion=f_score,
-                        expected_transit_sec=expected_sec,
-                    )
+                        candidate = FusedSighting(
+                            match=match,
+                            spatial=s_score,
+                            temporal=t_score,
+                            fusion=f_score,
+                            expected_transit_sec=expected_sec,
+                            observed_gap_sec=obs_gap,
+                        )
 
-                    if best_next is None or f_score > best_next[1].fusion:
-                        best_next = (cam_id, candidate)
+                        if best_next is None or f_score > best_next[1].fusion:
+                            best_next = (cam_id, candidate)
 
-            if best_next is None:
-                break
+                if best_next is None:
+                    break
 
-            best_cam_id, best_fused = best_next
-            route.append(best_fused)
-            visited.add(best_cam_id)
+                best_cam_id, best_fused = best_next
+                route.append(best_fused)
+                visited.add(best_cam_id)
 
         logger.info(
             "[RouteService] Route: "
@@ -335,13 +366,40 @@ class RouteService:
                 for s in route
             )
         )
-        return route
 
-    def compute_route_confidence(self, route: list[FusedSighting]) -> float:
-        """Mean fusion score across all route steps."""
-        if not route:
+        # ── Derive skipped cameras ────────────────────────────────────────
+        all_cands = all_camera_candidates if all_camera_candidates is not None else camera_candidates
+        route_cam_ids: set[str] = {f.match.camera_id for f in route}
+        cam_meta = self._graph.get("cameras", {})
+        skipped_list: list[SkippedCamera] = []
+        for cam_id, cand_list in all_cands.items():
+            if cam_id in route_cam_ids:
+                continue
+            if not cand_list:
+                continue
+            best_match = sorted(cand_list, key=lambda m: m.fused_score, reverse=True)[0]
+            cam_location = cam_meta.get(cam_id, {}).get("location", cam_id)
+            skipped_list.append(SkippedCamera(
+                camera_id=cam_id,
+                camera_location=cam_location,
+                best_score=best_match.fused_score,
+                match_status=best_match.match_status.value,
+            ))
+
+        return ReconstructedRoute(steps=route, skipped_cameras=skipped_list)
+
+    def compute_route_confidence(
+        self, route: "ReconstructedRoute | list[FusedSighting]"
+    ) -> float:
+        """Mean fusion score across all route steps.
+
+        Accepts either a ReconstructedRoute (uses .steps) or a raw list of
+        FusedSighting objects so existing callers are not broken.
+        """
+        steps = route.steps if isinstance(route, ReconstructedRoute) else route
+        if not steps:
             return 0.0
-        return round(sum(s.fusion for s in route) / len(route), 4)
+        return round(sum(s.fusion for s in steps) / len(steps), 4)
 
     # ------------------------------------------------------------------ #
     # Internal helpers                                                     #

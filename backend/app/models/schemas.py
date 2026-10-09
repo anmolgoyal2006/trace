@@ -206,6 +206,14 @@ class CandidateTrackOut(BaseModel):
 # Route Step
 # ===========================================================================
 
+class SkippedCameraOut(BaseModel):
+    """A camera that was searched but produced no confident match."""
+    camera_id: str
+    camera_location: str
+    best_score: Optional[float] = None   # best fusion score seen, even if below threshold
+    match_status: Optional[str] = None   # e.g. "POSSIBLE_MATCH_REVIEW", "NO_MATCH"
+
+
 class RouteStepOut(_Base):
     step_order: int
     camera_id: str
@@ -219,6 +227,10 @@ class RouteStepOut(_Base):
     matching_mode: str = "body"    # "face" | "body"
     face_used: bool = False         # True when ArcFace was the identity signal
     identity_score: float = 0.0    # face_sim OR body_sim, never blended
+    # ---- Hop timing fields (populated for step_order >= 1) --------------
+    expected_transit_sec: Optional[float] = None  # expected walk time from graph
+    observed_gap_sec: Optional[float] = None      # actual gap from prev last_seen
+    gap_verdict: Optional[str] = None             # "✓ on time" | "⚠ early" | "⚠ late"
 
 
 # ===========================================================================
@@ -269,6 +281,10 @@ class QueryRouteOut(BaseModel):
     # Up to 3 unique top candidate tracks for human review.
     # Always populated regardless of match_decision.
     top_candidates: list[CandidateTrackOut] = Field(default_factory=list)
+    # Plain-English journey narration assembled from route steps.
+    narration: Optional[str] = None
+    # Cameras that were searched but produced no confident match.
+    skipped_cameras: list[SkippedCameraOut] = Field(default_factory=list)
 
 
 # ===========================================================================

@@ -26,6 +26,7 @@ from backend.app.models.schemas import (
     QueryStatusOut,
     RouteStepOut,
     SightingOut,
+    SkippedCameraOut,
 )
 from backend.app.services.embedding_service import embedding_service
 
@@ -204,12 +205,53 @@ async def get_route(
 
     cam_data = _get_cam_data()
 
+    def _ts_sec(ts: str) -> float:
+        """Parse HH:MM:SS.ff → seconds since midnight."""
+        parts = ts.strip().split(":")
+        h, m = int(parts[0]), int(parts[1])
+        sp = parts[2].split(".")
+        return h * 3600 + m * 60 + int(sp[0]) + (int(sp[1]) if len(sp) > 1 else 0) / 100.0
+
     step_outs: list[RouteStepOut] = []
+    prev_sighting = None
     for step in steps:
         s = sighting_map.get(step.sighting_id)
         if s is None:
             continue
         location = cam_data.get(s.camera_id, {}).get("location", s.camera_id)
+
+        # Compute timing fields from stored timestamps + graph
+        if step.step_order == 0 or prev_sighting is None:
+            exp_transit: float | None = None
+            obs_gap: float | None = None
+            gap_verdict_str: str | None = None
+        else:
+            # Expected transit from graph connects_to
+            prev_cam = prev_sighting.camera_id
+            edges = cam_data.get(prev_cam, {}).get("connects_to", {})
+            edge_data = edges.get(s.camera_id) if isinstance(edges, dict) else None
+            exp_transit = (
+                edge_data.get("avg_transit_sec") if isinstance(edge_data, dict) else None
+            )
+
+            # Observed gap: current first_seen − previous last_seen
+            obs_gap = None
+            if s.first_seen and prev_sighting.last_seen:
+                try:
+                    obs_gap = _ts_sec(s.first_seen) - _ts_sec(prev_sighting.last_seen)
+                except Exception:
+                    obs_gap = None
+
+            # Verdict
+            if obs_gap is None or exp_transit is None or exp_transit <= 0:
+                gap_verdict_str = None
+            elif obs_gap < exp_transit * 0.5:
+                gap_verdict_str = "\u26a0 early"
+            elif obs_gap > exp_transit * 2.0:
+                gap_verdict_str = "\u26a0 late"
+            else:
+                gap_verdict_str = "\u2713 on time"
+
         step_outs.append(RouteStepOut(
             step_order=step.step_order,
             camera_id=s.camera_id,
@@ -222,13 +264,51 @@ async def get_route(
             matching_mode=getattr(s, "matching_mode", "body"),
             face_used=getattr(s, "face_used", False),
             identity_score=getattr(s, "identity_score", s.appearance_score),
+            expected_transit_sec=exp_transit,
+            observed_gap_sec=obs_gap,
+            gap_verdict=gap_verdict_str,
         ))
+        prev_sighting = s
 
     # Route confidence = mean fusion score
     route_confidence = (
         round(sum(s.fusion_score for s in sightings) / len(sightings), 4)
         if sightings else 0.0
     )
+
+    # Build narration (with gap info when available)
+    if not step_outs:
+        narration = "No confident match found."
+    elif len(step_outs) == 1:
+        s0 = step_outs[0]
+        narration = (
+            f"Seen at {s0.camera_location} ({s0.camera_id}) "
+            f"at {s0.timestamp or '\u2014'} \u2014 no further cameras matched."
+        )
+    else:
+        parts = [f"Seen at {step_outs[0].camera_location} ({step_outs[0].camera_id}) at {step_outs[0].timestamp or '\u2014'}"]
+        for s in step_outs[1:]:
+            if s.observed_gap_sec is not None:
+                parts.append(
+                    f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '\u2014'} "
+                    f"[gap: {int(s.observed_gap_sec)}s, expected: {int(s.expected_transit_sec or 0)}s {s.gap_verdict or ''}]"
+                )
+            else:
+                parts.append(f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '\u2014'}")
+        narration = " \u2192 ".join(parts)
+
+    # Build skipped_out: cameras in cam_data not appearing in step_outs
+    matched_ids = {s.camera_id for s in step_outs}
+    skipped_out = [
+        SkippedCameraOut(
+            camera_id=cam_id,
+            camera_location=cam_info.get("location", cam_id),
+            best_score=None,
+            match_status="NOT_IN_ROUTE",
+        )
+        for cam_id, cam_info in cam_data.items()
+        if cam_id not in matched_ids
+    ]
 
     return QueryRouteOut(
         session_id=session_id,
@@ -242,6 +322,8 @@ async def get_route(
             CandidateTrackOut(**c)
             for c in json.loads(getattr(session, "top_candidates_json", None) or "[]")
         ],
+        narration=narration,
+        skipped_cameras=skipped_out,
     )
 
 
