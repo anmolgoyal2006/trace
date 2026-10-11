@@ -48,6 +48,7 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await _migrate_sightings_schema(conn)
+        await _fail_interrupted_sessions(conn)
     logger.info("[startup] Database schema ready")
 
     # 2. Seed cameras from camera_graph.json
@@ -239,6 +240,82 @@ async def _migrate_sightings_schema(conn) -> None:
             logger.info(f"[migrate] Added query_sessions.{col_name}")
         else:
             logger.debug(f"[migrate] query_sessions.{col_name} already exists — skipped")
+
+    for table in Base.metadata.sorted_tables:
+        await _relax_orphan_not_null_columns(conn, table.name, {c.name for c in table.columns})
+
+
+async def _fail_interrupted_sessions(conn) -> None:
+    """
+    Mark sessions left "running"/"pending" by a previous server process as failed.
+
+    Query sessions run as in-process background tasks, so none can still be
+    running when the server starts. Without this, a session interrupted by a
+    restart stays "running" forever and every new query is rejected with 409.
+    """
+    from sqlalchemy import text as _text
+
+    result = await conn.execute(_text(
+        "UPDATE query_sessions "
+        "SET status = 'failed', "
+        "    error_message = 'Interrupted: the server stopped before this query finished.', "
+        "    completed_at = CURRENT_TIMESTAMP "
+        "WHERE status IN ('running', 'pending')"
+    ))
+    if result.rowcount:
+        logger.warning(f"[startup] Marked {result.rowcount} interrupted query session(s) as failed")
+
+
+async def _relax_orphan_not_null_columns(conn, table: str, model_columns: set[str]) -> None:
+    """
+    Make NOT NULL columns that the ORM no longer knows about nullable.
+
+    A column dropped from the ORM stays in an existing SQLite file. If it is
+    NOT NULL without a DEFAULT, every INSERT from the current code fails
+    (e.g. a stale ``sightings.match_tier`` made every query crash while
+    saving sightings). SQLite cannot ALTER a constraint, so the table is
+    rebuilt with the same definition minus those NOT NULL constraints;
+    all rows are copied unchanged.
+    """
+    import re
+
+    from sqlalchemy import text as _text
+
+    rows = (await conn.execute(_text(f"PRAGMA table_info({table})"))).fetchall()
+    # PRAGMA table_info rows: (cid, name, type, notnull, dflt_value, pk)
+    orphans = [r[1] for r in rows
+               if r[1] not in model_columns and r[3] == 1 and r[4] is None and not r[5]]
+    if not orphans:
+        return
+
+    create_sql = (await conn.execute(_text(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name=:t"
+    ), {"t": table})).scalar_one()
+
+    new_sql = create_sql
+    for col in orphans:
+        new_sql, n = re.subn(
+            rf'(\b{re.escape(col)}\s+\w+(?:\s*\([^)]*\))?)\s+NOT\s+NULL',
+            r"\1", new_sql, count=1, flags=re.IGNORECASE,
+        )
+        if n != 1:
+            logger.warning(f"[migrate] Could not relax {table}.{col} — left unchanged")
+            return
+
+    tmp = f"{table}__migrate_tmp"
+    new_sql = re.sub(rf"^\s*CREATE TABLE\s+\"?{re.escape(table)}\"?",
+                     f"CREATE TABLE {tmp}", new_sql, count=1, flags=re.IGNORECASE)
+    cols = ", ".join(f'"{r[1]}"' for r in rows)
+    index_sql = [r[0] for r in (await conn.execute(_text(
+        "SELECT sql FROM sqlite_master WHERE type='index' AND tbl_name=:t AND sql IS NOT NULL"
+    ), {"t": table})).fetchall()]
+    await conn.execute(_text(new_sql))
+    await conn.execute(_text(f"INSERT INTO {tmp} ({cols}) SELECT {cols} FROM {table}"))
+    await conn.execute(_text(f"DROP TABLE {table}"))
+    await conn.execute(_text(f"ALTER TABLE {tmp} RENAME TO {table}"))
+    for sql in index_sql:
+        await conn.execute(_text(sql))
+    logger.info(f"[migrate] {table}: made stale NOT NULL column(s) nullable: {orphans}")
 
 
 async def _seed_cameras() -> None:
