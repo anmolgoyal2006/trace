@@ -24,6 +24,9 @@ Coverage:
   AG1  Input validation and empty input
   AG2  Per-track statistics (max, mean_top3, mean_visible_parts, counts)
   AG3  Unusable crops — mismatched part counts, holistic fallback, all-unusable
+  BD1  Breakdown score parity with part_aware_similarity()
+  BD2  Breakdown per-part evidence (status, weight, share, contribution)
+  BD3  Breakdown fallback reporting and JSON-safety
 """
 
 from __future__ import annotations
@@ -42,6 +45,7 @@ sys.path.insert(0, str(_REPO_ROOT))
 from ai_pipeline.reid.kpr_similarity import (
     aggregate_kpr_by_track,
     part_aware_similarity,
+    part_aware_similarity_breakdown,
 )
 
 # ---------------------------------------------------------------------------
@@ -436,3 +440,149 @@ class TestAG3_UnusableCrops:
             "mean_visible_parts":       0.0,
             "num_observations":         2,
         }
+
+
+# ===========================================================================
+# BD1 — Breakdown score parity
+# ===========================================================================
+
+def _random_kwargs(seed: int, dim: int = 16, n_parts: int = 5) -> dict:
+    rng = random.Random(seed)
+    return dict(
+        emb_a=[[rng.gauss(0, 1) for _ in range(dim)] for _ in range(n_parts)],
+        vis_a=[rng.random() for _ in range(n_parts)],
+        emb_b=[[rng.gauss(0, 1) for _ in range(dim)] for _ in range(n_parts)],
+        vis_b=[rng.random() for _ in range(n_parts)],
+        holistic_a=[rng.gauss(0, 1) for _ in range(dim)],
+        holistic_b=[rng.gauss(0, 1) for _ in range(dim)],
+    )
+
+
+class TestBD1_ScoreParity:
+
+    @pytest.mark.parametrize("seed", range(50))
+    def test_score_equals_part_aware_similarity_exactly(self, seed):
+        kwargs = _random_kwargs(seed)
+        assert part_aware_similarity_breakdown(**kwargs)["score"] == \
+            part_aware_similarity(**kwargs)
+
+    def test_validation_errors_unchanged(self):
+        with pytest.raises(ValueError, match="Part count mismatch"):
+            part_aware_similarity_breakdown([_E0, _E0], [0.9, 0.9], [_E0], [0.9])
+        with pytest.raises(ValueError, match="vis_b length"):
+            part_aware_similarity_breakdown([_E0], [0.9], [_E0], [])
+
+
+# ===========================================================================
+# BD2 — Per-part evidence
+# ===========================================================================
+
+class TestBD2_PartEvidence:
+
+    def _bd(self):
+        # part0: used, cos=1,  w=0.6
+        # part1: used, cos=0,  w=0.4
+        # part2: below threshold on side B
+        # part3: mutually visible but errors (dimension mismatch)
+        return part_aware_similarity_breakdown(
+            emb_a=[_E0, _E0, _E0, _E0],
+            vis_a=[0.9, 0.4, 0.9, 0.8],
+            emb_b=[_E0, _E1, _E0, [1.0, 0.0, 0.0]],
+            vis_b=[0.6, 0.8, 0.1, 0.8],
+        )
+
+    def test_statuses(self):
+        assert [p["status"] for p in self._bd()["parts"]] == \
+            ["used", "used", "below_threshold", "error"]
+
+    def test_mutual_visibility_and_count(self):
+        bd = self._bd()
+        assert [p["mutually_visible"] for p in bd["parts"]] == [True, True, False, True]
+        assert bd["num_mutually_visible"] == 3
+
+    def test_used_part_values(self):
+        p0, p1, _, _ = self._bd()["parts"]
+        assert p0["cosine"] == pytest.approx(1.0)
+        assert p0["weight"] == pytest.approx(0.6)
+        assert p0["weight_share"] == pytest.approx(0.6)
+        assert p0["contribution"] == pytest.approx(0.6)
+        assert p1["cosine"] == pytest.approx(0.0)
+        assert p1["weight_share"] == pytest.approx(0.4)
+        assert p1["contribution"] == pytest.approx(0.0)
+
+    def test_unused_parts_carry_no_weight(self):
+        for p in self._bd()["parts"][2:]:
+            assert p["cosine"] is None
+            assert p["weight"] == 0.0
+            assert p["weight_share"] == 0.0
+            assert p["contribution"] == 0.0
+
+    def test_visibilities_echoed(self):
+        bd = self._bd()
+        assert [p["vis_a"] for p in bd["parts"]] == [0.9, 0.4, 0.9, 0.8]
+        assert [p["vis_b"] for p in bd["parts"]] == [0.6, 0.8, 0.1, 0.8]
+        assert [p["index"] for p in bd["parts"]] == [0, 1, 2, 3]
+
+    def test_weight_total(self):
+        assert self._bd()["weight_total"] == pytest.approx(1.0)
+
+    @pytest.mark.parametrize("seed", range(20))
+    def test_contributions_sum_to_score(self, seed):
+        bd = part_aware_similarity_breakdown(**_random_kwargs(seed))
+        if bd["fallback"] == "none":
+            assert sum(p["contribution"] for p in bd["parts"]) == \
+                pytest.approx(bd["score"], abs=1e-12)
+            assert sum(p["weight_share"] for p in bd["parts"]) == \
+                pytest.approx(1.0, abs=1e-12)
+
+
+# ===========================================================================
+# BD3 — Fallback reporting and JSON-safety
+# ===========================================================================
+
+class TestBD3_Fallbacks:
+
+    def test_fallback_none(self):
+        bd = part_aware_similarity_breakdown([_E0], [0.9], [_E0], [0.9])
+        assert bd["fallback"] == "none"
+
+    def test_fallback_holistic(self):
+        bd = part_aware_similarity_breakdown(
+            [_E0], [0.1], [_E0], [0.9], holistic_a=[1.0, 1.0], holistic_b=_E0,
+        )
+        assert bd["fallback"] == "holistic"
+        assert bd["score"] == pytest.approx(1.0 / math.sqrt(2.0))
+        assert bd["weight_total"] == 0.0
+        assert all(p["contribution"] == 0.0 for p in bd["parts"])
+
+    def test_fallback_holistic_when_all_parts_error(self):
+        bd = part_aware_similarity_breakdown(
+            [_E0], [0.9], [[1.0, 0, 0]], [0.9], holistic_a=_E0, holistic_b=_E0,
+        )
+        assert bd["fallback"] == "holistic"
+        assert bd["num_mutually_visible"] == 1
+        assert bd["parts"][0]["status"] == "error"
+
+    def test_fallback_zero(self):
+        bd = part_aware_similarity_breakdown([_E0], [0.1], [_E0], [0.9])
+        assert bd["fallback"] == "zero"
+        assert bd["score"] == 0.0
+
+    def test_fallback_zero_on_holistic_error(self):
+        bd = part_aware_similarity_breakdown(
+            [_E0], [0.1], [_E0], [0.1], holistic_a=[1.0, 0.0], holistic_b=[1.0, 0.0, 0.0],
+        )
+        assert bd["fallback"] == "zero"
+
+    def test_json_serialisable_plain_types(self):
+        import json
+        bd = part_aware_similarity_breakdown(
+            **_random_kwargs(0) | dict(
+                vis_a=np.array([0.9, 0.2, 0.5, 0.7, 0.4]),
+                vis_b=np.array([0.8, 0.9, 0.1, 0.6, 0.35]),
+            )
+        )
+        assert json.loads(json.dumps(bd)) == bd
+        assert type(bd["score"]) is float
+        for p in bd["parts"]:
+            assert type(p["vis_a"]) is float and type(p["weight"]) is float

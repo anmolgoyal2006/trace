@@ -9,6 +9,7 @@ optional holistic embedding as fallback.
 Public API
 ----------
     part_aware_similarity(emb_a, vis_a, emb_b, vis_b, ...)  -> float
+    part_aware_similarity_breakdown(...)                     -> dict  (XAI evidence)
     aggregate_kpr_by_track(kpr_records, query_kpr)          -> dict
 
 Design decisions
@@ -124,6 +125,56 @@ def part_aware_similarity(
         >>> sim
         1.0
     """
+    return part_aware_similarity_breakdown(
+        emb_a, vis_a, emb_b, vis_b,
+        holistic_a=holistic_a,
+        holistic_b=holistic_b,
+        vis_threshold=vis_threshold,
+    )["score"]
+
+
+# ---------------------------------------------------------------------------
+# part_aware_similarity_breakdown
+# ---------------------------------------------------------------------------
+
+def part_aware_similarity_breakdown(
+    emb_a: list[list[float]],
+    vis_a: list[float],
+    emb_b: list[list[float]],
+    vis_b: list[float],
+    holistic_a: Optional[list[float]] = None,
+    holistic_b: Optional[list[float]] = None,
+    vis_threshold: float = _DEFAULT_VIS_THRESHOLD,
+) -> dict[str, Any]:
+    """
+    Part-aware similarity plus the per-part evidence that produced it.
+
+    Single source of truth for part_aware_similarity(): the returned
+    ``score`` is exactly the value part_aware_similarity() returns for the
+    same inputs.  Arguments and ValueErrors are identical.
+
+    Returns
+    -------
+    dict with plain Python types (JSON-serialisable):
+
+    ``score``                float — the part-aware similarity
+    ``fallback``             "none" | "holistic" | "zero"
+                             "none" when at least one part contributed.
+    ``num_mutually_visible`` int — parts with both visibilities >= threshold
+                             (includes parts later skipped with status "error")
+    ``weight_total``         float — sum of weights of contributing parts
+    ``parts``                list, one entry per part index:
+        ``index``            int
+        ``vis_a``, ``vis_b`` float
+        ``mutually_visible`` bool
+        ``status``           "used" | "below_threshold" | "error"
+        ``cosine``           float, or None unless status == "used"
+        ``weight``           float — min(vis_a, vis_b) if used, else 0.0
+        ``weight_share``     float — weight / weight_total (0.0 if unused)
+        ``contribution``     float — weight * cosine / weight_total;
+                             contributions sum to ``score`` when fallback
+                             is "none", and are all 0.0 otherwise.
+    """
     num_parts = len(emb_a)
 
     # Input validation
@@ -143,38 +194,70 @@ def part_aware_similarity(
 
     weighted_sum = 0.0
     weight_total = 0.0
+    parts: list[dict[str, Any]] = []
 
     for i in range(num_parts):
         va = float(vis_a[i])
         vb = float(vis_b[i])
+        part: dict[str, Any] = {
+            "index":            i,
+            "vis_a":            va,
+            "vis_b":            vb,
+            "mutually_visible": False,
+            "status":           "below_threshold",
+            "cosine":           None,
+            "weight":           0.0,
+            "weight_share":     0.0,
+            "contribution":     0.0,
+        }
+        parts.append(part)
 
         # Only use parts that are visible in BOTH images
         if va < vis_threshold or vb < vis_threshold:
             continue
+        part["mutually_visible"] = True
 
         try:
             sim = cosine_similarity(emb_a[i], emb_b[i])
         except (ValueError, Exception):
             # Dimension mismatch or empty vector — skip this part silently
+            part["status"] = "error"
             continue
 
         weight = min(va, vb)     # conservative: trust the less-visible view
         weighted_sum += weight * sim
         weight_total += weight
+        part.update(status="used", cosine=float(sim), weight=float(weight))
+
+    result: dict[str, Any] = {
+        "score":                0.0,
+        "fallback":             "zero",
+        "num_mutually_visible": sum(1 for p in parts if p["mutually_visible"]),
+        "weight_total":         float(weight_total),
+        "parts":                parts,
+    }
 
     if weight_total > 0.0:
-        return float(weighted_sum / weight_total)
+        result["score"] = float(weighted_sum / weight_total)
+        result["fallback"] = "none"
+        for p in parts:
+            if p["status"] == "used":
+                p["weight_share"] = float(p["weight"] / weight_total)
+                p["contribution"] = float(p["weight"] * p["cosine"] / weight_total)
+        return result
 
     # --- Holistic fallback ------------------------------------------------
     # No mutually visible parts — fall back to global embedding comparison.
     if holistic_a is not None and holistic_b is not None:
         try:
-            return cosine_similarity(holistic_a, holistic_b)
+            result["score"] = cosine_similarity(holistic_a, holistic_b)
+            result["fallback"] = "holistic"
+            return result
         except (ValueError, Exception):
             pass
 
     # Nothing usable — return neutral score
-    return 0.0
+    return result
 
 
 # ---------------------------------------------------------------------------
