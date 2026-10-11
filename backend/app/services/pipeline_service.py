@@ -410,13 +410,31 @@ class PipelineService:
                 await self._execute(session, db)
             except Exception as e:
                 logger.exception(f"[PipelineService] Session {session_id} failed: {e}")
-                session.status        = "failed"
-                session.error_message = str(e)
-                session.completed_at  = datetime.utcnow()
-                await db.commit()
+                # A failed flush leaves `db` unusable until rolled back, so
+                # record the failure through a fresh session. Otherwise the
+                # session stays "running" forever and every later query is
+                # rejected with 409.
+                await db.rollback()
+                await self._mark_failed(session_id, str(e))
                 await self._ws.broadcast(WsError(
                     session_id=session_id, message=str(e)
                 ).model_dump())
+
+    async def _mark_failed(self, session_id: int, message: str) -> None:
+        """Persist status=failed for a session in its own transaction."""
+        try:
+            async with async_session() as fail_db:
+                session = await fail_db.get(QuerySession, session_id)
+                if session is None:
+                    return
+                session.status        = "failed"
+                session.error_message = message
+                session.completed_at  = datetime.utcnow()
+                await fail_db.commit()
+        except Exception as exc:
+            logger.exception(
+                f"[PipelineService] Could not mark session {session_id} failed: {exc}"
+            )
 
     async def _execute(self, session: QuerySession, db: AsyncSession) -> None:
         session_id = session.id
