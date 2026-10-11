@@ -365,9 +365,20 @@ def _build_top_candidates(
             first_seen=m.first_seen,
             crop_path=m.best_crop_path,
             active_backbone=m.active_backbone,
+            explanation=_candidate_explanation(m),
         )
         for m in flat[:n]
     ]
+
+
+def _candidate_explanation(m: CameraMatch) -> Optional[dict]:
+    """XAI payload for a candidate, or None when no explanation was computed."""
+    if m.fusion_explanation is None and m.kpr_evidence is None:
+        return None
+    return {
+        "fusion":       m.fusion_explanation,
+        "kpr_evidence": m.kpr_evidence,
+    }
 
 
 # ---------------------------------------------------------------------------

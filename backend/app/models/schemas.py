@@ -200,6 +200,12 @@ class CandidateTrackOut(BaseModel):
     first_seen: Optional[str] = None
     crop_path: Optional[str] = None
     active_backbone: str = "OSNet x1_0"
+    # XAI — why this candidate scored as it did. Explanatory only.
+    #   fusion       : per-signal weights/contributions, excluded signals,
+    #                  thresholds and decision reason
+    #   kpr_evidence : per-body-part breakdown of the best KPR crop, or None
+    # None for sessions stored before the XAI layer existed.
+    explanation: Optional[dict[str, Any]] = None
 
 
 # ===========================================================================

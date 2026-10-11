@@ -17,7 +17,8 @@ Coverage:
   EV3  Evidence content — belongs to the candidate's own track and
        agrees with kpr_sim / mean_visible_parts
   EV4  Edge cases — unusable KPR track, face veto still applied
-  EV5  Not exposed via API schemas (explanatory, internal for now)
+  EV5  No raw kpr_evidence field on API schemas — evidence reaches the API
+       only inside CandidateTrackOut.explanation (see test_candidate_explanation_api)
 """
 
 from __future__ import annotations
@@ -276,7 +277,7 @@ class TestEV4_EdgeCases:
 
 
 # ===========================================================================
-# EV5 — Not exposed through API schemas yet
+# EV5 — No raw kpr_evidence field on API schemas
 # ===========================================================================
 
 class TestEV5_NotExposed:
