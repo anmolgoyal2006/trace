@@ -188,6 +188,6 @@ def resolve_track_identity(
         try:
             return "face", float(face_sim)
         except (TypeError, ValueError):
-            # Non-numeric face_sim despite face_primary=True — safe body fallback
+            # Non-numeric face_sim despite face_primary=True â€” safe body fallback
             pass
     return "body", float(body_sim)
