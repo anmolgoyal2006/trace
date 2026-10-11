@@ -247,9 +247,9 @@ def _embed_query_face(img_path: Path) -> tuple[Optional[list[float]], Optional[f
 
         if result.get("face_detected") and result.get("face_embedding"):
             det_conf = result.get("face_confidence")  # SCRFD score
+            conf_str = f"{det_conf:.3f}" if det_conf is not None else "N/A"
             logger.info(
-                f"[PipelineService] Query face detected "
-                f"(SCRFD confidence={det_conf:.3f if det_conf else 'N/A'})"
+                f"[PipelineService] Query face detected (SCRFD confidence={conf_str})"
             )
             return result["face_embedding"], det_conf
 
