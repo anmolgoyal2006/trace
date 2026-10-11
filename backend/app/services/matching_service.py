@@ -155,6 +155,10 @@ class CameraMatch:
     -------------------------------------------------------
     kpr_sim            : part-aware similarity, or None
     mean_visible_parts : avg mutually-visible parts per crop pair
+    kpr_evidence       : XAI — per-part breakdown of the gallery crop that
+                         produced kpr_sim (see aggregate_kpr_by_track
+                         include_evidence).  Explanatory only; never used
+                         in scoring or match_status.
 
     Debug
     -----
@@ -188,6 +192,7 @@ class CameraMatch:
     # KPR fusion
     kpr_sim: Optional[float] = None
     mean_visible_parts: Optional[float] = None
+    kpr_evidence: Optional[dict] = None
 
     # Debug
     fused_score: float = 0.0
@@ -358,10 +363,12 @@ class MatchingService:
         Returns dict keyed by track_id:
             kpr_sim            float
             mean_visible_parts float
+            kpr_evidence       dict | None  (XAI, explanatory only)
         """
         try:
             track_stats = aggregate_kpr_by_track(
-                kpr_gallery, query_kpr, vis_threshold=self._kpr_vis_thr
+                kpr_gallery, query_kpr, vis_threshold=self._kpr_vis_thr,
+                include_evidence=True,
             )
         except Exception as exc:
             logger.warning(f"[MatchingService] aggregate_kpr_by_track failed: {exc}")
@@ -371,6 +378,7 @@ class MatchingService:
             track_id: {
                 "kpr_sim":            stats["max_part_aware_sim"],
                 "mean_visible_parts": stats["mean_visible_parts"],
+                "kpr_evidence":       stats.get("best_crop_evidence"),
             }
             for track_id, stats in track_stats.items()
         }
@@ -694,6 +702,7 @@ class MatchingService:
                 k_sim = ki.get("kpr_sim")
                 match.kpr_sim            = round(k_sim, 6) if k_sim is not None else None
                 match.mean_visible_parts = ki.get("mean_visible_parts")
+                match.kpr_evidence       = ki.get("kpr_evidence")
 
             # ---- assign match_status ------------------------------------
             if veto:
