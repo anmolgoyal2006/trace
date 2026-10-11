@@ -11,7 +11,7 @@ Upload CCTV videos from multiple cameras, submit a reference photo of any person
 
 | Requirement | Version | Notes |
 |---|---|---|
-| Python | 3.10 or 3.11 | 3.9 is **not** supported — the backend uses Python 3.10+ syntax |
+| Python | 3.10 or 3.11 | 3.9 also works |
 | pip | latest | comes with Python |
 | RAM | 8 GB minimum | 16 GB recommended |
 | Disk space | ~3 GB | for weights + deps |
