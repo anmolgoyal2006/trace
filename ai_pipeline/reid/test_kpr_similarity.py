@@ -27,6 +27,7 @@ Coverage:
   BD1  Breakdown score parity with part_aware_similarity()
   BD2  Breakdown per-part evidence (status, weight, share, contribution)
   BD3  Breakdown fallback reporting and JSON-safety
+  AG4  aggregate_kpr_by_track(include_evidence=True) — best-crop evidence
 """
 
 from __future__ import annotations
@@ -586,3 +587,94 @@ class TestBD3_Fallbacks:
         assert type(bd["score"]) is float
         for p in bd["parts"]:
             assert type(p["vis_a"]) is float and type(p["weight"]) is float
+
+
+# ===========================================================================
+# AG4 — aggregate_kpr_by_track(include_evidence=True)
+# ===========================================================================
+
+_STAT_KEYS = {
+    "max_part_aware_sim", "mean_top3_part_aware_sim",
+    "mean_visible_parts", "num_observations",
+}
+
+
+class TestAG4_TrackEvidence:
+
+    def _gallery(self):
+        return [
+            _record(7, [_E0, _NEG_E0], [0.9, 0.9]) | {"crop_path": "c7_f0.jpg", "frame": 0},
+            _record(7, [_E0, _E1],     [0.9, 0.9]) | {"crop_path": "c7_f5.jpg", "frame": 5,
+                                                      "timestamp": "00:00:05"},
+            _record(7, [_E1, _E0],     [0.9, 0.9]) | {"crop_path": "c7_f9.jpg"},
+            _record(8, [_E0],          [0.9]),                       # unusable
+        ]
+
+    def test_default_output_has_no_evidence_key(self):
+        for stats in aggregate_kpr_by_track(self._gallery(), _QUERY).values():
+            assert set(stats) == _STAT_KEYS
+
+    def test_stats_identical_with_and_without_evidence(self):
+        plain = aggregate_kpr_by_track(self._gallery(), _QUERY)
+        rich  = aggregate_kpr_by_track(self._gallery(), _QUERY, include_evidence=True)
+        assert set(plain) == set(rich)
+        for tid in plain:
+            assert set(rich[tid]) == _STAT_KEYS | {"best_crop_evidence"}
+            assert {k: rich[tid][k] for k in _STAT_KEYS} == plain[tid]
+
+    @pytest.mark.parametrize("seed", range(20))
+    def test_stats_identical_random(self, seed):
+        rng = random.Random(seed)
+        e = lambda: [[rng.gauss(0, 1) for _ in range(8)] for _ in range(5)]
+        v = lambda: [rng.random() for _ in range(5)]
+        gallery = [_record(rng.randint(0, 2), e(), v(), [rng.gauss(0, 1) for _ in range(8)])
+                   for _ in range(8)]
+        q = {"part_embeddings": e(), "part_visibility": v()}
+        plain = aggregate_kpr_by_track(gallery, q)
+        rich  = aggregate_kpr_by_track(gallery, q, include_evidence=True)
+        for tid in plain:
+            assert {k: rich[tid][k] for k in _STAT_KEYS} == plain[tid]
+            assert rich[tid]["best_crop_evidence"]["score"] == plain[tid]["max_part_aware_sim"]
+
+    def test_evidence_is_best_crop(self):
+        ev = aggregate_kpr_by_track(self._gallery(), _QUERY, include_evidence=True)[7]["best_crop_evidence"]
+        assert ev["crop_path"] == "c7_f5.jpg"
+        assert ev["frame"] == 5
+        assert ev["timestamp"] == "00:00:05"
+        assert ev["score"] == pytest.approx(1.0)
+        assert ev["fallback"] == "none"
+        assert ev["part_count_mismatch"] is False
+        assert [p["status"] for p in ev["parts"]] == ["used", "used"]
+
+    def test_missing_crop_metadata_is_none(self):
+        gallery = [_record(1, [_E0, _E1], [0.9, 0.9])]
+        ev = aggregate_kpr_by_track(gallery, _QUERY, include_evidence=True)[1]["best_crop_evidence"]
+        assert ev["crop_path"] is None and ev["frame"] is None and ev["timestamp"] is None
+
+    def test_tie_picks_first_crop(self):
+        gallery = [
+            _record(1, [_E0, _E1], [0.9, 0.9]) | {"crop_path": "first.jpg"},
+            _record(1, [_E0, _E1], [0.9, 0.9]) | {"crop_path": "second.jpg"},
+        ]
+        ev = aggregate_kpr_by_track(gallery, _QUERY, include_evidence=True)[1]["best_crop_evidence"]
+        assert ev["crop_path"] == "first.jpg"
+
+    def test_all_unusable_track_has_none_evidence(self):
+        rich = aggregate_kpr_by_track(self._gallery(), _QUERY, include_evidence=True)
+        assert rich[8]["best_crop_evidence"] is None
+
+    def test_part_count_mismatch_holistic_evidence(self):
+        q = dict(_QUERY, holistic_embedding=_E0)
+        gallery = [_record(1, [_E0, _E1, _E0], [0.9, 0.9, 0.9], holistic=[1.0, 1.0])
+                   | {"crop_path": "odd.jpg"}]
+        ev = aggregate_kpr_by_track(gallery, q, include_evidence=True)[1]["best_crop_evidence"]
+        assert ev["part_count_mismatch"] is True
+        assert ev["fallback"] == "holistic"
+        assert ev["parts"] == []
+        assert ev["score"] == pytest.approx(1.0 / math.sqrt(2.0))
+        assert ev["crop_path"] == "odd.jpg"
+
+    def test_evidence_json_serialisable(self):
+        import json
+        rich = aggregate_kpr_by_track(self._gallery(), _QUERY, include_evidence=True)
+        assert json.loads(json.dumps(rich[7])) == rich[7]

@@ -268,7 +268,8 @@ def aggregate_kpr_by_track(
     kpr_records: list[dict[str, Any]],
     query_kpr: dict[str, Any],
     vis_threshold: float = _DEFAULT_VIS_THRESHOLD,
-) -> dict[int | str, dict[str, float | int]]:
+    include_evidence: bool = False,
+) -> dict[int | str, dict[str, Any]]:
     """
     Compute per-track KPR aggregation statistics against a query crop.
 
@@ -301,6 +302,17 @@ def aggregate_kpr_by_track(
     vis_threshold:
         Passed through to part_aware_similarity(). Default 0.3.
 
+    include_evidence:
+        When True, each track dict gains a fifth key, ``best_crop_evidence``:
+        the part_aware_similarity_breakdown() of the crop that produced
+        ``max_part_aware_sim`` (first such crop on ties), extended with
+        ``crop_path`` / ``frame`` / ``timestamp`` (None if absent) and
+        ``part_count_mismatch`` (True when the crop's part count differed
+        from the query and the holistic fallback was used; ``parts`` is
+        then empty).  None when every crop of the track was unusable.
+        Scores are identical whether or not evidence is requested.
+        Default False — output is unchanged.
+
     Returns
     -------
     dict
@@ -311,6 +323,8 @@ def aggregate_kpr_by_track(
         ``mean_top3_part_aware_sim`` float
         ``mean_visible_parts``       float
         ``num_observations``         int
+
+        plus ``best_crop_evidence`` (dict | None) when include_evidence=True.
 
     Raises
     ------
@@ -350,11 +364,12 @@ def aggregate_kpr_by_track(
     if not grouped:
         return {}
 
-    result: dict[Any, dict[str, float | int]] = {}
+    result: dict[Any, dict[str, Any]] = {}
 
     for track_id, crops in grouped.items():
         sims:           list[float] = []
         visible_counts: list[int]   = []
+        evidence:       list[dict]  = []    # parallel to sims (include_evidence)
 
         for rec in crops:
             g_part_embs = rec["part_embeddings"]
@@ -369,15 +384,28 @@ def aggregate_kpr_by_track(
             visible_counts.append(n_visible)
 
             try:
-                sim = part_aware_similarity(
-                    emb_a=q_part_embs,
-                    vis_a=q_part_vis,
-                    emb_b=g_part_embs,
-                    vis_b=g_part_vis,
-                    holistic_a=q_holistic,
-                    holistic_b=g_holistic,
-                    vis_threshold=vis_threshold,
-                )
+                if include_evidence:
+                    crop_ev = part_aware_similarity_breakdown(
+                        emb_a=q_part_embs,
+                        vis_a=q_part_vis,
+                        emb_b=g_part_embs,
+                        vis_b=g_part_vis,
+                        holistic_a=q_holistic,
+                        holistic_b=g_holistic,
+                        vis_threshold=vis_threshold,
+                    )
+                    crop_ev["part_count_mismatch"] = False
+                    sim = crop_ev["score"]
+                else:
+                    sim = part_aware_similarity(
+                        emb_a=q_part_embs,
+                        vis_a=q_part_vis,
+                        emb_b=g_part_embs,
+                        vis_b=g_part_vis,
+                        holistic_a=q_holistic,
+                        holistic_b=g_holistic,
+                        vis_threshold=vis_threshold,
+                    )
             except (ValueError, Exception):
                 # Mismatched part counts between query and this gallery crop —
                 # fall back to holistic if available, else skip
@@ -388,8 +416,21 @@ def aggregate_kpr_by_track(
                         continue
                 else:
                     continue
+                crop_ev = {
+                    "score":                sim,
+                    "fallback":             "holistic",
+                    "num_mutually_visible": 0,
+                    "weight_total":         0.0,
+                    "parts":                [],
+                    "part_count_mismatch":  True,
+                }
 
             sims.append(sim)
+            if include_evidence:
+                crop_ev["crop_path"] = rec.get("crop_path")
+                crop_ev["frame"]     = rec.get("frame")
+                crop_ev["timestamp"] = rec.get("timestamp")
+                evidence.append(crop_ev)
 
         if not sims:
             # All crops for this track were unusable
@@ -399,6 +440,8 @@ def aggregate_kpr_by_track(
                 "mean_visible_parts":       0.0,
                 "num_observations":         int(len(crops)),
             }
+            if include_evidence:
+                result[track_id]["best_crop_evidence"] = None
             continue
 
         n = len(sims)
@@ -419,5 +462,7 @@ def aggregate_kpr_by_track(
             "mean_visible_parts":       float(mean_vis_parts),
             "num_observations":         int(n),
         }
+        if include_evidence:
+            result[track_id]["best_crop_evidence"] = evidence[sims.index(max_sim)]
 
     return result
