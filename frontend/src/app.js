@@ -947,6 +947,7 @@ function renderQueryResult(route) {
           <div style="font-size:.75rem;color:var(--text-3);font-family:var(--font-mono)">${esc(c.first_seen || '—')}</div>
           ${faceRow}${kprRow}
           <div style="font-size:.68rem;color:var(--text-3);font-family:var(--font-mono);margin-top:.2rem">${esc(c.active_backbone)}</div>
+          ${renderExplanation(c.explanation)}
         </div>`;
     }).join('');
 
@@ -973,6 +974,100 @@ function renderQueryResult(route) {
     <div style="margin-top:1.5rem;display:flex;gap:.85rem">
       <button class="btn btn-primary btn-sm" onclick="switchView('map')">View Route Map →</button>
     </div>`;
+}
+
+// ── XAI: "Why this score?" panel ────────────────────────────────────
+// Renders CandidateTrackOut.explanation (fusion breakdown + KPR part
+// evidence). Returns '' when absent (sessions stored before the XAI layer).
+const XAI_SIGNAL_LABELS = { body: 'Body', kpr: 'KPR parts', face: 'Face' };
+const XAI_PART_STATUS   = {
+  used:            'compared',
+  below_threshold: 'not visible in both',
+  error:           'unusable',
+};
+
+function xaiPct(x) {
+  return (typeof x === 'number' && isFinite(x)) ? `${(x * 100).toFixed(1)}%` : '—';
+}
+
+function xaiBar(value, color) {
+  const w = Math.max(0, Math.min(1, typeof value === 'number' ? value : 0)) * 100;
+  return `<div class="xai-bar"><div class="xai-bar-fill" style="width:${w.toFixed(1)}%;background:${color}"></div></div>`;
+}
+
+function renderFusionExplanation(f) {
+  if (!f) return '';
+  const signals = (f.signals || []).map(s => `
+    <div class="xai-row">
+      <span class="xai-label">${esc(XAI_SIGNAL_LABELS[s.signal] || s.signal)}</span>
+      ${xaiBar(s.contribution, s.contribution < 0 ? 'var(--red)' : 'var(--cyan)')}
+      <span class="xai-num" title="similarity ${xaiPct(s.similarity)} × weight ${xaiPct(s.normalized_weight)}">${s.contribution >= 0 ? '+' : ''}${xaiPct(s.contribution)}</span>
+    </div>
+    <div class="xai-sub">sim ${xaiPct(s.similarity)} · weight ${xaiPct(s.normalized_weight)}</div>`).join('');
+
+  const excluded = (f.excluded_signals || []).map(e =>
+    `<div class="xai-sub">✕ ${esc(XAI_SIGNAL_LABELS[e.signal] || e.signal)}: ${esc(e.reason)}</div>`).join('');
+
+  const margin = typeof f.margin_to_threshold === 'number' ? f.margin_to_threshold : null;
+  const marginColor = f.face_veto_applied ? 'var(--red)'
+                    : (margin !== null && margin >= 0 ? 'var(--green)' : 'var(--amber)');
+
+  return `
+    <div class="xai-section">Score breakdown</div>
+    ${signals}
+    <div class="xai-row xai-total">
+      <span class="xai-label">Fused</span>
+      ${xaiBar(f.fused_score, marginColor)}
+      <span class="xai-num">${xaiPct(f.fused_score)}</span>
+    </div>
+    <div class="xai-sub">threshold ${xaiPct(f.no_match_threshold)} · margin
+      <span style="color:${marginColor}">${margin !== null ? (margin >= 0 ? '+' : '') + xaiPct(margin) : '—'}</span></div>
+    ${excluded}
+    <div class="xai-reason" style="border-color:${marginColor}">${esc(f.decision_reason)}</div>`;
+}
+
+function renderKprEvidence(k) {
+  if (!k) return '';
+  if (k.part_count_mismatch || k.fallback === 'holistic') {
+    return `
+      <div class="xai-section">Body parts (KPR)</div>
+      <div class="xai-sub">No body part visible in both images — whole-body KPR
+        embedding used instead (sim ${xaiPct(k.score)}).</div>`;
+  }
+  if (k.fallback === 'zero') {
+    return `
+      <div class="xai-section">Body parts (KPR)</div>
+      <div class="xai-sub">No comparable body parts — KPR contributed no signal.</div>`;
+  }
+  // Part order follows the KPR model's part slots; semantic names are not
+  // confirmed, so parts are labelled by index.
+  const parts = (k.parts || []).map(p => {
+    const used = p.status === 'used';
+    return `
+      <div class="xai-row${used ? '' : ' xai-dim'}">
+        <span class="xai-label">Part ${p.index + 1}</span>
+        ${xaiBar(used ? p.cosine : 0, 'var(--accent2)')}
+        <span class="xai-num">${used ? xaiPct(p.cosine) : '—'}</span>
+      </div>
+      <div class="xai-sub${used ? '' : ' xai-dim'}">${esc(XAI_PART_STATUS[p.status] || p.status)}
+        · vis ${xaiPct(p.vis_a)} / ${xaiPct(p.vis_b)}${used ? ` · share ${xaiPct(p.weight_share)}` : ''}</div>`;
+  }).join('');
+
+  return `
+    <div class="xai-section">Body parts (KPR) — ${k.num_mutually_visible} visible in both</div>
+    ${parts}
+    ${k.crop_path ? `<div class="xai-sub">best crop: ${esc(String(k.crop_path).split('/').pop())}</div>` : ''}`;
+}
+
+function renderExplanation(x) {
+  if (!x || (!x.fusion && !x.kpr_evidence)) return '';
+  return `
+    <details class="xai-panel">
+      <summary>Why this score?</summary>
+      ${renderFusionExplanation(x.fusion)}
+      ${renderKprEvidence(x.kpr_evidence)}
+      <div class="xai-note">Similarity evidence only — not an identity probability.</div>
+    </details>`;
 }
 
 function renderCandidateMatchesShowcase() {

@@ -96,6 +96,42 @@ def get_route_service() -> RouteService:
 # Gallery loaders
 # ---------------------------------------------------------------------------
 
+def _gallery_dim(gallery: list[dict]) -> Optional[int]:
+    """Body-embedding dimension of a gallery (first record with an embedding)."""
+    for rec in gallery:
+        emb = rec.get("embedding")
+        if emb:
+            return len(emb)
+    return None
+
+
+def _embed_query_for_dim(dim: int, img_path: Optional[Path]) -> Optional[list[float]]:
+    """
+    Embed the query image with the backbone that produces *dim*-dim vectors.
+    Returns None when that is not possible (no image, unsupported dim, or the
+    backbone fails) — the caller then skips galleries of that dimension.
+    """
+    if img_path is None:
+        logger.warning(
+            f"[PipelineService] No query image to re-embed for {dim}-dim gallery "
+            "(registered-person queries only have an enrolled OSNet embedding)"
+        )
+        return None
+    try:
+        if dim == settings.solider_embedding_dim:
+            emb = embedding_service.embed_single_solider(img_path)
+        elif dim == 512:
+            emb = embedding_service.embed_single(img_path)
+        else:
+            logger.warning(f"[PipelineService] No backbone known for {dim}-dim galleries")
+            return None
+    except Exception as exc:
+        logger.warning(f"[PipelineService] Query embedding for {dim}-dim gallery failed: {exc}")
+        return None
+    logger.info(f"[PipelineService] Query re-embedded for {dim}-dim gallery")
+    return emb
+
+
 def _gallery_path_for_camera(camera_id: str) -> Optional[Path]:
     path = settings.embeddings_dir / f"embeddings_{camera_id}.json"
     return path if path.exists() else None
@@ -211,9 +247,9 @@ def _embed_query_face(img_path: Path) -> tuple[Optional[list[float]], Optional[f
 
         if result.get("face_detected") and result.get("face_embedding"):
             det_conf = result.get("face_confidence")  # SCRFD score
+            conf_str = f"{det_conf:.3f}" if det_conf is not None else "N/A"
             logger.info(
-                f"[PipelineService] Query face detected "
-                f"(SCRFD confidence={det_conf:.3f if det_conf else 'N/A'})"
+                f"[PipelineService] Query face detected (SCRFD confidence={conf_str})"
             )
             return result["face_embedding"], det_conf
 
@@ -247,53 +283,46 @@ def _embed_query_kpr(img_path: Path) -> Optional[dict]:
         )
         return None
 
+    # KPR ships its own fork of `torchreid`, but the standard torchreid is
+    # already imported server-wide for OSNet, so the fork can never be
+    # imported in-process ("No module named 'torchreid.utils'"). Run the same
+    # embed_kpr.py subprocess the upload pipeline uses — which also guarantees
+    # the query gets exactly the gallery's preprocessing.
     try:
-        import torch  # noqa: PLC0415
+        import tempfile  # noqa: PLC0415
 
-        _repo_root = Path(__file__).resolve().parents[3]
-        if str(_repo_root) not in sys.path:
-            sys.path.insert(0, str(_repo_root))
+        from backend.app.routers.upload import _run_kpr_embed  # noqa: PLC0415
 
-        from ai_pipeline.reid.embed_kpr import (  # noqa: PLC0415
-            load_kpr_model,
-            probe_kpr_output,
-            validate_and_preprocess,
-            _parse_kpr_output,
-        )
-        from torchreid.utils.tools import extract_test_embeddings  # noqa: PLC0415
+        img_abs = img_path.resolve()
+        with tempfile.TemporaryDirectory(prefix="trace_kpr_query_") as tmp:
+            tmp_dir  = Path(tmp)
+            metadata = tmp_dir / "query_metadata.json"
+            output   = tmp_dir / "query_kpr.json"
+            metadata.write_text(json.dumps([{
+                "crop_path":            str(img_abs),
+                "camera_id":            "QUERY",
+                "track_id":             0,
+                "frame":                0,
+                "timestamp":            None,
+                "bbox":                 None,
+                "detection_confidence": None,
+            }]))
+            _run_kpr_embed(metadata, img_abs.parent, output, kpr_w, kpr_c)
+            records = json.loads(output.read_text()) if output.exists() else []
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        kpr_root = kpr_c.resolve().parent
-        for parent in kpr_c.resolve().parents:
-            if (parent / "setup.py").exists() or (parent / "torchreid").exists():
-                kpr_root = parent
-                break
-
-        extractor = load_kpr_model(kpr_w, kpr_c, kpr_root, device)
-        num_slots, holistic_idx, num_parts, part_dim = probe_kpr_output(extractor, device)
-
-        tensor, failure = validate_and_preprocess(
-            img_path, str(img_path), min_crop_width=32, min_crop_height=64
-        )
-        if failure is not None:
-            logger.warning(f"[PipelineService] KPR query preprocess failed: {failure.reason}")
+        if not records:
+            logger.warning("[PipelineService] KPR query produced no embedding (crop rejected?)")
             return None
 
-        batch = tensor.unsqueeze(0).to(device)
-        with torch.no_grad():
-            embeddings_batch, vis_scores_batch = extract_test_embeddings(extractor, batch)
-
-        holistic_emb, part_embs, part_vis = _parse_kpr_output(
-            embeddings_batch, vis_scores_batch, 0, holistic_idx
-        )
+        rec = records[0]
         logger.info(
-            f"[PipelineService] KPR query embedded: {num_parts} parts, "
-            f"holistic_dim={len(holistic_emb)}"
+            f"[PipelineService] KPR query embedded: {len(rec['part_embeddings'])} parts, "
+            f"holistic_dim={len(rec['holistic_embedding'])}"
         )
         return {
-            "holistic_embedding": holistic_emb,
-            "part_embeddings":    part_embs,
-            "part_visibility":    part_vis,
+            "holistic_embedding": rec["holistic_embedding"],
+            "part_embeddings":    rec["part_embeddings"],
+            "part_visibility":    rec["part_visibility"],
         }
 
     except Exception as exc:
@@ -365,9 +394,20 @@ def _build_top_candidates(
             first_seen=m.first_seen,
             crop_path=m.best_crop_path,
             active_backbone=m.active_backbone,
+            explanation=_candidate_explanation(m),
         )
         for m in flat[:n]
     ]
+
+
+def _candidate_explanation(m: CameraMatch) -> Optional[dict]:
+    """XAI payload for a candidate, or None when no explanation was computed."""
+    if m.fusion_explanation is None and m.kpr_evidence is None:
+        return None
+    return {
+        "fusion":       m.fusion_explanation,
+        "kpr_evidence": m.kpr_evidence,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -399,13 +439,31 @@ class PipelineService:
                 await self._execute(session, db)
             except Exception as e:
                 logger.exception(f"[PipelineService] Session {session_id} failed: {e}")
-                session.status        = "failed"
-                session.error_message = str(e)
-                session.completed_at  = datetime.utcnow()
-                await db.commit()
+                # A failed flush leaves `db` unusable until rolled back, so
+                # record the failure through a fresh session. Otherwise the
+                # session stays "running" forever and every later query is
+                # rejected with 409.
+                await db.rollback()
+                await self._mark_failed(session_id, str(e))
                 await self._ws.broadcast(WsError(
                     session_id=session_id, message=str(e)
                 ).model_dump())
+
+    async def _mark_failed(self, session_id: int, message: str) -> None:
+        """Persist status=failed for a session in its own transaction."""
+        try:
+            async with async_session() as fail_db:
+                session = await fail_db.get(QuerySession, session_id)
+                if session is None:
+                    return
+                session.status        = "failed"
+                session.error_message = message
+                session.completed_at  = datetime.utcnow()
+                await fail_db.commit()
+        except Exception as exc:
+            logger.exception(
+                f"[PipelineService] Could not mark session {session_id} failed: {exc}"
+            )
 
     async def _execute(self, session: QuerySession, db: AsyncSession) -> None:
         session_id = session.id
@@ -451,11 +509,13 @@ class PipelineService:
                 "Upload a video first to generate the galleries."
             )
 
-        # Infer active backbone from first gallery record
-        first_gallery = next(iter(body_galleries.values()), [])
-        emb_dim = len(first_gallery[0]["embedding"]) if first_gallery else 512
+        # Body backbone per camera (inferred from gallery dimension) — cameras
+        # can differ, so report each one rather than only the first.
         from ai_pipeline.reid.confidence_scaling import get_backbone_config  # noqa: PLC0415
-        backbone_cfg = get_backbone_config(emb_dim)
+        body_models = ", ".join(
+            f"{cam}={get_backbone_config(d).name} ({d}-d, thr {get_backbone_config(d).no_match_threshold})"
+            for cam, d in ((cam, _gallery_dim(g) or 512) for cam, g in body_galleries.items())
+        )
 
         # Load face + KPR galleries only when query signals are active
         face_galleries: dict[str, list[dict]] = {}
@@ -490,14 +550,11 @@ class PipelineService:
         )
         logger.info(
             f"[PipelineService] ══ ACTIVE CONFIGURATION ══ "
-            f"BODY MODEL: {backbone_cfg.name} | "
-            f"BODY DIMENSION: {emb_dim} | "
+            f"BODY MODELS: {body_models} | "
             f"FACE: {'ENABLED' if 'face' in active_signals else 'DISABLED'} | "
             f"KPR: {'ENABLED' if 'KPR' in active_signals else 'DISABLED'} | "
             f"FACE WEIGHTS: {settings.face_det_model_path or 'not set'} | "
             f"KPR WEIGHTS: {settings.kpr_weights_path_abs or 'not set'} | "
-            f"ACTIVE THRESHOLD: {backbone_cfg.no_match_threshold} | "
-            f"SOFT FLOOR: {backbone_cfg.soft_floor} | "
             f"QUERY FACE RELIABLE: {face_reliable} "
             f"(conf={query_face_confidence}, "
             f"min={settings.face_min_query_confidence})"
@@ -507,6 +564,10 @@ class PipelineService:
         await self._push_progress(session, db, 30, "Running cross-camera matching...")
         camera_candidates: dict[str, list[CameraMatch]] = {}
         n_cameras = len(body_galleries)
+        # Galleries may use different body backbones (an upload re-embeds a
+        # camera with SOLIDER when its weights are configured). The query must
+        # be embedded with the same backbone as each gallery it is compared to.
+        query_by_dim: dict[int, Optional[list[float]]] = {len(query_embedding): query_embedding}
 
         for i, (cam_id, gallery) in enumerate(body_galleries.items()):
             pct = 30 + int((i / n_cameras) * 40)
@@ -515,8 +576,21 @@ class PipelineService:
                 f"[{i+1}/{n_cameras}] Matching {cam_id} ({'+'.join(active_signals)})..."
             )
 
+            gallery_dim = _gallery_dim(gallery)
+            if gallery_dim is not None and gallery_dim not in query_by_dim:
+                query_by_dim[gallery_dim] = await loop.run_in_executor(
+                    None, _embed_query_for_dim, gallery_dim, img_path
+                )
+            cam_query = query_by_dim.get(gallery_dim, query_embedding) if gallery_dim else query_embedding
+            if cam_query is None:
+                logger.warning(
+                    f"[PipelineService] Skipping {cam_id}: gallery is {gallery_dim}-dim "
+                    f"but no {gallery_dim}-dim query embedding is available"
+                )
+                continue
+
             candidates = _matching_service.search_camera_top_k(
-                query_embedding=query_embedding,
+                query_embedding=cam_query,
                 gallery=gallery,
                 camera_id=cam_id,
                 candidate_tracks=3,
@@ -675,18 +749,18 @@ class PipelineService:
             s0 = step_outs[0]
             narration = (
                 f"Seen at {s0.camera_location} ({s0.camera_id}) "
-                f"at {s0.timestamp or '\u2014'} \u2014 no further cameras matched."
+                f"at {s0.timestamp or '—'} \u2014 no further cameras matched."
             )
         else:
-            parts = [f"Seen at {step_outs[0].camera_location} ({step_outs[0].camera_id}) at {step_outs[0].timestamp or '\u2014'}"]
+            parts = [f"Seen at {step_outs[0].camera_location} ({step_outs[0].camera_id}) at {step_outs[0].timestamp or '—'}"]
             for s in step_outs[1:]:
                 if s.observed_gap_sec is not None:
                     parts.append(
-                        f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '\u2014'} "
+                        f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '—'} "
                         f"[gap: {int(s.observed_gap_sec)}s, expected: {int(s.expected_transit_sec or 0)}s {s.gap_verdict or ''}]"
                     )
                 else:
-                    parts.append(f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '\u2014'}")
+                    parts.append(f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '—'}")
             narration = " \u2192 ".join(parts)
 
         # ── Build skipped_out list ────────────────────────────────────────

@@ -797,6 +797,24 @@ textarea.field-input { resize: vertical; }
   box-shadow: 0 0 25px var(--green-glow);
   transform: translateY(-5px) scale(1.02);
 }
+/* ── XAI: "Why this score?" panel on candidate cards ── */
+.xai-panel { width: 100%; margin-top: .7rem; text-align: left; font-family: var(--font-mono); font-size: .7rem; color: var(--text-2); }
+.xai-panel > summary { cursor: pointer; color: var(--cyan); font-weight: 700; font-size: .74rem; padding: .3rem 0; list-style: none; }
+.xai-panel > summary::-webkit-details-marker { display: none; }
+.xai-panel > summary::before { content: '▸ '; }
+.xai-panel[open] > summary::before { content: '▾ '; }
+.xai-section { margin-top: .6rem; margin-bottom: .25rem; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: .64rem; }
+.xai-row { display: grid; grid-template-columns: 5.2rem 1fr 3.4rem; align-items: center; gap: .4rem; margin-top: .25rem; }
+.xai-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xai-num { text-align: right; color: var(--text); }
+.xai-bar { height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+.xai-bar-fill { height: 100%; border-radius: 3px; }
+.xai-sub { color: var(--text-4); font-size: .62rem; margin: .1rem 0 0 .1rem; line-height: 1.35; }
+.xai-total { margin-top: .45rem; padding-top: .35rem; border-top: 1px solid var(--border); font-weight: 700; }
+.xai-reason { margin-top: .45rem; padding: .35rem .5rem; border-left: 2px solid var(--border); background: var(--surface); border-radius: 4px; font-size: .62rem; line-height: 1.4; color: var(--text-2); }
+.xai-dim { opacity: .45; }
+.xai-note { margin-top: .55rem; color: var(--text-4); font-size: .6rem; font-style: italic; }
+
 .match-img { width: 75px; height: 110px; object-fit: cover; border-radius: 6px; border: 1.5px solid var(--cyan); margin-bottom: .7rem; }
 .match-conf { font-family: var(--font-heading); font-size: 1.3rem; font-weight: 900; color: var(--green); }
 .match-cam  { font-family: var(--font-mono); font-size: .82rem; color: var(--text); font-weight: 800; margin-top: .2rem; }

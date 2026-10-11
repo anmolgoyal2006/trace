@@ -186,6 +186,7 @@ Results show:
 - Match confidence per sighting
 - Reconstructed route with spatial + temporal scoring
 - Body similarity, face similarity, and KPR part similarity per match
+- **Why this score?** — expand any candidate card to see how its score was built (see [Explainability](#explainability-xai))
 
 ---
 
@@ -234,6 +235,49 @@ Route reconstruction  →  greedy walk over camera graph
     ▼
 Results pushed via WebSocket  →  displayed on dashboard
 ```
+
+---
+
+## Explainability (XAI)
+
+Every top candidate carries an explanation of **why** it scored the way it did.
+It is shown in the dashboard under **Why this score?** on each candidate card,
+and returned by the API as `top_candidates[].explanation`.
+
+Explanations are computed from the same values the matcher uses, but they are
+**read-only**: they never change scores, thresholds, rankings, the face veto,
+or route reconstruction.
+
+### Score breakdown (`explanation.fusion`)
+
+| Field | Meaning |
+|---|---|
+| `mode` | `body_only` (no face/KPR provided) or `weighted` (fusion formula) |
+| `signals[]` | Each signal used: `similarity`, `weight`, `normalized_weight`, `contribution` (= similarity × normalized weight). Contributions sum to `fused_score`. |
+| `excluded_signals[]` | Signals left out, with a reason — e.g. not provided, no usable KPR record for the track, no reliable gallery face, or a non-positive face similarity (handled by the face veto instead) |
+| `fused_score`, `no_match_threshold`, `soft_floor` | The score and the backbone-specific thresholds it was compared against |
+| `margin_to_threshold` | `fused_score − no_match_threshold`; ≥ 0 means it cleared the match threshold |
+| `face_veto_applied`, `decision_reason` | Why the candidate got its `match_status`, in plain text |
+
+### Body-part evidence (`explanation.kpr_evidence`)
+
+For the gallery crop that produced the track's KPR similarity:
+
+| Field | Meaning |
+|---|---|
+| `parts[]` | One entry per KPR body-part slot: visibility in the query (`vis_a`) and gallery crop (`vis_b`), `status` (`used`, `below_threshold`, `error`), part `cosine`, `weight` = min(vis_a, vis_b), `weight_share` and `contribution` |
+| `num_mutually_visible` | Parts visible (≥ `KPR_VIS_THRESHOLD`) in **both** images — only these are compared |
+| `fallback` | `none` (part-based), `holistic` (no shared visible parts → whole-body KPR embedding), or `zero` (no usable signal) |
+| `crop_path`, `frame`, `timestamp` | Which gallery crop the evidence comes from |
+
+Parts are labelled by slot index; the slot-to-body-region mapping depends on
+the KPR model configuration.
+
+> **Interpretation:** all values are similarity evidence, **not** identity
+> probabilities. A high contribution means the signal agreed with the match —
+> not that the person is confirmed. Human verification is still required.
+
+Sessions saved before the XAI layer have `explanation: null` and display as before.
 
 ---
 
@@ -364,7 +408,7 @@ DETECTION_CONFIDENCE=0.6
 | GET | `/api/upload/status/{job_id}` | Poll upload job status |
 | POST | `/api/queries` | Submit a Re-ID search query |
 | GET | `/api/queries/{id}` | Poll query session status |
-| GET | `/api/queries/{id}/route` | Get completed route and candidates |
+| GET | `/api/queries/{id}/route` | Get completed route and candidates (each candidate includes an [`explanation`](#explainability-xai)) |
 | GET | `/api/cameras` | List cameras |
 | GET | `/api/persons` | List registered persons |
 | POST | `/api/persons` | Register a new person |

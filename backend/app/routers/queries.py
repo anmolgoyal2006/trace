@@ -283,18 +283,18 @@ async def get_route(
         s0 = step_outs[0]
         narration = (
             f"Seen at {s0.camera_location} ({s0.camera_id}) "
-            f"at {s0.timestamp or '\u2014'} \u2014 no further cameras matched."
+            f"at {s0.timestamp or '—'} \u2014 no further cameras matched."
         )
     else:
-        parts = [f"Seen at {step_outs[0].camera_location} ({step_outs[0].camera_id}) at {step_outs[0].timestamp or '\u2014'}"]
+        parts = [f"Seen at {step_outs[0].camera_location} ({step_outs[0].camera_id}) at {step_outs[0].timestamp or '—'}"]
         for s in step_outs[1:]:
             if s.observed_gap_sec is not None:
                 parts.append(
-                    f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '\u2014'} "
+                    f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '—'} "
                     f"[gap: {int(s.observed_gap_sec)}s, expected: {int(s.expected_transit_sec or 0)}s {s.gap_verdict or ''}]"
                 )
             else:
-                parts.append(f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '\u2014'}")
+                parts.append(f"{s.camera_location} ({s.camera_id}) at {s.timestamp or '—'}")
         narration = " \u2192 ".join(parts)
 
     # Build skipped_out: cameras in cam_data not appearing in step_outs

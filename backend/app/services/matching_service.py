@@ -155,6 +155,17 @@ class CameraMatch:
     -------------------------------------------------------
     kpr_sim            : part-aware similarity, or None
     mean_visible_parts : avg mutually-visible parts per crop pair
+    kpr_evidence       : XAI — per-part breakdown of the gallery crop that
+                         produced kpr_sim (see aggregate_kpr_by_track
+                         include_evidence).  Explanatory only; never used
+                         in scoring or match_status.
+
+    XAI
+    ---
+    fusion_explanation : how fused_score and match_status were reached —
+                         per-signal weight / contribution, excluded signals
+                         with reasons, thresholds and decision reason.
+                         Explanatory only; never used in scoring.
 
     Debug
     -----
@@ -188,6 +199,10 @@ class CameraMatch:
     # KPR fusion
     kpr_sim: Optional[float] = None
     mean_visible_parts: Optional[float] = None
+    kpr_evidence: Optional[dict] = None
+
+    # XAI
+    fusion_explanation: Optional[dict] = None
 
     # Debug
     fused_score: float = 0.0
@@ -358,10 +373,12 @@ class MatchingService:
         Returns dict keyed by track_id:
             kpr_sim            float
             mean_visible_parts float
+            kpr_evidence       dict | None  (XAI, explanatory only)
         """
         try:
             track_stats = aggregate_kpr_by_track(
-                kpr_gallery, query_kpr, vis_threshold=self._kpr_vis_thr
+                kpr_gallery, query_kpr, vis_threshold=self._kpr_vis_thr,
+                include_evidence=True,
             )
         except Exception as exc:
             logger.warning(f"[MatchingService] aggregate_kpr_by_track failed: {exc}")
@@ -371,6 +388,7 @@ class MatchingService:
             track_id: {
                 "kpr_sim":            stats["max_part_aware_sim"],
                 "mean_visible_parts": stats["mean_visible_parts"],
+                "kpr_evidence":       stats.get("best_crop_evidence"),
             }
             for track_id, stats in track_stats.items()
         }
@@ -588,6 +606,32 @@ class MatchingService:
                 use_kpr = False
 
         # ---- compute fused score per track -------------------------------
+        def _fusion_terms(
+            track_id: int | str, body_sim: float
+        ) -> list[tuple[str, float, float]]:
+            """
+            (signal, similarity, weight) terms of the weighted fusion, in
+            accumulation order.  Single source of truth for _fused_score()
+            and the XAI fusion explanation.
+            """
+            terms = [("body", body_sim, self._body_weight)]
+
+            if use_kpr:
+                k_sim = kpr_info.get(track_id, {}).get("kpr_sim")
+                if k_sim is not None:
+                    terms.append(("kpr", k_sim, self._kpr_weight))
+
+            # Face: include in ranking score only when positive (supportive).
+            # When face_sim < 0, it will trigger the veto but must NOT
+            # suppress the candidate below soft_floor before the veto fires.
+            if use_face:
+                fi    = face_info.get(track_id, {})
+                f_sim = fi.get("face_sim")
+                if f_sim is not None and f_sim > 0:
+                    terms.append(("face", f_sim, self._face_weight))
+
+            return terms
+
         def _fused_score(track_id: int | str, body_sim: float) -> float:
             """
             Weighted fusion of body + KPR (+ face when available).
@@ -608,26 +652,87 @@ class MatchingService:
             if not use_face and not use_kpr:
                 return body_sim
 
-            numerator   = self._body_weight * body_sim
-            denominator = self._body_weight
-
-            if use_kpr:
-                k_sim = kpr_info.get(track_id, {}).get("kpr_sim")
-                if k_sim is not None:
-                    numerator   += self._kpr_weight * k_sim
-                    denominator += self._kpr_weight
-
-            # Face: include in ranking score only when positive (supportive).
-            # When face_sim < 0, it will trigger the veto but must NOT
-            # suppress the candidate below soft_floor before the veto fires.
-            if use_face:
-                fi    = face_info.get(track_id, {})
-                f_sim = fi.get("face_sim")
-                if f_sim is not None and f_sim > 0:
-                    numerator   += self._face_weight * f_sim
-                    denominator += self._face_weight
+            numerator   = 0.0
+            denominator = 0.0
+            for _, sim, weight in _fusion_terms(track_id, body_sim):
+                numerator   += weight * sim
+                denominator += weight
 
             return float(numerator / denominator)
+
+        def _explain_fusion(
+            track_id: int | str,
+            body_sim: float,
+            fused: float,
+            veto: bool,
+            veto_reason: Optional[str],
+        ) -> dict:
+            """XAI: describe how fused_score and match_status were reached."""
+            body_only = not use_face and not use_kpr
+            if body_only:
+                terms = [("body", body_sim, 1.0)]
+            else:
+                terms = _fusion_terms(track_id, body_sim)
+            weight_total = sum(w for _, _, w in terms)
+
+            signals = [
+                {
+                    "signal":            name,
+                    "similarity":        float(sim),
+                    "weight":            float(weight),
+                    "normalized_weight": float(weight / weight_total),
+                    "contribution":      float(weight * sim / weight_total),
+                }
+                for name, sim, weight in terms
+            ]
+
+            used = {name for name, _, _ in terms}
+            excluded: list[dict] = []
+            if "kpr" not in used:
+                excluded.append({
+                    "signal": "kpr",
+                    "reason": (
+                        "no usable KPR record for this track" if use_kpr
+                        else "KPR signal not provided"
+                    ),
+                })
+            if "face" not in used:
+                if not use_face:
+                    reason = "face signal not provided"
+                else:
+                    f_sim = face_info.get(track_id, {}).get("face_sim")
+                    reason = (
+                        "no gallery face embedding meeting coverage threshold"
+                        if f_sim is None else
+                        "non-positive face similarity excluded from fusion "
+                        "(face veto evaluated separately)"
+                    )
+                excluded.append({"signal": "face", "reason": reason})
+
+            if veto:
+                decision_reason = f"face veto: {veto_reason}"
+            elif fused >= no_match_thr:
+                decision_reason = (
+                    f"fused_score {fused:.4f} >= no_match_threshold {no_match_thr:.4f}"
+                )
+            else:
+                decision_reason = (
+                    f"fused_score {fused:.4f} is below no_match_threshold "
+                    f"{no_match_thr:.4f} but >= soft_floor {soft_floor:.4f}; "
+                    "returned for human review"
+                )
+
+            return {
+                "mode":                "body_only" if body_only else "weighted",
+                "signals":             signals,
+                "excluded_signals":    excluded,
+                "fused_score":         float(fused),
+                "no_match_threshold":  float(no_match_thr),
+                "soft_floor":          float(soft_floor),
+                "margin_to_threshold": float(fused - no_match_thr),
+                "face_veto_applied":   bool(veto),
+                "decision_reason":     decision_reason,
+            }
 
         # ---- rank by fused score, collect all above soft_floor -----------
         ranked_tracks = sorted(
@@ -694,6 +799,7 @@ class MatchingService:
                 k_sim = ki.get("kpr_sim")
                 match.kpr_sim            = round(k_sim, 6) if k_sim is not None else None
                 match.mean_visible_parts = ki.get("mean_visible_parts")
+                match.kpr_evidence       = ki.get("kpr_evidence")
 
             # ---- assign match_status ------------------------------------
             if veto:
@@ -712,6 +818,11 @@ class MatchingService:
             match.matching_mode   = "face" if match.face_used and not veto else "body"
             match.face_similarity = match.face_sim          # alias
             match.body_similarity = match.appearance_score  # alias
+
+            # ---- XAI: explain fusion + decision (no effect on scoring) --
+            match.fusion_explanation = _explain_fusion(
+                track_id, body_sim, fused, veto, veto_reason
+            )
 
             matches.append(match)
 

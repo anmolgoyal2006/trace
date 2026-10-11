@@ -115,6 +115,67 @@ class EmbeddingService:
 
         return embedding.cpu().squeeze(0).tolist()
 
+    def embed_single_solider(self, image_path: Path) -> list[float]:
+        """
+        Embed one image through SOLIDER (Swin-Small) → 768-D L2-normalised list.
+
+        Needed when a camera gallery was built with SOLIDER (uploads run it
+        whenever SOLIDER weights are configured): the query must be embedded
+        with the same backbone as the gallery it is compared against.
+        Uses the exact loader / transform / forward of embed_solider.py that
+        produced the gallery. The model is loaded lazily on first use.
+
+        Raises:
+            RuntimeError: if SOLIDER is not configured or fails to load/run.
+        """
+        if not image_path.exists():
+            raise FileNotFoundError(f"Image not found: {image_path}")
+
+        from ai_pipeline.reid.embed_solider import (  # noqa: PLC0415
+            SOLIDER_TRANSFORM,
+            solider_forward,
+        )
+
+        model, device = self._get_solider_model()
+        try:
+            img = Image.open(image_path).convert("RGB")
+        except Exception as e:
+            raise RuntimeError(f"Cannot open image {image_path}: {e}")
+
+        tensor = SOLIDER_TRANSFORM(img).unsqueeze(0).to(device)
+        with torch.no_grad():
+            embedding = solider_forward(model, tensor)  # [1, 768]
+        return embedding.cpu().squeeze(0).tolist()
+
+    def _get_solider_model(self):
+        """Load (once) and return (model, device) for SOLIDER query embedding."""
+        if getattr(self, "_solider_model", None) is not None:
+            return self._solider_model, self._solider_device
+
+        weights = settings.solider_weights
+        config  = settings.solider_config_path
+        if not str(weights).strip(" .") or not Path(weights).exists():
+            raise RuntimeError(f"SOLIDER weights not configured or missing: {weights!r}")
+        if not str(config).strip(" .") or not Path(config).exists():
+            raise RuntimeError(f"SOLIDER config not configured or missing: {config!r}")
+
+        from ai_pipeline.reid.embed_solider import (  # noqa: PLC0415
+            load_solider_model,
+            select_device,
+        )
+
+        device = select_device()
+        try:
+            model = load_solider_model(
+                Path(weights), Path(config), settings.repo_root / "SOLIDER-REID", device
+            )
+        except SystemExit as exc:   # embed_solider reports load errors via sys.exit
+            raise RuntimeError(f"SOLIDER model failed to load: {exc}") from None
+
+        self._solider_model, self._solider_device = model, device
+        logger.info(f"[EmbeddingService] SOLIDER query model loaded on {device}")
+        return model, device
+
     # ------------------------------------------------------------------ #
     # Batch embedding (subprocess)                                         #
     # ------------------------------------------------------------------ #
