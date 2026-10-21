@@ -217,6 +217,7 @@ async def _migrate_sightings_schema(conn) -> None:
     _session_columns = [
         ("match_decision",       "TEXT    NOT NULL DEFAULT 'NO_CONFIDENT_MATCH'"),
         ("top_candidates_json",  "TEXT"),
+        ("route_data_json",      "TEXT"),
     ]
 
     result = await conn.execute(_text("PRAGMA table_info(sightings)"))
@@ -240,6 +241,23 @@ async def _migrate_sightings_schema(conn) -> None:
             logger.info(f"[migrate] Added query_sessions.{col_name}")
         else:
             logger.debug(f"[migrate] query_sessions.{col_name} already exists — skipped")
+
+    _camera_columns = [
+        ("latitude",        "FLOAT"),
+        ("longitude",       "FLOAT"),
+        ("google_place_id", "TEXT"),
+    ]
+
+    result3 = await conn.execute(_text("PRAGMA table_info(cameras)"))
+    existing3 = {row[1] for row in result3.fetchall()}
+    for col_name, col_def in _camera_columns:
+        if col_name not in existing3:
+            await conn.execute(_text(
+                f"ALTER TABLE cameras ADD COLUMN {col_name} {col_def}"
+            ))
+            logger.info(f"[migrate] Added cameras.{col_name}")
+        else:
+            logger.debug(f"[migrate] cameras.{col_name} already exists — skipped")
 
     for table in Base.metadata.sorted_tables:
         await _relax_orphan_not_null_columns(conn, table.name, {c.name for c in table.columns})

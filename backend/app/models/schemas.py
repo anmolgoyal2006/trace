@@ -96,9 +96,12 @@ class PersonSearchResult(_Base):
 class CameraOut(_Base):
     id: str
     location: str
-    description: Optional[str]
-    start_time: Optional[str]
+    description: Optional[str] = None
+    start_time: Optional[str] = None
     is_active: bool
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    google_place_id: Optional[str] = None
 
 
 class CameraGraphEdge(BaseModel):
@@ -111,9 +114,12 @@ class CameraGraphEdge(BaseModel):
 class CameraWithGraph(_Base):
     id: str
     location: str
-    description: Optional[str]
-    start_time: Optional[str]
+    description: Optional[str] = None
+    start_time: Optional[str] = None
     is_active: bool
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    google_place_id: Optional[str] = None
     connects_to: list[CameraGraphEdge] = []
 
 
@@ -121,10 +127,13 @@ class CameraUpdate(BaseModel):
     """
     User-editable camera fields.
 
-    location    — human-readable place name shown in the UI and map.
-    start_time  — HH:MM:SS wall-clock time when the recording started.
+    location        — human-readable place name shown in the UI and map.
+    start_time      — HH:MM:SS wall-clock time when the recording started.
     transit_updates — map of {neighbour_camera_id: avg_transit_sec} to
                       patch specific edges in camera_graph.json.
+    latitude        — latitude in decimal degrees (-90.0 to 90.0).
+    longitude       — longitude in decimal degrees (-180.0 to 180.0).
+    google_place_id — optional Google Place ID.
     """
     location: Optional[str] = Field(default=None, min_length=1, max_length=200)
     start_time: Optional[str] = Field(
@@ -136,6 +145,26 @@ class CameraUpdate(BaseModel):
         default=None,
         description="Neighbour camera ID → new avg_transit_sec",
     )
+    latitude: Optional[float] = Field(default=None, ge=-90.0, le=90.0)
+    longitude: Optional[float] = Field(default=None, ge=-180.0, le=180.0)
+    google_place_id: Optional[str] = Field(default=None, max_length=500)
+
+
+class CameraLocationUpdate(BaseModel):
+    """
+    Location-specific update schema for Google Maps integration.
+    """
+    latitude: float = Field(..., ge=-90.0, le=90.0, description="Latitude between -90 and 90")
+    longitude: float = Field(..., ge=-180.0, le=180.0, description="Longitude between -180 and 180")
+    google_place_id: Optional[str] = Field(default=None, max_length=500)
+    location: Optional[str] = Field(default=None, min_length=1, max_length=200)
+
+
+class CameraMapsConfig(BaseModel):
+    """Config payload for frontend Google Maps initialization."""
+    google_maps_api_key: str
+    configured: bool
+
 
 
 # ===========================================================================
@@ -237,6 +266,12 @@ class RouteStepOut(_Base):
     expected_transit_sec: Optional[float] = None  # expected walk time from graph
     observed_gap_sec: Optional[float] = None      # actual gap from prev last_seen
     gap_verdict: Optional[str] = None             # "✓ on time" | "⚠ early" | "⚠ late"
+    # ---- Phase 5: topology-aware explainability fields ------------------
+    transition_status: str = "SUPPORTED"          # SUPPORTED | PROBABLE | AMBIGUOUS | DISCONNECTED
+    hop_distance_m: Optional[float] = None        # geodesic distance between cameras if coords present
+    implied_speed_mps: Optional[float] = None     # speed in m/s if distance and time available
+    route_explanation: Optional[dict[str, Any]] = None  # structured evidence explanation
+    alternative_candidate: Optional[dict[str, Any]] = None  # runner-up candidate if ambiguous
 
 
 # ===========================================================================
@@ -291,6 +326,12 @@ class QueryRouteOut(BaseModel):
     narration: Optional[str] = None
     # Cameras that were searched but produced no confident match.
     skipped_cameras: list[SkippedCameraOut] = Field(default_factory=list)
+    # Route metrics & explainability summaries
+    supported_transitions_count: int = 0
+    ambiguous_transitions_count: int = 0
+    disconnected_transitions_count: int = 0
+    data_limitations: list[str] = Field(default_factory=list)
+    route_method: str = "topology_aware"
 
 
 # ===========================================================================

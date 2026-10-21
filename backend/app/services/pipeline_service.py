@@ -629,9 +629,20 @@ class PipelineService:
             if any(m.match_status == MatchStatus.CONFIDENT_MATCH for m in cands)
         }
 
+        # Fetch camera coordinates for spatial GPS validation
+        from backend.app.models.orm import Camera  # noqa: PLC0415
+        cam_records = (await db.execute(select(Camera))).scalars().all()
+        camera_coords = {
+            c.id: (c.latitude, c.longitude)
+            for c in cam_records
+            if c.latitude is not None and c.longitude is not None
+        }
+
         fused_route_result = route_service.reconstruct_route(
             confident_candidates,
             all_camera_candidates=camera_candidates,
+            camera_coordinates=camera_coords,
+            method="topology_aware",
         )
         fused_route = fused_route_result.steps
         skipped_cameras = fused_route_result.skipped_cameras
@@ -697,7 +708,7 @@ class PipelineService:
         sighting_map = {s.id: s for s in all_sightings}
         cam_data_map = route_service.get_graph().get("cameras", {})
 
-        # Build fused_map for timing field lookup
+        # Build fused_map for timing and explanation lookup
         fused_map: dict[str, FusedSighting] = {f.match.camera_id: f for f in fused_route}
 
         step_outs: list[RouteStepOut] = []
@@ -740,6 +751,11 @@ class PipelineService:
                 expected_transit_sec=exp_transit,
                 observed_gap_sec=obs_gap,
                 gap_verdict=gap_verdict,
+                transition_status=fused.transition_status if fused else "SUPPORTED",
+                hop_distance_m=fused.hop_distance_m if fused else None,
+                implied_speed_mps=fused.implied_speed_mps if fused else None,
+                route_explanation=fused.explanation if fused else None,
+                alternative_candidate=fused.alternative_candidate if fused else None,
             ))
 
         # ── Build narration string ────────────────────────────────────────
@@ -785,6 +801,11 @@ class PipelineService:
             top_candidates=top_candidates,
             narration=narration,
             skipped_cameras=skipped_out,
+            supported_transitions_count=fused_route_result.supported_transitions_count,
+            ambiguous_transitions_count=fused_route_result.ambiguous_transitions_count,
+            disconnected_transitions_count=fused_route_result.disconnected_transitions_count,
+            data_limitations=fused_route_result.data_limitations,
+            route_method=fused_route_result.method_used,
         )
 
         # ── Step 9: mark complete ──────────────────────────────────────────
@@ -793,8 +814,28 @@ class PipelineService:
         session.progress_pct  = 100
         session.completed_at  = datetime.utcnow()
         session.match_decision = match_decision
-        # Serialize top_candidates to JSON so GET /api/queries/{id}/route can return them
+        # Serialize top_candidates and rich route metadata to JSON
         session.top_candidates_json = json.dumps([c.model_dump() for c in top_candidates])
+        session.route_data_json = json.dumps({
+            "supported_transitions_count": fused_route_result.supported_transitions_count,
+            "ambiguous_transitions_count": fused_route_result.ambiguous_transitions_count,
+            "disconnected_transitions_count": fused_route_result.disconnected_transitions_count,
+            "data_limitations": fused_route_result.data_limitations,
+            "method_used": fused_route_result.method_used,
+            "steps_detail": [
+                {
+                    "step_order": s.step_order,
+                    "camera_id": s.camera_id,
+                    "transition_status": s.transition_status,
+                    "hop_distance_m": s.hop_distance_m,
+                    "implied_speed_mps": s.implied_speed_mps,
+                    "route_explanation": s.route_explanation,
+                    "alternative_candidate": s.alternative_candidate,
+                }
+                for s in step_outs
+            ],
+        })
+        await db.commit()
         await db.commit()
 
         await self._ws.broadcast(WsRouteComplete(

@@ -273,8 +273,29 @@ function switchView(name) {
   if (name === 'watchlist') loadPersonsList();
   if (name === 'upload')    { loadUploadJobs(); loadCameraConfig(); }
   if (name === 'query')     { loadPersonsSelect(); renderCandidateMatchesShowcase(); }
-  if (name === 'map')       { loadSessionSelect('map-session-select'); if (State.lastRoute) renderMapRoute(State.lastRoute); else loadDemoRoute(); }
-  if (name === 'timeline')  { loadSessionSelect('timeline-session-select'); renderTimeline(); }
+  if (name === 'map') {
+    (async () => {
+      const activeId = await loadSessionSelect('map-session-select');
+      const sel = document.getElementById('map-session-select');
+      const chosen = sel?.value || activeId;
+      if (chosen && chosen !== 'demo-session') {
+        loadMapRoute(parseInt(chosen));
+      } else if (State.lastRoute && State.lastRoute !== MOCK_DEMO_ROUTE) {
+        renderMapRoute(State.lastRoute);
+      } else {
+        loadDemoRoute();
+      }
+    })();
+  }
+  if (name === 'timeline') {
+    (async () => {
+      const activeId = await loadSessionSelect('timeline-session-select');
+      const sel = document.getElementById('timeline-session-select');
+      const chosen = sel?.value || activeId;
+      renderTimeline(chosen);
+    })();
+  }
+  if (name === 'camera-location') loadCameraLocationView();
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -378,8 +399,14 @@ function onPipelineErr(msg) {
    CAMERAS
 ═══════════════════════════════════════════════════════════════════ */
 async function loadCameras() {
-  try { State.cameras = await API.cameras.list(); }
-  catch { State.cameras = []; }
+  try {
+    State.cameras = await API.cameras.list();
+    (State.cameras || []).forEach(c => {
+      if (CAM_LAYOUT[c.id]) {
+        CAM_LAYOUT[c.id].loc = c.location || CAM_LAYOUT[c.id].loc;
+      }
+    });
+  } catch { State.cameras = []; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1181,6 +1208,13 @@ function initMapSvg() {
     nodesEl.appendChild(g);
   });
 
+  const mapSel = document.getElementById('map-session-select');
+  mapSel?.addEventListener('change', () => {
+    const id = mapSel.value;
+    if (id && id !== 'demo-session') loadMapRoute(parseInt(id));
+    else loadDemoRoute();
+  });
+
   document.getElementById('btn-load-map')?.addEventListener('click', () => {
     const id = document.getElementById('map-session-select')?.value;
     if (id && id !== 'demo-session') loadMapRoute(parseInt(id));
@@ -1202,28 +1236,45 @@ function svgEl(tag, attrs) {
 
 async function loadSessionSelect(selId) {
   const sel = document.getElementById(selId);
-  if (!sel) return;
+  if (!sel) return null;
+  const currentVal = sel.value;
   try {
-    const sessions = await API.queries.list(30);
+    const sessions = await API.queries.list(50);
     const done     = sessions.filter(s => s.status === 'done');
+    // Sort newest session first (highest ID first)
+    done.sort((a, b) => b.id - a.id);
     if (!done.length) {
-      sel.innerHTML = '<option value="demo-session">Session #1 — Demo Sighting Trajectory</option>';
-      return;
+      sel.innerHTML = '<option value="demo-session">Demo — Example Trajectory</option>';
+      return 'demo-session';
     }
-    sel.innerHTML  = '<option value="demo-session">Session #1 — Demo Sighting Trajectory</option>' +
-      done.map(s => `<option value="${s.id}">Session #${s.id} — ${fmtTime(s.submitted_at)}</option>`).join('');
+    sel.innerHTML =
+      done.map(s => `<option value="${s.id}">Session #${s.id} — ${fmtTime(s.submitted_at)}</option>`).join('') +
+      '<option value="demo-session">Demo — Example Trajectory</option>';
+    // Retain previous user selection if still present in options, otherwise select newest session
+    if (currentVal && Array.from(sel.options).some(o => o.value === currentVal)) {
+      sel.value = currentVal;
+    } else {
+      sel.value = String(done[0].id);
+    }
+    return sel.value;
   } catch {
     sel.innerHTML = '<option value="demo-session">Session #1 — Demo Sighting Trajectory</option>';
+    return 'demo-session';
   }
 }
 
 async function loadMapRoute(sessionId) {
   try {
-    const id    = sessionId || parseInt(document.getElementById('map-session-select').value);
+    const id = sessionId || parseInt(document.getElementById('map-session-select').value);
+    const sel = document.getElementById('map-session-select');
+    if (sel && id && sel.value !== String(id)) sel.value = String(id);
     const route = await API.queries.route(id);
     State.lastRoute = route;
     renderMapRoute(route);
-  } catch (e) { loadDemoRoute(); }
+  } catch (e) {
+    console.error('Failed to load map route:', e);
+    loadDemoRoute();
+  }
 }
 
 function renderMapRoute(route) {
@@ -1233,7 +1284,23 @@ function renderMapRoute(route) {
   });
   document.getElementById('map-route-path').innerHTML = '';
 
-  if (!route.steps?.length) { toast('No trajectory steps to display', 'info'); return; }
+  const summaryCard = document.getElementById('map-route-summary');
+  const summaryBody = document.getElementById('map-route-summary-body');
+  let narrationEl = document.getElementById('map-route-narration');
+
+  if (!route.steps?.length) {
+    if (narrationEl) narrationEl.style.display = 'none';
+    if (summaryCard) summaryCard.style.display = 'block';
+    if (summaryBody) {
+      summaryBody.innerHTML = `
+        <div style="padding:1.5rem 1rem;text-align:center;color:var(--text-3);font-family:var(--font-mono);font-size:.85rem">
+          No trajectory steps to display for this session.<br>
+          <span style="font-size:.75rem;color:var(--text-4)">Decision: ${esc(route.match_decision || 'NO_CONFIDENT_MATCH')}</span>
+        </div>`;
+    }
+    toast('No trajectory steps to display', 'info');
+    return;
+  }
 
   (route.sightings || []).forEach(s => highlightCamNode(s.camera_id, 'matched'));
 
@@ -1291,12 +1358,9 @@ function renderMapRoute(route) {
     if (node) node.setAttribute('class', 'cam-node skipped');
   });
 
-  const summaryCard = document.getElementById('map-route-summary');
-  const summaryBody = document.getElementById('map-route-summary-body');
   summaryCard.style.display = 'block';
 
   // Inject narration element if not already in DOM
-  let narrationEl = document.getElementById('map-route-narration');
   if (!narrationEl) {
     narrationEl = document.createElement('div');
     narrationEl.id = 'map-route-narration';
@@ -1306,36 +1370,103 @@ function renderMapRoute(route) {
   if (route.narration) {
     narrationEl.textContent = route.narration;
     narrationEl.style.display = 'block';
+  } else {
+    narrationEl.style.display = 'none';
   }
 
   const cf  = (route.route_confidence * 100).toFixed(1);
   const cfColor = parseFloat(cf) >= 70 ? 'var(--green)' : parseFloat(cf) >= 50 ? 'var(--amber)' : 'var(--red)';
 
+  const supportedCnt    = route.supported_transitions_count != null ? route.supported_transitions_count : route.steps.length;
+  const ambiguousCnt    = route.ambiguous_transitions_count || 0;
+  const disconnectedCnt = route.disconnected_transitions_count || 0;
+
   summaryBody.innerHTML = `
     <div style="margin-bottom:1rem">
-      <div class="section-label" style="font-family:var(--font-mono);font-size:.72rem;color:var(--cyan);font-weight:800">ROUTE CONFIDENCE</div>
+      <div class="section-label" style="font-family:var(--font-mono);font-size:.72rem;color:var(--cyan);font-weight:800">ROUTE EVIDENCE SCORE (MEAN FUSION)</div>
       <div style="font-family:var(--font-heading);font-size:2.25rem;font-weight:900;color:${cfColor};letter-spacing:-.04em">${cf}%</div>
+      <div style="font-size:.7rem;color:var(--text-3);font-family:var(--font-mono);margin-top:.15rem">Similarity-derived score · Not a calibrated probability</div>
       <div style="margin-top:.5rem">
         <div class="progress-track">
           <div class="progress-fill" style="width:${cf}%;background:${cfColor}"></div>
         </div>
       </div>
     </div>
+
+    <!-- Transition Status Breakdown Pills -->
+    <div style="display:flex;gap:.4rem;margin-bottom:.875rem;flex-wrap:wrap">
+      <span class="badge-pill" style="background:rgba(16,185,129,.15);color:var(--green);font-size:.72rem;font-family:var(--font-mono);font-weight:800">
+        ✓ ${supportedCnt} SUPPORTED
+      </span>
+      ${ambiguousCnt ? `
+      <span class="badge-pill" style="background:rgba(245,158,11,.15);color:var(--amber);font-size:.72rem;font-family:var(--font-mono);font-weight:800">
+        ⚠ ${ambiguousCnt} AMBIGUOUS
+      </span>` : ''}
+      ${disconnectedCnt ? `
+      <span class="badge-pill" style="background:rgba(239,68,68,.15);color:var(--red);font-size:.72rem;font-family:var(--font-mono);font-weight:800">
+        ✕ ${disconnectedCnt} DISCONNECTED
+      </span>` : ''}
+    </div>
+
+    ${route.data_limitations?.length ? `
+    <div style="padding:.65rem .85rem;margin-bottom:.875rem;border-radius:6px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);font-size:.76rem;color:#fcd34d;line-height:1.45">
+      <div style="font-weight:800;font-family:var(--font-mono);margin-bottom:.25rem;display:flex;align-items:center;gap:.35rem">
+        <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M10 2L2 17h16L10 2z" stroke="currentColor" stroke-width="1.8"/><circle cx="10" cy="13" r="1" fill="currentColor"/></svg>
+        DATA LIMITATIONS REPORTED:
+      </div>
+      <ul style="margin:0 0 0 1rem;padding:0;list-style:disc">
+        ${route.data_limitations.map(lim => `<li>${esc(lim)}</li>`).join('')}
+      </ul>
+    </div>` : ''}
+
     <div style="font-size:.85rem;color:var(--text-2);margin-bottom:1rem;font-weight:700">
       ${route.total_cameras_matched} / ${Object.keys(CAM_LAYOUT).length} camera channels matched
     </div>
     <div class="section-label" style="font-family:var(--font-mono);font-size:.72rem;color:var(--cyan);margin-bottom:.5rem;font-weight:800">SEQUENCE STEPS</div>
-    <div style="display:flex;flex-direction:column;gap:.45rem">
+    <div style="display:flex;flex-direction:column;gap:.5rem">
       ${route.steps.map((s, i) => {
-        const modeLabel = s.matching_mode === 'face' ? 'FACE MATCH' : s.matching_mode === 'body' ? 'BODY RE-ID' : null;
-        const modeColor = s.matching_mode === 'face' ? 'var(--green)' : 'var(--cyan)';
+        const modeLabel = s.matching_mode === 'face' ? 'FACE' : s.matching_mode === 'body' ? 'BODY' : null;
+        const statusVal = s.transition_status || 'SUPPORTED';
+        const statusBg = statusVal === 'SUPPORTED' ? 'rgba(16,185,129,.15)'
+          : statusVal === 'AMBIGUOUS' ? 'rgba(245,158,11,.15)'
+          : statusVal === 'DISCONNECTED' ? 'rgba(239,68,68,.15)'
+          : 'rgba(6,182,212,.15)';
+        const statusColor = statusVal === 'SUPPORTED' ? 'var(--green)'
+          : statusVal === 'AMBIGUOUS' ? 'var(--amber)'
+          : statusVal === 'DISCONNECTED' ? 'var(--red)'
+          : 'var(--cyan)';
+
+        const expl = s.route_explanation || {};
+        const explSummary = expl.summary || '';
+
         return `
-        <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;padding:.5rem .75rem;border-radius:6px;background:rgba(255,255,255,0.05);border:1px solid var(--border)">
-          <span style="background:var(--accent-grad);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;flex-shrink:0">${i + 1}</span>
-          <span style="color:#fff;font-weight:800;font-family:var(--font-heading)">${s.camera_id}</span>
-          <span style="color:var(--text-3);font-size:.75rem;font-family:var(--font-mono)">${s.timestamp || '—'}</span>
-          ${modeLabel ? `<span style="font-size:.7rem;color:${modeColor};font-family:var(--font-mono);font-weight:800">${modeLabel}</span>` : ''}
-          <span class="badge-pill badge-poi" style="margin-left:auto">${(s.confidence || 0).toFixed(1)}%</span>
+        <div style="padding:.55rem .75rem;border-radius:6px;background:rgba(255,255,255,0.05);border:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem">
+            <span style="background:var(--accent-grad);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;flex-shrink:0">${i + 1}</span>
+            <span style="color:#fff;font-weight:800;font-family:var(--font-heading)">${s.camera_id}</span>
+            <span style="color:var(--text-3);font-size:.75rem;font-family:var(--font-mono)">${s.timestamp || '—'}</span>
+            <span class="badge-pill" style="background:${statusBg};color:${statusColor};font-size:.65rem;font-family:var(--font-mono);font-weight:800">${statusVal}</span>
+            ${modeLabel ? `<span style="font-size:.68rem;color:var(--cyan);font-family:var(--font-mono);font-weight:800">${modeLabel}</span>` : ''}
+            <span class="badge-pill badge-poi" style="margin-left:auto">${(s.confidence || 0).toFixed(1)}%</span>
+          </div>
+
+          <!-- Geodesic distance & velocity info if available -->
+          ${s.hop_distance_m != null ? `
+          <div style="font-size:.72rem;color:var(--cyan);font-family:var(--font-mono);margin-top:.35rem;padding-left:1.8rem">
+            Geodesic: ${s.hop_distance_m.toFixed(1)}m ${s.implied_speed_mps != null ? `• Implied speed: ${s.implied_speed_mps.toFixed(1)} m/s` : ''}
+          </div>` : ''}
+
+          <!-- Explanation Summary & Toggle -->
+          ${explSummary ? `
+          <div style="margin-top:.4rem;padding-left:1.8rem">
+            <div style="font-size:.75rem;color:var(--text-2);line-height:1.45;background:rgba(0,0,0,0.2);padding:.4rem .6rem;border-radius:4px;border-left:2px solid ${statusColor}">
+              ${esc(explSummary)}
+            </div>
+            ${s.alternative_candidate ? `
+            <div style="font-size:.72rem;color:var(--amber);margin-top:.25rem">
+              ⚠ Alternative considered: ${esc(s.alternative_candidate.camera_id || '')} Track ${s.alternative_candidate.track_id} (score: ${s.alternative_candidate.fusion_score != null ? s.alternative_candidate.fusion_score.toFixed(3) : '—'})
+            </div>` : ''}
+          </div>` : ''}
         </div>`;
       }).join('')}
     </div>
@@ -1349,6 +1480,184 @@ function renderMapRoute(route) {
           <span style="margin-left:auto;font-size:.7rem;color:var(--text-3);font-family:var(--font-mono)">${sc.match_status || 'NO MATCH'}</span>
         </div>`).join('')}
     </div>` : ''}`;
+
+  // If in Google Maps view mode, render the route on Google Maps as well
+  if (RouteMap.mode === 'google') {
+    renderRouteOnGoogleMap(route);
+  }
+}
+
+/* ── Route Google Maps Integration ── */
+const RouteMap = {
+  map: null,
+  markers: [],
+  polylines: [],
+  mode: 'radar', // 'radar' | 'google'
+};
+
+async function toggleRouteMapMode() {
+  const btn = document.getElementById('btn-toggle-route-map');
+  const lbl = document.getElementById('lbl-route-map-mode');
+  const radarSvg = document.getElementById('camera-map');
+  const googleMapEl = document.getElementById('route-google-map');
+
+  if (RouteMap.mode === 'radar') {
+    RouteMap.mode = 'google';
+    if (lbl) lbl.textContent = 'Switch to Tactical Radar';
+    if (radarSvg) radarSvg.style.display = 'none';
+    if (googleMapEl) googleMapEl.style.display = 'block';
+
+    // Ensure Google Maps SDK is loaded
+    try {
+      await loadGoogleMapsForRoute();
+      if (!RouteMap.map) initRouteGoogleMap();
+      if (State.lastRoute) renderRouteOnGoogleMap(State.lastRoute);
+    } catch (e) {
+      toast('Failed to load Google Maps: ' + e.message, 'error');
+      toggleRouteMapMode(); // revert to radar
+    }
+  } else {
+    RouteMap.mode = 'radar';
+    if (lbl) lbl.textContent = 'Switch to Google Maps';
+    if (radarSvg) radarSvg.style.display = 'block';
+    if (googleMapEl) googleMapEl.style.display = 'none';
+  }
+}
+
+async function loadGoogleMapsForRoute() {
+  if (CamLoc.mapsLoaded) return;
+  const cfg = await API.cameras.getMapsConfig();
+  if (!cfg.configured || !cfg.google_maps_api_key) {
+    throw new Error('Google Maps API key not configured on backend.');
+  }
+  await loadGoogleMapsScript(cfg.google_maps_api_key);
+}
+
+function initRouteGoogleMap() {
+  const container = document.getElementById('route-google-map');
+  if (!container || !window.google?.maps) return;
+
+  RouteMap.map = new google.maps.Map(container, {
+    center: { lat: 12.9716, lng: 77.5946 },
+    zoom: 16,
+    mapTypeId: 'roadmap',
+    styles: [
+      { elementType: 'geometry', stylers: [{ color: '#0d1427' }] },
+      { elementType: 'labels.text.fill', stylers: [{ color: '#8ec3b9' }] },
+      { elementType: 'labels.text.stroke', stylers: [{ color: '#1a3646' }] },
+      { featureType: 'administrative.country', elementType: 'geometry.stroke', stylers: [{ color: '#4b6878' }] },
+      { featureType: 'landscape.man_made', elementType: 'geometry.stroke', stylers: [{ color: '#334e87' }] },
+      { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#021019' }] },
+      { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#283d6a' }] },
+      { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#304a7d' }] },
+      { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1626' }] },
+    ],
+    disableDefaultUI: false,
+    zoomControl: true,
+  });
+}
+
+function renderRouteOnGoogleMap(route) {
+  if (!RouteMap.map || !window.google?.maps) return;
+
+  // Clear previous markers and polylines
+  RouteMap.markers.forEach(m => m.setMap(null));
+  RouteMap.markers = [];
+  RouteMap.polylines.forEach(p => p.setMap(null));
+  RouteMap.polylines = [];
+
+  if (!route?.steps?.length) return;
+
+  const cameras = CamLoc.cameras || State.cameras || [];
+  const camCoordMap = {};
+  cameras.forEach(c => {
+    if (c.latitude != null && c.longitude != null) {
+      camCoordMap[c.id] = { lat: c.latitude, lng: c.longitude, location: c.location || c.id };
+    }
+  });
+
+  const pathCoords = [];
+  const bounds = new google.maps.LatLngBounds();
+  let coordsFound = false;
+
+  route.steps.forEach((step, idx) => {
+    const coord = camCoordMap[step.camera_id];
+    if (!coord) return;
+
+    coordsFound = true;
+    const pos = { lat: coord.lat, lng: coord.lng };
+    pathCoords.push(pos);
+    bounds.extend(pos);
+
+    const statusVal = step.transition_status || 'SUPPORTED';
+    const pinColor = statusVal === 'SUPPORTED' ? '#10b981'
+      : statusVal === 'AMBIGUOUS' ? '#f59e0b'
+      : statusVal === 'DISCONNECTED' ? '#ef4444'
+      : '#06b6d4';
+
+    const marker = new google.maps.Marker({
+      position: pos,
+      map: RouteMap.map,
+      title: `${idx + 1}. ${step.camera_id} (${coord.location})`,
+      label: {
+        text: String(idx + 1),
+        color: '#ffffff',
+        fontWeight: 'bold',
+        fontSize: '12px',
+      },
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 14,
+        fillColor: pinColor,
+        fillOpacity: 0.95,
+        strokeColor: '#ffffff',
+        strokeWeight: 2,
+      },
+    });
+
+    const infoContent = `
+      <div style="color:#000;font-family:sans-serif;max-width:260px;font-size:12px;line-height:1.4">
+        <div style="font-weight:bold;font-size:14px;color:#1e293b;margin-bottom:4px">
+          Step ${idx + 1}: ${esc(step.camera_id)} (${esc(coord.location)})
+        </div>
+        <div><strong>Status:</strong> <span style="color:${pinColor};font-weight:bold">${statusVal}</span></div>
+        <div><strong>Timestamp:</strong> ${esc(step.timestamp || '—')}</div>
+        <div><strong>Confidence:</strong> ${(step.confidence || 0).toFixed(1)}%</div>
+        ${step.hop_distance_m != null ? `<div><strong>Distance:</strong> ${step.hop_distance_m.toFixed(1)} m</div>` : ''}
+        ${step.implied_speed_mps != null ? `<div><strong>Speed:</strong> ${step.implied_speed_mps.toFixed(1)} m/s</div>` : ''}
+        ${step.route_explanation?.summary ? `<div style="margin-top:6px;font-size:11px;color:#475569;border-top:1px solid #cbd5e1;padding-top:4px">${esc(step.route_explanation.summary)}</div>` : ''}
+      </div>`;
+
+    const infoWindow = new google.maps.InfoWindow({ content: infoContent });
+    marker.addListener('click', () => infoWindow.open(RouteMap.map, marker));
+    RouteMap.markers.push(marker);
+  });
+
+  if (coordsFound && pathCoords.length >= 2) {
+    // Draw vector route polyline with directional arrows
+    const polyline = new google.maps.Polyline({
+      path: pathCoords,
+      geodesic: true,
+      strokeColor: '#06b6d4',
+      strokeOpacity: 0.85,
+      strokeWeight: 3.5,
+      icons: [{
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 3,
+          strokeColor: '#06b6d4',
+          fillColor: '#06b6d4',
+          fillOpacity: 1.0,
+        },
+        offset: '50%',
+      }],
+      map: RouteMap.map,
+    });
+    RouteMap.polylines.push(polyline);
+    RouteMap.map.fitBounds(bounds);
+  } else if (!coordsFound) {
+    toast('Camera GPS coordinates are not configured for route cameras. Set coordinates in Camera Manager.', 'info');
+  }
 }
 
 function highlightCamNode(id, cls) {
@@ -1380,9 +1689,17 @@ function showCamDetail(id) {
     ? `<span style="font-size:.72rem;padding:.25rem .6rem;border-radius:99px;background:rgba(255,255,255,0.07);color:${modeColor};font-family:var(--font-mono);font-weight:800;margin-left:.4rem">${modeLabel}</span>`
     : '';
 
+  const cropUrl = s.crop_path
+    ? `/crops/${s.crop_path.replace(/\\/g, '/').split('/crops/').pop()}`
+    : null;
+
   bodyEl.innerHTML = `
-    <div style="display:flex;gap:.9rem;margin-bottom:1.1rem">
-      <div style="width:68px;height:100px;background:var(--surface3);border-radius:6px;border:1.5px solid var(--cyan);display:flex;align-items:center;justify-content:center;font-size:2.2rem">👤</div>
+    <div style="display:flex;gap:.9rem;margin-bottom:1.1rem;align-items:center">
+      <div style="width:68px;height:100px;background:var(--surface3);border-radius:6px;border:1.5px solid var(--cyan);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+        ${cropUrl
+          ? `<img src="${esc(cropUrl)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='👤'" />`
+          : '<span style="font-size:2.2rem">👤</span>'}
+      </div>
       <div style="min-width:0">
         <div style="font-size:.85rem;color:var(--text-2)">Track ID: <strong style="color:#fff;font-family:var(--font-mono)">#${s.track_id}</strong></div>
         <div style="font-size:.8rem;color:var(--text-2);margin-top:.25rem">First seen: <strong style="color:#fff;font-family:var(--font-mono)">${s.first_seen || '—'}</strong></div>
@@ -1422,31 +1739,52 @@ function scoreBar(name, val) {
    TIMELINE VIEW
 ═══════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('btn-load-timeline')?.addEventListener('click', () => renderTimeline());
+  const tlSel = document.getElementById('timeline-session-select');
+  tlSel?.addEventListener('change', () => {
+    const val = tlSel.value;
+    renderTimeline(val);
+  });
+  document.getElementById('btn-load-timeline')?.addEventListener('click', () => {
+    const val = document.getElementById('timeline-session-select')?.value;
+    renderTimeline(val);
+  });
 });
 
-async function renderTimeline() {
+async function renderTimeline(requestedSessionId) {
   const container = document.getElementById('timeline-container');
   if (!container) return;
 
-  // Try to get real route data
-  let route = State.lastRoute;
-  if (!route) {
-    const selEl = document.getElementById('timeline-session-select');
-    const val = selEl ? selEl.value : '';
-    if (val === 'demo-session' || val === '') {
-      route = MOCK_DEMO_ROUTE;
-    } else {
-      const sid = parseInt(val);
-      if (!isNaN(sid)) {
-        try { route = await API.queries.route(sid); State.lastRoute = route; }
-        catch(e) { route = MOCK_DEMO_ROUTE; }
+  const selEl = document.getElementById('timeline-session-select');
+  let val = requestedSessionId !== undefined ? String(requestedSessionId) : (selEl ? selEl.value : '');
+
+  // Synchronize select element value if passed explicitly
+  if (selEl && val && selEl.value !== val) {
+    selEl.value = val;
+  }
+
+  // Determine which route to display
+  let route = null;
+  if (val === 'demo-session') {
+    route = MOCK_DEMO_ROUTE;
+  } else if (val) {
+    const sid = parseInt(val);
+    if (!isNaN(sid)) {
+      try {
+        route = await API.queries.route(sid);
+        State.lastRoute = route;
+      } catch (e) {
+        console.warn('Failed to load session route for timeline:', e);
+        route = MOCK_DEMO_ROUTE;
       }
     }
   }
 
+  if (!route) {
+    route = State.lastRoute || MOCK_DEMO_ROUTE;
+  }
+
   if (!route?.steps?.length) {
-    container.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-3);font-family:var(--font-mono);font-size:.85rem">No route data — run a query first.</div>`;
+    container.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-3);font-family:var(--font-mono);font-size:.85rem">No route data — run a query or select a completed session above.</div>`;
     return;
   }
 
@@ -1479,7 +1817,6 @@ async function renderTimeline() {
   const ticksHtml = ticks.map(t => `<span>${fmtSec(t)}</span>`).join('');
 
   // All cameras: matched (from steps) + skipped
-  const matchedIds = new Set(route.steps.map(s => s.camera_id));
   const skippedRows = (route.skipped_cameras || []).map(sc => ({
     camera_id: sc.camera_id,
     camera_location: sc.camera_location,
@@ -1499,23 +1836,28 @@ async function renderTimeline() {
     let gapHtml = '';
     if (!isSkipped && step.observed_gap_sec != null && step.expected_transit_sec != null) {
       const verdictColor = step.gap_verdict?.includes('\u2713') ? 'var(--green)' : 'var(--amber)';
-      gapHtml = `<span style="position:absolute;top:-18px;left:${markerPos};transform:translateX(-50%);font-size:.68rem;color:${verdictColor};font-family:var(--font-mono);white-space:nowrap;font-weight:700">+${Math.round(step.observed_gap_sec)}s ${step.gap_verdict || ''}</span>`;
+      gapHtml = `<span style="position:absolute;top:-22px;left:${markerPos};transform:translateX(-50%);font-size:.68rem;color:${verdictColor};font-family:var(--font-mono);white-space:nowrap;font-weight:700">+${Math.round(step.observed_gap_sec)}s ${step.gap_verdict || ''}</span>`;
     }
 
     const markerHtml = isSkipped
-      ? `<div style="position:absolute;left:50%;transform:translateX(-50%);top:50%;margin-top:-8px;width:16px;height:16px;border-radius:50%;background:var(--surface3);border:2px dashed var(--text-3);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--text-3)">\u2717</div>`
-      : `<div class="tl-marker ${confClass}" style="left:${markerPos}" title="${step.camera_id} at ${step.timestamp || '—'}"></div>${gapHtml}`;
+      ? `<div style="position:absolute;left:50%;transform:translateX(-50%);top:50%;margin-top:-8px;width:16px;height:16px;border-radius:50%;background:var(--surface3);border:2px dashed var(--text-3);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--text-3)" title="${step.camera_id}: No matching sightings">✕</div>`
+      : `<div class="tl-marker ${confClass}" style="left:${markerPos}" title="${step.camera_id} · Track #${step.track_id} at ${step.timestamp || '—'} (${(step.confidence||0).toFixed(1)}%)"></div>${gapHtml}`;
 
     const rowOpacity = isSkipped ? '0.4' : '1';
     const statusLabel = isSkipped
       ? `<span style="font-size:.65rem;color:var(--text-3);font-family:var(--font-mono)">NO MATCH</span>`
-      : `<span style="font-size:.65rem;color:${modeColor};font-family:var(--font-mono)">${step.matching_mode === 'face' ? 'FACE' : 'BODY'}</span>`;
+      : `<span style="font-size:.65rem;color:${modeColor};font-family:var(--font-mono);font-weight:700">${step.matching_mode === 'face' ? 'FACE' : 'BODY'}</span>`;
+
+    const subDetail = !isSkipped
+      ? `<div style="font-size:.7rem;color:var(--cyan);font-family:var(--font-mono);margin-top:2px;font-weight:700">Track #${step.track_id} · ${step.timestamp || '—'}</div>`
+      : '';
 
     return `
       <div class="timeline-row" style="opacity:${rowOpacity}">
         <div class="timeline-cam">
           <div class="timeline-cam-name">${step.camera_id}</div>
           <div class="timeline-cam-loc">${step.camera_location || step.camera_id}</div>
+          ${subDetail}
           ${statusLabel}
         </div>
         <div class="timeline-track" style="position:relative">
@@ -1524,7 +1866,49 @@ async function renderTimeline() {
       </div>`;
   }).join('');
 
+  // Telemetry summary header bar
+  const cfPct = ((route.route_confidence || 0) * 100).toFixed(1);
+  const cfColor = parseFloat(cfPct) >= 70 ? 'var(--green)' : parseFloat(cfPct) >= 50 ? 'var(--amber)' : 'var(--red)';
+  const matchDecision = route.match_decision || (route.session_id ? 'CONFIDENT_MATCH' : 'DEMO');
+
+  const summaryHeaderHtml = `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem;padding:.75rem 1rem;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+        <div>
+          <span style="font-size:.7rem;font-family:var(--font-mono);color:var(--text-3)">SESSION</span>
+          <div style="font-size:1rem;font-weight:800;color:#fff">${route.session_id ? `#${route.session_id}` : 'DEMO'}</div>
+        </div>
+        <div>
+          <span style="font-size:.7rem;font-family:var(--font-mono);color:var(--text-3)">ROUTE EVIDENCE (MEAN FUSION)</span>
+          <div style="font-size:1rem;font-weight:800;color:${cfColor}">${cfPct}%</div>
+          <div style="font-size:.65rem;color:var(--text-3);font-family:var(--font-mono)">Similarity-derived · Not a probability</div>
+        </div>
+        <div>
+          <span style="font-size:.7rem;font-family:var(--font-mono);color:var(--text-3)">MATCHED CAMERAS</span>
+          <div style="font-size:1rem;font-weight:800;color:var(--cyan)">${route.total_cameras_matched || route.steps.length} channels</div>
+        </div>
+        <div>
+          <span style="font-size:.7rem;font-family:var(--font-mono);color:var(--text-3)">DECISION</span>
+          <div><span class="badge-pill badge-poi" style="font-size:.72rem">${matchDecision}</span></div>
+        </div>
+      </div>
+      ${route.supported_transitions_count != null ? `
+      <div style="display:flex;gap:.4rem">
+        <span class="badge-pill" style="background:rgba(16,185,129,.15);color:var(--green);font-size:.72rem;font-family:var(--font-mono);font-weight:800">
+          ✓ ${route.supported_transitions_count} SUPPORTED
+        </span>
+        ${route.ambiguous_transitions_count ? `<span class="badge-pill" style="background:rgba(245,158,11,.15);color:var(--amber);font-size:.72rem;font-family:var(--font-mono);font-weight:800">⚠ ${route.ambiguous_transitions_count} AMBIGUOUS</span>` : ''}
+        ${route.disconnected_transitions_count ? `<span class="badge-pill" style="background:rgba(239,68,68,.15);color:var(--red);font-size:.72rem;font-family:var(--font-mono);font-weight:800">✕ ${route.disconnected_transitions_count} DISCONNECTED</span>` : ''}
+      </div>` : ''}
+    </div>
+    ${route.narration ? `
+    <div style="padding:.75rem 1rem;margin-bottom:1.25rem;border-radius:8px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35);font-size:.85rem;font-weight:700;color:#e0e0ff;line-height:1.5;font-family:var(--font-mono)">
+      ${esc(route.narration)}
+    </div>` : ''}
+  `;
+
   container.innerHTML = `
+    ${summaryHeaderHtml}
     <div class="timeline-wrap">
       <div class="timeline-header">${ticksHtml}</div>
       ${rowsHtml}
@@ -2150,3 +2534,434 @@ function fmtTime(isoStr) {
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   CAMERA LOCATION MANAGER — Google Maps integration
+═══════════════════════════════════════════════════════════════════ */
+
+const CamLoc = {
+  map:             null,   // google.maps.Map instance
+  marker:          null,   // active draggable marker (selected camera)
+  allMarkers:      {},     // { cameraId: google.maps.Marker } for all cameras
+  cameras:         [],     // latest camera list from API
+  selectedId:      null,   // currently selected camera id
+  mapsLoaded:      false,  // true once the Maps JS API script has fired its callback
+  mapsLoading:     false,  // true while the script tag is being injected
+  searchBox:       null,   // google.maps.places.SearchBox
+};
+
+/* ── Entry point — called whenever the camera-location view is activated ── */
+async function loadCameraLocationView() {
+  // Load cameras from API (refreshes State.cameras too)
+  try {
+    CamLoc.cameras = await API.cameras.list();
+  } catch (e) {
+    CamLoc.cameras = State.cameras || [];
+  }
+
+  renderCamLocList();
+  _updateCamLocStats();
+
+  // Fetch Maps config and load the Maps JS SDK if not already done
+  try {
+    const cfg = await API.cameras.mapsConfig();
+    const banner = document.getElementById('maps-not-configured-banner');
+    if (!cfg.configured) {
+      if (banner) banner.style.display = 'flex';
+      document.getElementById('cam-map-placeholder').querySelector('span').textContent =
+        'Google Maps API key not configured — see banner above.';
+      return;
+    }
+    if (banner) banner.style.display = 'none';
+    await loadGoogleMapsScript(cfg.google_maps_api_key);
+  } catch (e) {
+    toast('Failed to load Maps config: ' + e.message, 'error');
+    return;
+  }
+
+  // If map not yet initialised, build it now
+  if (!CamLoc.map) {
+    initCamLocMap();
+  } else {
+    // Map already exists — refresh all camera markers
+    refreshAllCamMarkers();
+  }
+}
+
+/* ── Dynamically inject the Google Maps JS SDK (idempotent) ── */
+function loadGoogleMapsScript(apiKey) {
+  return new Promise((resolve, reject) => {
+    if (CamLoc.mapsLoaded) { resolve(); return; }
+    if (CamLoc.mapsLoading) {
+      // Another call already in-flight; poll until ready
+      const poll = setInterval(() => {
+        if (CamLoc.mapsLoaded) { clearInterval(poll); resolve(); }
+      }, 100);
+      return;
+    }
+    CamLoc.mapsLoading = true;
+
+    // Expose callback so Maps SDK can signal readiness
+    window._traceMapsCallback = () => {
+      CamLoc.mapsLoaded = true;
+      CamLoc.mapsLoading = false;
+      resolve();
+    };
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places&callback=_traceMapsCallback`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => {
+      CamLoc.mapsLoading = false;
+      reject(new Error('Google Maps script failed to load. Check your API key and browser console.'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+/* ── Build the Google Map and attach event listeners ── */
+function initCamLocMap() {
+  const container = document.getElementById('cam-location-map');
+  if (!container || !window.google?.maps) return;
+
+  // Hide placeholder text
+  const placeholder = document.getElementById('cam-map-placeholder');
+  if (placeholder) placeholder.style.display = 'none';
+
+  // Default centre: first camera with coords, else London
+  const firstWithCoords = CamLoc.cameras.find(c => c.latitude != null && c.longitude != null);
+  const centre = firstWithCoords
+    ? { lat: firstWithCoords.latitude, lng: firstWithCoords.longitude }
+    : { lat: 30.7333, lng: 76.7794 };  // Default: Chandigarh, India
+
+  CamLoc.map = new google.maps.Map(container, {
+    center:    centre,
+    zoom:      15,
+    mapTypeId: 'roadmap',
+    styles: [
+      { elementType: 'geometry',        stylers: [{ color: '#0d1427' }] },
+      { elementType: 'labels.text.fill', stylers: [{ color: '#8ec3b9' }] },
+      { elementType: 'labels.text.stroke', stylers: [{ color: '#1a3646' }] },
+      { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1626' }] },
+      { featureType: 'road',  elementType: 'geometry', stylers: [{ color: '#304a7d' }] },
+      { featureType: 'road',  elementType: 'geometry.stroke', stylers: [{ color: '#255763' }] },
+      { featureType: 'poi',   elementType: 'geometry', stylers: [{ color: '#283d6a' }] },
+      { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#2f3948' }] },
+    ],
+  });
+
+  // Click on map → move the active camera's marker
+  CamLoc.map.addListener('click', (e) => {
+    if (!CamLoc.selectedId) {
+      toast('Select a camera from the list first', 'info');
+      return;
+    }
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    placeDraggableMarker(lat, lng);
+    updateEditFormCoords(lat, lng);
+  });
+
+  // Wire up Places search box
+  const searchInput = document.getElementById('cam-loc-search');
+  if (searchInput && google.maps.places) {
+    CamLoc.searchBox = new google.maps.places.SearchBox(searchInput);
+    CamLoc.searchBox.addListener('places_changed', () => {
+      const places = CamLoc.searchBox.getPlaces();
+      if (!places?.length) return;
+      const place = places[0];
+      if (!place.geometry?.location) return;
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
+      CamLoc.map.setCenter({ lat, lng });
+      CamLoc.map.setZoom(17);
+      placeDraggableMarker(lat, lng);
+      updateEditFormCoords(lat, lng);
+      // Pre-fill location name if field is empty
+      const nameInput = document.getElementById('cam-loc-name');
+      if (nameInput && !nameInput.value.trim() && place.name) {
+        nameInput.value = place.name;
+      }
+    });
+  }
+
+  // Drop markers for all cameras that already have coordinates
+  refreshAllCamMarkers();
+}
+
+/* ── Place or move the single draggable marker for the selected camera ── */
+function placeDraggableMarker(lat, lng) {
+  if (!CamLoc.map) return;
+
+  if (CamLoc.marker) {
+    CamLoc.marker.setPosition({ lat, lng });
+    return;
+  }
+
+  CamLoc.marker = new google.maps.Marker({
+    position:  { lat, lng },
+    map:       CamLoc.map,
+    draggable: true,
+    animation: google.maps.Animation.DROP,
+    icon: {
+      path:        google.maps.SymbolPath.CIRCLE,
+      scale:       10,
+      fillColor:   '#06b6d4',
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeWeight: 2,
+    },
+  });
+
+  CamLoc.marker.addListener('dragend', (e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    updateEditFormCoords(lat, lng);
+  });
+}
+
+/* ── Render all camera markers (non-draggable, labelled) ── */
+function refreshAllCamMarkers() {
+  if (!CamLoc.map) return;
+
+  // Remove stale markers
+  Object.values(CamLoc.allMarkers).forEach(m => m.setMap(null));
+  CamLoc.allMarkers = {};
+
+  CamLoc.cameras.forEach(cam => {
+    if (cam.latitude == null || cam.longitude == null) return;
+    if (cam.id === CamLoc.selectedId) return; // active cam has its own draggable marker
+
+    const marker = new google.maps.Marker({
+      position: { lat: cam.latitude, lng: cam.longitude },
+      map:      CamLoc.map,
+      title:    `${cam.id} — ${cam.location}`,
+      icon: {
+        path:        google.maps.SymbolPath.CIRCLE,
+        scale:       8,
+        fillColor:   '#10b981',
+        fillOpacity: 0.9,
+        strokeColor: '#ffffff',
+        strokeWeight: 2,
+      },
+      label: {
+        text:      cam.id,
+        color:     '#ffffff',
+        fontSize:  '11px',
+        fontWeight: '700',
+      },
+    });
+
+    const infoWindow = new google.maps.InfoWindow({
+      content: `
+        <div style="font-family:Inter,sans-serif;padding:4px 2px;min-width:140px">
+          <div style="font-weight:800;font-size:13px;margin-bottom:4px">${esc(cam.id)} — ${esc(cam.location)}</div>
+          <div style="font-size:11px;color:#64748b">${cam.latitude.toFixed(6)}, ${cam.longitude.toFixed(6)}</div>
+          <button onclick="selectCameraForEdit('${cam.id}')" style="margin-top:8px;padding:4px 10px;background:#06b6d4;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px">Edit Location</button>
+        </div>`,
+    });
+
+    marker.addListener('click', () => infoWindow.open(CamLoc.map, marker));
+    CamLoc.allMarkers[cam.id] = marker;
+  });
+}
+
+/* ── Update hero-strip counters ── */
+function _updateCamLocStats() {
+  const cameras  = CamLoc.cameras || [];
+  const total    = cameras.length;
+  const pinned   = cameras.filter(c => c.latitude != null && c.longitude != null).length;
+  const unset    = total - pinned;
+  const coverage = total > 0 ? Math.round((pinned / total) * 100) + '%' : '—';
+
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setText('cam-loc-total-count',  total  || '—');
+  setText('cam-loc-pinned-count', pinned || '0');
+  setText('cam-loc-unset-count',  unset  || '0');
+  setText('cam-loc-coverage',     coverage);
+
+  const badge = document.getElementById('cam-loc-badge');
+  if (badge) badge.textContent = `${total} camera${total !== 1 ? 's' : ''}`;
+}
+
+/* ── Render camera list in the left panel ── */
+function renderCamLocList() {
+  const el = document.getElementById('cam-loc-list');
+  if (!el) return;
+
+  if (!CamLoc.cameras.length) {
+    el.innerHTML = `<div class="empty-msg" style="padding:1.5rem 1rem">No cameras registered</div>`;
+    return;
+  }
+
+  el.innerHTML = CamLoc.cameras.map(cam => {
+    const hasCoords = cam.latitude != null && cam.longitude != null;
+    const isActive  = cam.id === CamLoc.selectedId;
+    return `
+      <div class="cam-status-row" id="cam-loc-row-${cam.id}"
+           style="cursor:pointer;padding:.625rem .875rem;border-radius:.5rem;margin:.25rem .25rem;transition:background .15s;${isActive ? 'background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.3)' : 'border:1px solid transparent'}"
+           onclick="selectCameraForEdit('${cam.id}')">
+        <div class="cam-status-icon" style="color:${isActive ? 'var(--cyan)' : 'var(--text-3)'}">
+          <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="13" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M15 9l3.5-2v6L15 11" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="cam-info" style="flex:1">
+          <div class="cam-name">${esc(cam.id)}</div>
+          <div class="cam-loc">${esc(cam.location)}</div>
+          <div class="cam-stats" style="font-size:.72rem;margin-top:.2rem">
+            ${hasCoords
+              ? `<span style="color:var(--green)">✓ ${cam.latitude.toFixed(5)}, ${cam.longitude.toFixed(5)}</span>`
+              : `<span style="color:var(--text-3)">No coordinates set</span>`}
+          </div>
+        </div>
+        <span class="cam-badge ${hasCoords ? 'cam-badge-active' : ''}" style="${!hasCoords ? 'background:rgba(255,255,255,.06);color:var(--text-3)' : ''}">
+          ${hasCoords ? 'PLACED' : 'UNSET'}
+        </span>
+      </div>`;
+  }).join('');
+}
+
+/* ── Select a camera and show the edit panel ── */
+function selectCameraForEdit(camId) {
+  CamLoc.selectedId = camId;
+  renderCamLocList(); // re-render to highlight selection
+
+  const cam = CamLoc.cameras.find(c => c.id === camId);
+  if (!cam) return;
+
+  // Show edit panel
+  const panel = document.getElementById('cam-loc-edit-panel');
+  if (panel) panel.style.display = 'block';
+
+  document.getElementById('cam-loc-edit-title').textContent = `Edit — ${cam.id}`;
+  document.getElementById('cam-loc-name').value = cam.location || '';
+  document.getElementById('cam-loc-lat').value  = cam.latitude  != null ? cam.latitude  : '';
+  document.getElementById('cam-loc-lng').value  = cam.longitude != null ? cam.longitude : '';
+  document.getElementById('cam-loc-search').value = '';
+  document.getElementById('cam-loc-save-status').textContent = '';
+  document.getElementById('cam-loc-save-status').style.color = '';
+
+  if (!CamLoc.map) return;
+
+  // Remove previous draggable marker
+  if (CamLoc.marker) { CamLoc.marker.setMap(null); CamLoc.marker = null; }
+
+  // Refresh static markers (exclude newly selected one)
+  refreshAllCamMarkers();
+
+  if (cam.latitude != null && cam.longitude != null) {
+    const pos = { lat: cam.latitude, lng: cam.longitude };
+    CamLoc.map.setCenter(pos);
+    CamLoc.map.setZoom(17);
+    placeDraggableMarker(cam.latitude, cam.longitude);
+  } else {
+    // No coords yet — just pan to current map center for easy clicking
+    toast(`Click the map to place ${cam.id}`, 'info');
+  }
+
+  document.getElementById('cam-loc-map-status').textContent = cam.id + ' SELECTED';
+}
+
+/* ── Update lat/lng form inputs ── */
+function updateEditFormCoords(lat, lng) {
+  const latEl = document.getElementById('cam-loc-lat');
+  const lngEl = document.getElementById('cam-loc-lng');
+  if (latEl) latEl.value = lat.toFixed(7);
+  if (lngEl) lngEl.value = lng.toFixed(7);
+}
+
+/* ── Search button handler ── */
+function searchCameraLocation() {
+  const input = document.getElementById('cam-loc-search');
+  if (!input?.value.trim()) return;
+  if (!CamLoc.searchBox) {
+    toast('Maps not loaded yet', 'error');
+    return;
+  }
+  // SearchBox fires 'places_changed' automatically — but we can also
+  // trigger a Geocoder lookup as a fallback
+  if (!window.google?.maps?.Geocoder) return;
+  const geocoder = new google.maps.Geocoder();
+  geocoder.geocode({ address: input.value.trim() }, (results, status) => {
+    if (status !== 'OK' || !results?.length) {
+      toast('Location not found — try a different search', 'error');
+      return;
+    }
+    const loc = results[0].geometry.location;
+    const lat = loc.lat();
+    const lng = loc.lng();
+    CamLoc.map.setCenter({ lat, lng });
+    CamLoc.map.setZoom(17);
+    placeDraggableMarker(lat, lng);
+    updateEditFormCoords(lat, lng);
+    const nameInput = document.getElementById('cam-loc-name');
+    if (nameInput && !nameInput.value.trim()) {
+      nameInput.value = results[0].formatted_address.split(',')[0];
+    }
+  });
+}
+
+/* ── Save the location to backend ── */
+async function saveCameraLocation() {
+  const statusEl = document.getElementById('cam-loc-save-status');
+  if (!CamLoc.selectedId) {
+    toast('No camera selected', 'error');
+    return;
+  }
+
+  const latVal  = parseFloat(document.getElementById('cam-loc-lat').value);
+  const lngVal  = parseFloat(document.getElementById('cam-loc-lng').value);
+  const nameVal = document.getElementById('cam-loc-name').value.trim();
+
+  // Validation
+  if (isNaN(latVal) || latVal < -90  || latVal > 90) {
+    statusEl.textContent = 'Latitude must be between -90 and 90';
+    statusEl.className   = 'status-inline err';
+    return;
+  }
+  if (isNaN(lngVal) || lngVal < -180 || lngVal > 180) {
+    statusEl.textContent = 'Longitude must be between -180 and 180';
+    statusEl.className   = 'status-inline err';
+    return;
+  }
+
+  statusEl.textContent = 'Saving…';
+  statusEl.className   = 'status-inline';
+
+  try {
+    const updated = await API.cameras.updateLocation(CamLoc.selectedId, {
+      latitude:  latVal,
+      longitude: lngVal,
+      location:  nameVal || undefined,
+    });
+
+    // Update local cache
+    const idx = CamLoc.cameras.findIndex(c => c.id === CamLoc.selectedId);
+    if (idx !== -1) CamLoc.cameras[idx] = { ...CamLoc.cameras[idx], ...updated };
+
+    // Also keep State.cameras in sync
+    const si = (State.cameras || []).findIndex(c => c.id === CamLoc.selectedId);
+    if (si !== -1) State.cameras[si] = { ...State.cameras[si], ...updated };
+
+    renderCamLocList();
+    refreshAllCamMarkers();
+    _updateCamLocStats();
+    statusEl.textContent = '✓ Location saved';
+    statusEl.style.color = 'var(--green)';
+    toast(`${CamLoc.selectedId} location saved`, 'success');
+  } catch (e) {
+    statusEl.textContent = 'Error: ' + e.message;
+    statusEl.className   = 'status-inline err';
+    toast('Failed to save: ' + e.message, 'error');
+  }
+}
+
+/* ── Cancel / clear edit ── */
+function clearCameraLocationEdit() {
+  CamLoc.selectedId = null;
+  if (CamLoc.marker) { CamLoc.marker.setMap(null); CamLoc.marker = null; }
+  document.getElementById('cam-loc-edit-panel').style.display = 'none';
+  document.getElementById('cam-loc-map-status').textContent = 'READY';
+  renderCamLocList();
+  refreshAllCamMarkers();
+}

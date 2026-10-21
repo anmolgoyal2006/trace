@@ -212,6 +212,18 @@ async def get_route(
         sp = parts[2].split(".")
         return h * 3600 + m * 60 + int(sp[0]) + (int(sp[1]) if len(sp) > 1 else 0) / 100.0
 
+    route_meta = {}
+    if getattr(session, "route_data_json", None):
+        try:
+            route_meta = json.loads(session.route_data_json)
+        except Exception:
+            route_meta = {}
+
+    steps_detail_map = {
+        d.get("step_order"): d
+        for d in route_meta.get("steps_detail", [])
+    }
+
     step_outs: list[RouteStepOut] = []
     prev_sighting = None
     for step in steps:
@@ -252,6 +264,8 @@ async def get_route(
             else:
                 gap_verdict_str = "\u2713 on time"
 
+        step_detail = steps_detail_map.get(step.step_order, {})
+
         step_outs.append(RouteStepOut(
             step_order=step.step_order,
             camera_id=s.camera_id,
@@ -267,6 +281,11 @@ async def get_route(
             expected_transit_sec=exp_transit,
             observed_gap_sec=obs_gap,
             gap_verdict=gap_verdict_str,
+            transition_status=step_detail.get("transition_status", "SUPPORTED"),
+            hop_distance_m=step_detail.get("hop_distance_m"),
+            implied_speed_mps=step_detail.get("implied_speed_mps"),
+            route_explanation=step_detail.get("route_explanation"),
+            alternative_candidate=step_detail.get("alternative_candidate"),
         ))
         prev_sighting = s
 
@@ -324,6 +343,20 @@ async def get_route(
         ],
         narration=narration,
         skipped_cameras=skipped_out,
+        supported_transitions_count=route_meta.get(
+            "supported_transitions_count",
+            sum(1 for st in step_outs if st.transition_status in ("SUPPORTED", "PROBABLE"))
+        ),
+        ambiguous_transitions_count=route_meta.get(
+            "ambiguous_transitions_count",
+            sum(1 for st in step_outs if st.transition_status == "AMBIGUOUS")
+        ),
+        disconnected_transitions_count=route_meta.get(
+            "disconnected_transitions_count",
+            sum(1 for st in step_outs if st.transition_status == "DISCONNECTED")
+        ),
+        data_limitations=route_meta.get("data_limitations", []),
+        route_method=route_meta.get("route_method", "topology_aware"),
     )
 
 

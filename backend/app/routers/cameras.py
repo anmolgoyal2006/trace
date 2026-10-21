@@ -17,7 +17,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.config import settings
 from backend.app.database import get_db
 from backend.app.models.orm import Camera, Sighting
-from backend.app.models.schemas import CameraGraphEdge, CameraOut, CameraUpdate, CameraWithGraph
+from backend.app.models.schemas import (
+    CameraGraphEdge,
+    CameraLocationUpdate,
+    CameraMapsConfig,
+    CameraOut,
+    CameraUpdate,
+    CameraWithGraph,
+)
 from backend.app.services.route_service import RouteService
 
 router = APIRouter(prefix="/api/cameras", tags=["cameras"])
@@ -33,9 +40,19 @@ def _get_route_svc() -> RouteService:
     return _route_svc
 
 
+@router.get("/maps-config", response_model=CameraMapsConfig)
+async def get_maps_config() -> CameraMapsConfig:
+    """Return Google Maps configuration for frontend initialization."""
+    key = settings.google_maps_api_key.strip() if settings.google_maps_api_key else ""
+    return CameraMapsConfig(
+        google_maps_api_key=key,
+        configured=bool(key),
+    )
+
+
 @router.get("", response_model=list[CameraWithGraph])
 async def list_cameras(db: AsyncSession = Depends(get_db)) -> list[CameraWithGraph]:
-    """List all active cameras with their adjacency graph edges."""
+    """List all active cameras with their adjacency graph edges and GPS coordinates."""
     result = await db.execute(select(Camera).where(Camera.is_active == True))
     cameras = result.scalars().all()
 
@@ -59,6 +76,9 @@ async def list_cameras(db: AsyncSession = Depends(get_db)) -> list[CameraWithGra
             description=cam.description,
             start_time=cam.start_time,
             is_active=cam.is_active,
+            latitude=cam.latitude,
+            longitude=cam.longitude,
+            google_place_id=cam.google_place_id,
             connects_to=edges,
         ))
     return out
@@ -89,6 +109,9 @@ async def get_camera(
         description=cam.description,
         start_time=cam.start_time,
         is_active=cam.is_active,
+        latitude=cam.latitude,
+        longitude=cam.longitude,
+        google_place_id=cam.google_place_id,
         connects_to=edges,
     )
 
@@ -150,6 +173,12 @@ async def update_camera(
         # Normalise to HH:MM:SS
         t = body.start_time.strip()
         cam.start_time = t if len(t) == 8 else t + ":00"
+    if body.latitude is not None:
+        cam.latitude = body.latitude
+    if body.longitude is not None:
+        cam.longitude = body.longitude
+    if body.google_place_id is not None:
+        cam.google_place_id = body.google_place_id.strip() or None
 
     await db.commit()
     await db.refresh(cam)
@@ -199,5 +228,71 @@ async def update_camera(
         description=cam.description,
         start_time=cam.start_time,
         is_active=cam.is_active,
+        latitude=cam.latitude,
+        longitude=cam.longitude,
+        google_place_id=cam.google_place_id,
         connects_to=edges,
     )
+
+
+@router.put("/{camera_id}/location", response_model=CameraWithGraph)
+async def update_camera_location(
+    camera_id: str,
+    body: CameraLocationUpdate,
+    db: AsyncSession = Depends(get_db),
+) -> CameraWithGraph:
+    """
+    Save or update camera GPS coordinates and Google Place ID.
+    Optionally updates the camera's human-readable location name.
+    """
+    cam = await db.get(Camera, camera_id)
+    if not cam or not cam.is_active:
+        raise HTTPException(status_code=404, detail="Camera not found")
+
+    cam.latitude = body.latitude
+    cam.longitude = body.longitude
+    cam.google_place_id = body.google_place_id.strip() if body.google_place_id else None
+
+    if body.location and body.location.strip():
+        cam.location = body.location.strip()
+
+    await db.commit()
+    await db.refresh(cam)
+
+    # Patch location name in camera_graph.json if changed
+    if body.location and body.location.strip():
+        graph_path = settings.camera_graph_path
+        if graph_path.exists():
+            with open(graph_path) as f:
+                graph = json.load(f)
+            cam_data = graph.get("cameras", {}).get(camera_id, {})
+            cam_data["location"] = cam.location
+            graph["cameras"][camera_id] = cam_data
+            with open(graph_path, "w") as f:
+                json.dump(graph, f, indent=2)
+            global _route_svc
+            _route_svc = None
+
+    route_svc = _get_route_svc()
+    updated_graph = route_svc.get_graph()
+    edges_raw = updated_graph.get("cameras", {}).get(cam.id, {}).get("connects_to", {})
+    edges = [
+        CameraGraphEdge(
+            to_camera_id=neighbour,
+            avg_transit_sec=edge_data.get("avg_transit_sec", 0),
+            notes=edge_data.get("notes"),
+        )
+        for neighbour, edge_data in edges_raw.items()
+    ]
+    return CameraWithGraph(
+        id=cam.id,
+        location=cam.location,
+        description=cam.description,
+        start_time=cam.start_time,
+        is_active=cam.is_active,
+        latitude=cam.latitude,
+        longitude=cam.longitude,
+        google_place_id=cam.google_place_id,
+        connects_to=edges,
+    )
+
