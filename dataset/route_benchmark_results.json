@@ -1,0 +1,126 @@
+{
+  "summary": {
+    "num_scenarios": 6,
+    "greedy_runtime_ms": 0.051,
+    "topology_aware_runtime_ms": 0.279,
+    "greedy_invalid_graph_transitions": 1,
+    "topology_aware_invalid_graph_transitions": 1,
+    "greedy_temporally_inconsistent_transitions": 2,
+    "topology_aware_temporally_inconsistent_transitions": 1,
+    "greedy_speed_violations": 0,
+    "topology_aware_speed_violations": 1,
+    "greedy_ambiguous_detected": 0,
+    "topology_aware_ambiguous_detected": 1,
+    "greedy_synthetic_accuracy_pct": 66.7,
+    "topology_aware_synthetic_accuracy_pct": 83.3,
+    "real_world_accuracy": "Ground truth unavailable (no real-world multi-camera trajectory ground truth in dataset)"
+  },
+  "scenarios": [
+    {
+      "name": "Standard Forward Sequence (C01 \u2192 C02 \u2192 C03)",
+      "greedy_sequence": [
+        "C01",
+        "C02",
+        "C03"
+      ],
+      "greedy_valid": true,
+      "topo_sequence": [
+        "C01",
+        "C02",
+        "C03"
+      ],
+      "topo_valid": true,
+      "topo_ambiguous_count": 0
+    },
+    {
+      "name": "High-Similarity Disconnected Lure (C01, C02, C99)",
+      "greedy_sequence": [
+        "C99",
+        "C01",
+        "C02"
+      ],
+      "greedy_valid": false,
+      "topo_sequence": [
+        "C01",
+        "C02",
+        "C99"
+      ],
+      "topo_valid": false,
+      "topo_ambiguous_count": 0
+    },
+    {
+      "name": "Inverted Timestamp Sequence (C01, C02 with C02 earlier)",
+      "greedy_sequence": [
+        "C01",
+        "C02"
+      ],
+      "greedy_valid": false,
+      "topo_sequence": [
+        "C02",
+        "C01"
+      ],
+      "topo_valid": true,
+      "topo_ambiguous_count": 0
+    },
+    {
+      "name": "Ambiguous Candidates in Same Camera",
+      "greedy_sequence": [
+        "C01",
+        "C02"
+      ],
+      "greedy_valid": true,
+      "topo_sequence": [
+        "C01",
+        "C02"
+      ],
+      "topo_valid": true,
+      "topo_ambiguous_count": 1
+    },
+    {
+      "name": "Impossible Pedestrian Speed / Teleportation",
+      "greedy_sequence": [
+        "C01",
+        "C02"
+      ],
+      "greedy_valid": true,
+      "topo_sequence": [
+        "C01",
+        "C02"
+      ],
+      "topo_valid": true,
+      "topo_ambiguous_count": 0
+    },
+    {
+      "name": "Missing Observation Timestamps",
+      "greedy_sequence": [
+        "C01",
+        "C02"
+      ],
+      "greedy_valid": true,
+      "topo_sequence": [
+        "C01",
+        "C02"
+      ],
+      "topo_valid": true,
+      "topo_ambiguous_count": 0
+    }
+  ],
+  "ablation_study": {
+    "lure_scenario": "High-Similarity Disconnected Lure (C01, C02, C99)",
+    "appearance_alone_sequence": [
+      "C99",
+      "C01",
+      "C02"
+    ],
+    "appearance_plus_topology_sequence": [
+      "C01",
+      "C02",
+      "C99"
+    ],
+    "all_evidence_sequence": [
+      "C01",
+      "C02",
+      "C99"
+    ]
+  }
+}

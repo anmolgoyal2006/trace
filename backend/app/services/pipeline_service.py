@@ -46,6 +46,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 from loguru import logger
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.config import settings
@@ -630,7 +631,7 @@ class PipelineService:
         }
 
         # Fetch camera coordinates for spatial GPS validation
-        from backend.app.models.orm import Camera  # noqa: PLC0415
+        from backend.app.models.orm import Camera  # noqa: PLC0415 — avoid circular import at module level
         cam_records = (await db.execute(select(Camera))).scalars().all()
         camera_coords = {
             c.id: (c.latitude, c.longitude)
@@ -665,8 +666,6 @@ class PipelineService:
 
         # ── Step 7: persist route steps ───────────────────────────────────
         await self._push_progress(session, db, 88, "Persisting route...")
-        from sqlalchemy import select  # noqa: PLC0415
-
         existing_result = await db.execute(
             select(Sighting).where(Sighting.session_id == session_id)
         )
@@ -835,7 +834,6 @@ class PipelineService:
                 for s in step_outs
             ],
         })
-        await db.commit()
         await db.commit()
 
         await self._ws.broadcast(WsRouteComplete(
