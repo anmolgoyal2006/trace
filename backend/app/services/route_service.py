@@ -220,6 +220,19 @@ def _timestamp_diff_seconds(ts_later: str, ts_earlier: str) -> float:
     return _to_sec(ts_later) - _to_sec(ts_earlier)
 
 
+def _active_modalities(
+    match: "CameraMatch", face_reliable: bool, mismatch_thr: float
+) -> list[str]:
+    """Return list of modality names that are active/contributed to route fusion."""
+    mods = ["body", "spatial", "temporal"]
+    if face_reliable and getattr(match, "face_sim", None) is not None:
+        if match.face_sim >= mismatch_thr:
+            mods.append("face")
+    if getattr(match, "kpr_sim", None) is not None:
+        mods.append("kpr")
+    return mods
+
+
 # ---------------------------------------------------------------------------
 # Fused sighting and Route entities
 # ---------------------------------------------------------------------------
@@ -238,6 +251,7 @@ class FusedSighting:
     implied_speed_mps: Optional[float] = None
     explanation: Optional[dict[str, Any]] = None
     alternative_candidate: Optional[dict[str, Any]] = None
+    transition_score: float = 0.0              # effective score after soft penalties
 
 
 @dataclass
@@ -261,6 +275,7 @@ class ReconstructedRoute:
     data_limitations: list[str] = field(default_factory=list)
     method_used: str = "topology_aware"
     alternative_routes: list[list[FusedSighting]] = field(default_factory=list)
+    cumulative_route_score: float = 0.0        # mean effective transition_score (penalty-aware)
 
 
 # ---------------------------------------------------------------------------
@@ -290,6 +305,39 @@ class RouteService:
         self._w_app = settings.fusion_appearance_weight
         self._w_spa = settings.fusion_spatial_weight
         self._w_tem = settings.fusion_temporal_weight
+
+        # Five-component route fusion weights
+        self._route_weights = {
+            "body":     settings.route_body_weight,
+            "face":     settings.route_face_weight,
+            "kpr":      settings.route_kpr_weight,
+            "spatial":  settings.route_spatial_weight,
+            "temporal": settings.route_temporal_weight,
+        }
+        self._beam_width = settings.route_beam_width
+
+        # Normalization bounds for face / KPR
+        self._face_norm_min = settings.face_norm_min
+        self._face_norm_max = settings.face_norm_max
+        self._kpr_norm_min  = settings.kpr_norm_min
+        self._kpr_norm_max  = settings.kpr_norm_max
+
+        # Route-transition face veto config
+        self._route_face_mismatch_thr      = settings.route_face_mismatch_threshold
+        self._route_face_min_coverage      = settings.route_face_min_coverage
+        self._route_face_min_query_conf    = settings.route_face_min_query_confidence
+        self._route_face_confidence_thr    = settings.route_face_confidence_threshold
+        self._route_face_include_uncertain = settings.route_face_include_uncertain
+
+        # Physical contradiction
+        self._route_max_speed_mps = settings.route_max_speed_mps
+
+        # Soft penalties
+        self._penalty_disconnected  = settings.route_penalty_disconnected
+        self._penalty_too_fast      = settings.route_penalty_too_fast
+        self._penalty_simultaneous  = settings.route_penalty_simultaneous
+        self._penalty_early         = settings.route_penalty_early
+        self._penalty_late          = settings.route_penalty_late
 
         # Camera coordinates: {camera_id: (lat, lng)}
         self._coordinates: dict[str, tuple[float, float]] = {}
@@ -541,17 +589,19 @@ class RouteService:
                 match=best,
                 spatial=1.0,
                 temporal=1.0,
-                fusion=self._fuse(best.appearance_score, 1.0, 1.0),
+                fusion=self._fuse_route(best, 1.0, 1.0),
                 expected_transit_sec=0,
                 observed_gap_sec=None,
                 transition_status="SUPPORTED",
                 explanation=explanation,
             )
+            step.transition_score = step.fusion  # anchor: penalty-free
             skipped_list = self._derive_skipped_cameras([step], camera_candidates, all_camera_candidates)
             return ReconstructedRoute(
                 steps=[step],
                 skipped_cameras=skipped_list,
                 route_confidence=round(step.fusion, 4),
+                cumulative_route_score=step.fusion,
                 supported_transitions_count=1,
                 ambiguous_transitions_count=0,
                 disconnected_transitions_count=0,
@@ -560,7 +610,7 @@ class RouteService:
             )
 
         # Multi-camera sequence search via Beam Search
-        best_path, alt_paths = self._beam_search_route(valid, coords)
+        best_path, alt_paths = self._beam_search_route(valid, coords, beam_width=self._beam_width)
 
         # Compute summary metrics
         supported_cnt = 0
@@ -581,6 +631,14 @@ class RouteService:
         route_conf = self.compute_route_confidence(best_path)
         skipped_list = self._derive_skipped_cameras(best_path, camera_candidates, all_camera_candidates)
 
+        # Compute cumulative route score (mean of penalty-aware transition scores)
+        if best_path:
+            cum_score = float(max(0.0, min(1.0,
+                sum(s.transition_score for s in best_path) / len(best_path)
+            )))
+        else:
+            cum_score = 0.0
+
         logger.info(
             f"[RouteService:TopologyAware] Best route ({len(best_path)} steps, conf={route_conf:.3f}): "
             + " → ".join(
@@ -593,6 +651,7 @@ class RouteService:
             steps=best_path,
             skipped_cameras=skipped_list,
             route_confidence=route_conf,
+            cumulative_route_score=cum_score,
             supported_transitions_count=supported_cnt,
             ambiguous_transitions_count=ambiguous_cnt,
             disconnected_transitions_count=disconnected_cnt,
@@ -615,7 +674,7 @@ class RouteService:
         Search for the most plausible consistent path using beam search.
         Evaluates alternative candidate starts and scores transitions
         incorporating topology, chronological feasibility, spatial constraints,
-        and contradiction penalties.
+        hard contradiction vetoes, and soft penalties.
         """
         # Step 1: Candidate anchor starts
         # Prefer starting from candidates that have earlier timestamps if available,
@@ -642,7 +701,7 @@ class RouteService:
         beam: list[tuple[float, list[FusedSighting], set[str]]] = []
 
         for cam_id, match in candidate_anchors[:beam_width]:
-            init_fuse = self._fuse(match.appearance_score, 1.0, 1.0)
+            init_fuse = self._fuse_route(match, 1.0, 1.0)
             explanation = self._generate_step_explanation(
                 dest_match=match,
                 prev_match=None,
@@ -665,6 +724,7 @@ class RouteService:
                 transition_status="SUPPORTED",
                 explanation=explanation,
             )
+            step.transition_score = init_fuse  # anchor: penalty-free, transition_score == fusion
             beam.append((init_fuse, [step], {cam_id}))
 
         target_len = len(valid)
@@ -685,16 +745,26 @@ class RouteService:
 
                 # Score all candidate extensions
                 candidate_transitions: list[tuple[float, FusedSighting, str]] = []
+                _transition_cache: dict[tuple, dict] = {}
 
                 for cam_id in unvisited:
                     matches = valid[cam_id]
                     for match in matches:
-                        eval_res = self._evaluate_transition(
-                            from_match=prev.match,
-                            to_match=match,
-                            coords=coords,
-                        )
-                        candidate_transitions.append((eval_res["transition_score"], eval_res["step"], cam_id))
+                        cache_key = (prev.match.camera_id, prev.match.track_id, match.camera_id, match.track_id)
+                        if cache_key in _transition_cache:
+                            eval_res = _transition_cache[cache_key]
+                        else:
+                            eval_res = self._evaluate_transition(
+                                from_match=prev.match,
+                                to_match=match,
+                                coords=coords,
+                            )
+                            _transition_cache[cache_key] = eval_res
+                        if eval_res.get("vetoed"):
+                            continue
+                        step_obj = eval_res["step"]
+                        step_obj.transition_score = eval_res["transition_score"]
+                        candidate_transitions.append((eval_res["transition_score"], step_obj, cam_id))
 
                 if not candidate_transitions:
                     next_beam.append((cum_score, path, visited))
@@ -726,20 +796,27 @@ class RouteService:
 
                 # Add top extensions to next beam
                 for t_score, step_obj, next_cam in candidate_transitions[:beam_width]:
-                    # Contradiction pruning: skip impossible negative time transitions unless forced
+                    # Contradiction pruning: skip large negative soft-penalty transitions unless forced
                     if t_score <= -0.2 and len(candidate_transitions) > 1 and candidate_transitions[0][0] > 0.0:
                         continue
                     new_path = list(path) + [step_obj]
                     new_visited = set(visited) | {next_cam}
-                    new_cum = cum_score + step_obj.fusion
+                    new_cum = cum_score + step_obj.transition_score
                     next_beam.append((new_cum, new_path, new_visited))
 
             if not next_beam:
                 break
 
-            # Deduplicate by visited camera sequence to maintain diversity
+            # Deduplicate hypotheses with the same ordered camera sequence
             next_beam.sort(key=lambda x: (len(x[1]), x[0] / len(x[1])), reverse=True)
-            beam = next_beam[:beam_width]
+            seen_sequences: set[tuple[str, ...]] = set()
+            deduped: list[tuple[float, list[FusedSighting], set[str]]] = []
+            for entry in next_beam:
+                seq = tuple(s.match.camera_id for s in entry[1])
+                if seq not in seen_sequences:
+                    seen_sequences.add(seq)
+                    deduped.append(entry)
+            beam = deduped[:beam_width]
 
         if not beam:
             return ([], [])
@@ -764,15 +841,34 @@ class RouteService:
         """
         Evaluate and score a transition between from_match and to_match.
 
-        Computes:
-            - Topology compatibility (graph edge existence, hop distance, expected transit)
-            - Temporal feasibility (chronological delta, sprint/velocity check, missing timestamp handling)
-            - Spatial compatibility (geodesic distance via Haversine, implied walking speed)
-            - Contradiction penalties (impossible backward time, disconnected transitions)
-            - Transparent explanation object
+        Returns: {"vetoed": bool, "transition_score": float|None,
+                  "step": FusedSighting|None, "status": str, ...}
+
+        Hard vetoes (return vetoed=True before FusedSighting construction):
+          1. Backward-in-time
+          2. GPS impossible speed
+          3. Face mismatch (reliable contradiction)
         """
         src_cam = from_match.camera_id
         dst_cam = to_match.camera_id
+
+        # ── Face identity veto (route-transition level) ──────────────────
+        face_sim = getattr(to_match, "face_sim", None)
+        query_face_reliable = getattr(to_match, "query_face_reliable", False)
+        gallery_face_reliable = getattr(to_match, "gallery_face_reliable", False)
+        face_reliable = (
+            face_sim is not None
+            and query_face_reliable
+            and gallery_face_reliable
+        )
+        if face_reliable and face_sim < self._route_face_mismatch_thr:
+            return {
+                "vetoed": True,
+                "veto_reason": "face_mismatch",
+                "transition_score": None,
+                "step": None,
+                "status": "FACE_MISMATCH",
+            }
 
         # 1. Topology compatibility
         hop_count, expected_transit = shortest_path_transit(self._adjacency, src_cam, dst_cam)
@@ -796,7 +892,6 @@ class RouteService:
         obs_gap: Optional[float] = None
         temp_score = 0.50  # Neutral default for missing timestamps
         has_timestamps = (to_match.first_seen is not None and from_match.last_seen is not None)
-        contradiction_penalty = 0.0
         time_verdict = "unverified"
 
         if has_timestamps:
@@ -807,14 +902,17 @@ class RouteService:
 
         if obs_gap is not None:
             if obs_gap < 0:
-                # Impossible backward time
-                temp_score = 0.0
-                contradiction_penalty += 0.60
-                time_verdict = "backward_in_time"
+                # Hard veto — backward time is physically paradoxical
+                return {
+                    "vetoed": True,
+                    "veto_reason": "backward_in_time",
+                    "transition_score": None,
+                    "step": None,
+                    "status": "BACKWARD_IN_TIME",
+                }
             elif obs_gap == 0 and src_cam != dst_cam:
                 # Simultaneous appearance at two distinct cameras
                 temp_score = 0.0
-                contradiction_penalty += 0.50
                 time_verdict = "simultaneous_overlap"
             else:
                 # Positive time gap
@@ -823,7 +921,6 @@ class RouteService:
                     if obs_gap < min_allowed:
                         # Impossible sprint / teleportation
                         temp_score = 0.05
-                        contradiction_penalty += 0.30
                         time_verdict = "too_fast"
                     elif obs_gap < expected_transit * 0.5:
                         time_verdict = "early"
@@ -857,39 +954,68 @@ class RouteService:
 
             if obs_gap is not None and obs_gap > 0:
                 implied_speed = round(geo_dist / obs_gap, 2)
-                # Pedestrian sprint limit: > 6.0 m/s is implausible for indoor/foot transit
-                if implied_speed > 6.0:
-                    speed_valid = False
-                    contradiction_penalty += 0.40
-                else:
-                    speed_valid = True
+                # GPS impossible speed — hard veto
+                if implied_speed > self._route_max_speed_mps:
+                    return {
+                        "vetoed": True,
+                        "veto_reason": "gps_impossible_speed",
+                        "transition_score": None,
+                        "step": None,
+                        "status": "GPS_IMPOSSIBLE_SPEED",
+                        "hop_distance_m": round(geo_dist, 2),
+                        "implied_speed_mps": round(implied_speed, 2),
+                    }
+                speed_valid = True
 
-        # Penalize completely disconnected cameras
+        # 4. Soft penalties (non-veto cases only)
+        soft_penalty = 0.0
         if topo_score == 0.0:
-            contradiction_penalty += 0.40
+            soft_penalty += self._penalty_disconnected
+        if time_verdict == "too_fast" and geo_dist is None:
+            # Only apply soft too-fast penalty when GPS coords are unavailable
+            # (GPS impossible speed is already handled as a hard veto above)
+            soft_penalty += self._penalty_too_fast
+        if time_verdict == "simultaneous_overlap":
+            soft_penalty += self._penalty_simultaneous
+        if time_verdict == "early":
+            soft_penalty += self._penalty_early
+        if time_verdict == "late":
+            soft_penalty += self._penalty_late
 
-        # Compute fusion score (clamped [0, 1])
-        app_score = to_match.appearance_score
-        fused = self._fuse(app_score, topo_score, temp_score)
+        # 5. Determine which modalities are active for _fuse_route
+        # face_active: face was not vetoed (we already returned if vetoed)
+        # and face is reliable and in the confidence band
+        face_active = True  # face veto already handled above; _fuse_route re-checks reliability
+        kpr_active = True   # KPR always active if present
 
-        # Transition score for beam search ranking
-        # TransitionScore = Appearance + Topology + Temporal - ContradictionPenalties
-        trans_score = (
-            self._w_app * app_score
-            + self._w_spa * topo_score
-            + self._w_tem * temp_score
-            - contradiction_penalty
+        # 6. Five-component fusion (penalty-free)
+        route_fusion_score = self._fuse_route(
+            to_match, topo_score, temp_score,
+            face_active=face_active, kpr_active=kpr_active
         )
 
-        # Determine step status
-        if contradiction_penalty > 0.45 or topo_score == 0.0:
+        # 7. Effective transition score (penalty-aware)
+        transition_score = route_fusion_score - soft_penalty
+
+        # 8. Determine step status
+        if topo_score == 0.0:
             status = "DISCONNECTED"
         elif time_verdict in ("too_fast", "early", "late") or topo_score < 1.0:
             status = "PROBABLE"
         else:
             status = "SUPPORTED"
 
-        # Construct structured explanation
+        # 9. Compute active modalities list for explanation
+        # (must mirror _fuse_route inclusion logic)
+        active_mods: list[str] = ["body", "spatial", "temporal"]
+        if face_reliable and face_sim is not None and face_sim >= self._route_face_mismatch_thr:
+            if face_sim >= self._route_face_confidence_thr or self._route_face_include_uncertain:
+                active_mods.append("face")
+        kpr_sim_val = getattr(to_match, "kpr_sim", None)
+        if kpr_sim_val is not None:
+            active_mods.append("kpr")
+
+        # 10. Construct structured explanation
         explanation = self._generate_step_explanation(
             dest_match=to_match,
             prev_match=from_match,
@@ -902,13 +1028,20 @@ class RouteService:
             temporal_score_val=temp_score,
             status=status,
             speed_valid=speed_valid,
+            face_sim=face_sim,
+            kpr_sim=getattr(to_match, "kpr_sim", None),
+            route_fusion_score=route_fusion_score,
+            transition_score=transition_score,
+            face_veto=False,
+            face_veto_reason=None,
+            active_modalities=active_mods,
         )
 
         step = FusedSighting(
             match=to_match,
             spatial=round(topo_score, 4),
             temporal=round(temp_score, 4),
-            fusion=fused,
+            fusion=route_fusion_score,
             expected_transit_sec=expected_transit,
             observed_gap_sec=obs_gap,
             transition_status=status,
@@ -916,9 +1049,11 @@ class RouteService:
             implied_speed_mps=implied_speed,
             explanation=explanation,
         )
+        step.transition_score = transition_score
 
         return {
-            "transition_score": trans_score,
+            "vetoed": False,
+            "transition_score": transition_score,
             "step": step,
             "status": status,
         }
@@ -941,6 +1076,13 @@ class RouteService:
         status: str,
         speed_valid: Optional[bool] = None,
         alternative: Optional[CameraMatch] = None,
+        face_sim: Optional[float] = None,
+        kpr_sim: Optional[float] = None,
+        route_fusion_score: Optional[float] = None,
+        transition_score: Optional[float] = None,
+        face_veto: bool = False,
+        face_veto_reason: Optional[str] = None,
+        active_modalities: Optional[list[str]] = None,
     ) -> dict[str, Any]:
         """
         Generate transparent, evidence-grounded explanation for a route step.
@@ -967,6 +1109,18 @@ class RouteService:
                     "appearance_score": dest_match.appearance_score,
                     "confidence": dest_match.best_confidence,
                     "backbone": dest_match.active_backbone,
+                },
+                "component_breakdown": {
+                    "body_similarity": dest_match.appearance_score,
+                    "face_similarity": face_sim,
+                    "kpr_similarity": kpr_sim,
+                    "spatial_score": 1.0,
+                    "temporal_score": 1.0,
+                    "route_fusion_score": route_fusion_score,
+                    "transition_score": transition_score,
+                    "face_veto": face_veto,
+                    "face_veto_reason": face_veto_reason,
+                    "active_modalities": active_modalities or [],
                 },
                 "missing_constraints": [],
             }
@@ -1062,6 +1216,18 @@ class RouteService:
                 "implied_speed_mps": implied_speed_mps,
                 "speed_valid": speed_valid,
             },
+            "component_breakdown": {
+                "body_similarity": dest_match.appearance_score,
+                "face_similarity": face_sim,
+                "kpr_similarity": kpr_sim,
+                "spatial_score": topology_score,
+                "temporal_score": temporal_score_val,
+                "route_fusion_score": route_fusion_score,
+                "transition_score": transition_score,
+                "face_veto": face_veto,
+                "face_veto_reason": face_veto_reason,
+                "active_modalities": active_modalities or [],
+            },
             "missing_constraints": missing,
         }
 
@@ -1087,6 +1253,84 @@ class RouteService:
             + self._w_tem * temporal
         )
         return round(float(max(0.0, min(1.0, score))), 6)
+
+    @staticmethod
+    def _normalize_component(value: float, obs_min: float, obs_max: float) -> float:
+        """Min-max rescale value from [obs_min, obs_max] to [0, 1]."""
+        if obs_max <= obs_min:
+            return 0.0
+        return float(max(0.0, min(1.0, (value - obs_min) / (obs_max - obs_min))))
+
+    def _fuse_route(
+        self,
+        to_match: CameraMatch,
+        topo_score: float,
+        temp_score: float,
+        *,
+        face_active: bool = True,
+        kpr_active: bool = True,
+    ) -> float:
+        """
+        Five-component route fusion: Body + Face + KPR + Spatial + Temporal.
+        Missing modalities are excluded via active-weight renormalization —
+        never substituted with zero.
+        face_active / kpr_active are set by _evaluate_transition per Phase 4 conditions.
+        Returns a clamped float in [0, 1].
+        """
+        from ai_pipeline.reid.confidence_scaling import get_backbone_config
+
+        # Body normalization uses backbone-specific observed range
+        try:
+            bb_cfg = get_backbone_config(to_match.embedding_dim)
+            b_norm = self._normalize_component(
+                to_match.appearance_score, bb_cfg.observed_min, bb_cfg.observed_max
+            )
+        except Exception:
+            # Fallback: use config-level OSNet defaults
+            b_norm = self._normalize_component(
+                to_match.appearance_score,
+                settings.similarity_observed_min,
+                settings.similarity_observed_max,
+            )
+
+        active_terms: list[tuple[float, float]] = [
+            (b_norm, self._route_weights["body"]),
+            (topo_score, self._route_weights["spatial"]),
+            (temp_score, self._route_weights["temporal"]),
+        ]
+
+        # Face: include only when reliable, not a mismatch, and face_active flag set
+        if face_active:
+            face_sim = getattr(to_match, "face_sim", None)
+            query_face_reliable = getattr(to_match, "query_face_reliable", False)
+            gallery_face_reliable = getattr(to_match, "gallery_face_reliable", False)
+            face_reliable = (
+                face_sim is not None
+                and query_face_reliable
+                and gallery_face_reliable
+            )
+            if face_reliable and face_sim >= self._route_face_mismatch_thr:
+                # Include if above confidence threshold, or uncertain-band is allowed
+                if face_sim >= self._route_face_confidence_thr or self._route_face_include_uncertain:
+                    f_norm = self._normalize_component(
+                        face_sim, self._face_norm_min, self._face_norm_max
+                    )
+                    active_terms.append((f_norm, self._route_weights["face"]))
+
+        # KPR: include only when available and kpr_active flag set
+        if kpr_active:
+            kpr_sim = getattr(to_match, "kpr_sim", None)
+            if kpr_sim is not None:
+                k_norm = self._normalize_component(
+                    kpr_sim, self._kpr_norm_min, self._kpr_norm_max
+                )
+                active_terms.append((k_norm, self._route_weights["kpr"]))
+
+        weight_sum = sum(w for _, w in active_terms)
+        if weight_sum == 0.0:
+            return 0.0
+        fused = sum(s * w for s, w in active_terms) / weight_sum
+        return round(float(max(0.0, min(1.0, fused))), 6)
 
     def _min_transit_2hop(self, from_cam: str, to_cam: str) -> int:
         """Minimum cumulative transit time via 2 hops; 0 if unreachable."""

@@ -212,6 +212,7 @@ async def _migrate_sightings_schema(conn) -> None:
         ("fused_score",        "FLOAT   NOT NULL DEFAULT 0.0"),
         ("active_backbone",    "TEXT    NOT NULL DEFAULT 'OSNet x1_0'"),
         ("embedding_dim",      "INTEGER NOT NULL DEFAULT 512"),
+        ("transition_score",   "FLOAT DEFAULT 0.0"),
     ]
 
     _session_columns = [

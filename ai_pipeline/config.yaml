@@ -76,7 +76,12 @@ face:
     rec: ""                     # fill in path to w600k_r50.onnx
                                 # download: https://huggingface.co/yakhyo/arcface/resolve/main/w600k_r50.onnx
   fusion:
-    body_weight: 0.70           # weight for body (OSNet) similarity when fusing with face
-    face_weight: 0.30           # weight for face (ArcFace) similarity
+    # DEPRECATED — these fusion weights are no longer used by the backend.
+    # The authoritative source is backend/app/config.py (route_body_weight, route_face_weight,
+    # route_kpr_weight, route_spatial_weight, route_temporal_weight).
+    # The values below are stale and kept only for historical reference.
+    # body_weight: 0.70   # stale — predates KPR and five-component route fusion
+    # face_weight: 0.30   # stale — predates KPR and five-component route fusion
+    min_face_coverage: 0.30   # still used by embed_kpr.py / target_search.py if applicable
     min_face_coverage: 0.30     # minimum fraction of track crops with detected face
                                 # to trust the face signal; below this, face_weight=0

@@ -617,17 +617,18 @@ class PipelineService:
             f"total_candidates={len(all_candidates_flat)}"
         )
 
-        # ── Step 6: route reconstruction (CONFIDENT_MATCH only) ──────────
+        # ── Step 6: route reconstruction (eligible candidates) ──────────
         await self._push_progress(session, db, 75, "Reconstructing route...")
         route_service = get_route_service()
 
-        # Only route-walk over tracks that were actually confident matches.
-        # POSSIBLE_MATCH_REVIEW and FACE_MISMATCH tracks are in top_candidates
-        # for human review but must not anchor a route as "confirmed".
-        confident_candidates: dict[str, list[CameraMatch]] = {
-            cam_id: [m for m in cands if m.match_status == MatchStatus.CONFIDENT_MATCH]
+        # Route-walk over CONFIDENT_MATCH and POSSIBLE_MATCH_REVIEW candidates.
+        # Spatial, temporal and multi-model route fusion can resolve ambiguous candidates.
+        # FACE_MISMATCH tracks remain excluded — handled as hard veto in _evaluate_transition.
+        _eligible_for_route = {MatchStatus.CONFIDENT_MATCH, MatchStatus.POSSIBLE_MATCH_REVIEW}
+        route_candidates: dict[str, list[CameraMatch]] = {
+            cam_id: [m for m in cands if m.match_status in _eligible_for_route]
             for cam_id, cands in camera_candidates.items()
-            if any(m.match_status == MatchStatus.CONFIDENT_MATCH for m in cands)
+            if any(m.match_status in _eligible_for_route for m in cands)
         }
 
         # Fetch camera coordinates for spatial GPS validation
@@ -640,7 +641,7 @@ class PipelineService:
         }
 
         fused_route_result = route_service.reconstruct_route(
-            confident_candidates,
+            route_candidates,
             all_camera_candidates=camera_candidates,
             camera_coordinates=camera_coords,
             method="topology_aware",
@@ -681,6 +682,7 @@ class PipelineService:
             sighting.spatial_score  = round(fused.spatial, 6)
             sighting.temporal_score = round(fused.temporal, 6)
             sighting.fusion_score   = round(fused.fusion,   6)
+            sighting.transition_score = round(fused.transition_score, 6)
             db.add(RouteStep(
                 session_id=session_id,
                 step_order=step_order,
@@ -755,6 +757,7 @@ class PipelineService:
                 implied_speed_mps=fused.implied_speed_mps if fused else None,
                 route_explanation=fused.explanation if fused else None,
                 alternative_candidate=fused.alternative_candidate if fused else None,
+                transition_score=round(fused.transition_score, 6) if fused else None,
             ))
 
         # ── Build narration string ────────────────────────────────────────
@@ -821,6 +824,7 @@ class PipelineService:
             "disconnected_transitions_count": fused_route_result.disconnected_transitions_count,
             "data_limitations": fused_route_result.data_limitations,
             "method_used": fused_route_result.method_used,
+            "cumulative_route_score": fused_route_result.cumulative_route_score,
             "steps_detail": [
                 {
                     "step_order": s.step_order,
@@ -830,6 +834,7 @@ class PipelineService:
                     "implied_speed_mps": s.implied_speed_mps,
                     "route_explanation": s.route_explanation,
                     "alternative_candidate": s.alternative_candidate,
+                    "transition_score": s.transition_score,
                 }
                 for s in step_outs
             ],

@@ -204,6 +204,7 @@ class SightingOut(_Base):
     face_similarity: Optional[float] = None  # ArcFace cosine sim, None = no face
     body_similarity: float = 0.0           # OSNet / SOLIDER body cosine sim
     identity_score: float = 0.0            # face_sim OR body_sim, never blended
+    transition_score: Optional[float] = None  # route-transition effective score
 
 
 class CandidateTrackOut(BaseModel):
@@ -272,6 +273,7 @@ class RouteStepOut(_Base):
     implied_speed_mps: Optional[float] = None     # speed in m/s if distance and time available
     route_explanation: Optional[dict[str, Any]] = None  # structured evidence explanation
     alternative_candidate: Optional[dict[str, Any]] = None  # runner-up candidate if ambiguous
+    transition_score: Optional[float] = None      # effective transition score after soft penalties
 
 
 # ===========================================================================
@@ -332,6 +334,7 @@ class QueryRouteOut(BaseModel):
     disconnected_transitions_count: int = 0
     data_limitations: list[str] = Field(default_factory=list)
     route_method: str = "topology_aware"
+    cumulative_route_score: Optional[float] = None  # mean effective transition_score (penalty-aware)
 
 
 # ===========================================================================

@@ -5,6 +5,7 @@ All tunable values live here. Import `settings` anywhere in the backend.
 """
 
 from pathlib import Path
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -80,6 +81,46 @@ class Settings(BaseSettings):
     fusion_body_weight: float = 0.40   # reduced: KPR handles body better
     fusion_face_weight: float = 0.30
     fusion_kpr_weight: float = 0.60   # KPR dominates — best at partial bodies
+
+    # ------------------------------------------------------------------ #
+    # Route fusion weights — five components.                             #
+    # Renormalized by active weight sum at runtime.                       #
+    # INITIAL DEFAULTS — not proven optimal; calibrate with labelled data.#
+    # ------------------------------------------------------------------ #
+    route_body_weight: float = 0.25
+    route_face_weight: float = 0.20
+    route_kpr_weight: float = 0.15
+    route_spatial_weight: float = 0.25
+    route_temporal_weight: float = 0.15
+
+    # Per-modality normalization bounds.
+    # body: derived at runtime from confidence_scaling.get_backbone_config(embedding_dim).
+    # face: ARBITRARY UN-CALIBRATED PLACEHOLDER. Replace after labelled ArcFace calibration.
+    face_norm_min: float = 0.0
+    face_norm_max: float = 0.70
+    # kpr: PLACEHOLDER from Swin/SOLIDER range (kpr_swin_small shares Swin family). Recalibrate.
+    kpr_norm_min: float = 0.83
+    kpr_norm_max: float = 0.995
+
+    # Route-transition face identity veto
+    route_face_mismatch_threshold: float = 0.38
+    route_face_min_coverage: float = 0.30
+    route_face_min_query_confidence: float = 0.50
+    route_face_confidence_threshold: float = 0.38  # must be >= route_face_mismatch_threshold
+    route_face_include_uncertain: bool = True
+
+    # Physical contradiction
+    route_max_speed_mps: float = 6.0
+
+    # Soft penalties (non-veto cases only)
+    route_penalty_disconnected: float = 0.40
+    route_penalty_too_fast: float = 0.30      # sprint-without-GPS only; GPS impossible = hard veto
+    route_penalty_simultaneous: float = 0.50
+    route_penalty_early: float = 0.0
+    route_penalty_late: float = 0.0
+
+    # Beam search
+    route_beam_width: int = 3
 
     # ------------------------------------------------------------------ #
     # Face identity veto                                                   #
@@ -179,6 +220,36 @@ class Settings(BaseSettings):
     yolo_model: str = "yolov8n.pt"
     detection_confidence: float = 0.6
     detection_classes: list[int] = [0]   # person only
+
+    @model_validator(mode="after")
+    def _validate_route_config(self) -> "Settings":
+        weights = [
+            self.route_body_weight, self.route_face_weight, self.route_kpr_weight,
+            self.route_spatial_weight, self.route_temporal_weight,
+        ]
+        if any(w < 0 for w in weights):
+            raise ValueError("No route weight may be negative.")
+        if all(w == 0 for w in weights):
+            raise ValueError("All five route weights cannot be zero simultaneously.")
+        if self.route_beam_width < 1:
+            raise ValueError("route_beam_width must be >= 1.")
+        if self.route_max_speed_mps <= 0:
+            raise ValueError("route_max_speed_mps must be > 0.")
+        if self.face_norm_max <= self.face_norm_min:
+            raise ValueError("face_norm_max must be > face_norm_min.")
+        if self.kpr_norm_max <= self.kpr_norm_min:
+            raise ValueError("kpr_norm_max must be > kpr_norm_min.")
+        if self.route_face_confidence_threshold < self.route_face_mismatch_threshold:
+            raise ValueError(
+                "route_face_confidence_threshold must be >= route_face_mismatch_threshold."
+            )
+        soft_penalties = [
+            self.route_penalty_disconnected, self.route_penalty_too_fast,
+            self.route_penalty_simultaneous, self.route_penalty_early, self.route_penalty_late,
+        ]
+        if any(p < 0 for p in soft_penalties):
+            raise ValueError("Soft penalty values must be >= 0.")
+        return self
 
 
 settings = Settings()

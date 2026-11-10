@@ -286,6 +286,7 @@ async def get_route(
             implied_speed_mps=step_detail.get("implied_speed_mps"),
             route_explanation=step_detail.get("route_explanation"),
             alternative_candidate=step_detail.get("alternative_candidate"),
+            transition_score=step_detail.get("transition_score"),
         ))
         prev_sighting = s
 
@@ -357,6 +358,7 @@ async def get_route(
         ),
         data_limitations=route_meta.get("data_limitations", []),
         route_method=route_meta.get("route_method", "topology_aware"),
+        cumulative_route_score=route_meta.get("cumulative_route_score"),
     )
 
 

@@ -268,7 +268,7 @@ class TestBasicRouteReconstruction:
         assert len(route.alternative_routes) >= 1
 
     def test_geodesic_speed_validation(self, route_service):
-        """18. Geodesic distance calculation and pedestrian speed limits (>6.0 m/s sprint limit)."""
+        """18. GPS hard veto fires for impossible pedestrian speed (>6.0 m/s)."""
         # Distance between 2 coordinate points: ~120 meters
         coords = {
             "C01": (12.971598, 77.594562),
@@ -277,17 +277,34 @@ class TestBasicRouteReconstruction:
         dist = haversine_distance(coords["C01"][0], coords["C01"][1], coords["C02"][0], coords["C02"][1])
         assert 100 < dist < 120
 
-        # Transit time 10 seconds -> ~11 m/s (impossible sprint)
+        # Transit time 10 seconds -> ~11 m/s (impossible sprint) — GPS hard veto fires
         candidates = {
             "C01": [_make_match("C01", first_seen="10:00:00.00", last_seen="10:00:05.00")],
             "C02": [_make_match("C02", first_seen="10:00:15.00", last_seen="10:00:25.00")],
         }
         route = route_service.reconstruct_route(candidates, camera_coordinates=coords, method="topology_aware")
-        step_c02 = route.steps[1]
-        assert step_c02.hop_distance_m is not None
-        assert step_c02.implied_speed_mps is not None
-        assert step_c02.implied_speed_mps > 6.0
-        assert step_c02.explanation["spatial_evidence"]["speed_valid"] is False
+        # GPS hard veto fires — route terminates at C01 only
+        assert len(route.steps) == 1
+        assert route.steps[0].match.camera_id == "C01"
+
+    def test_gps_impossible_speed_hard_veto_direct(self, route_service):
+        """18b. Direct _evaluate_transition call returns vetoed=True on GPS impossible speed."""
+        from_m = _make_match("C01", last_seen="10:00:05.00")
+        to_m   = _make_match("C02", first_seen="10:00:15.00")
+        coords = {"C01": (12.971598, 77.594562), "C02": (12.972598, 77.594562)}
+        result = route_service._evaluate_transition(from_m, to_m, coords)
+        assert result["vetoed"] is True
+        assert result["veto_reason"] == "gps_impossible_speed"
+        assert result["step"] is None
+
+    def test_backward_in_time_hard_veto_direct(self, route_service):
+        """18c. Direct _evaluate_transition call returns vetoed=True on backward time."""
+        from_m = _make_match("C01", last_seen="10:05:00.00")
+        to_m   = _make_match("C02", first_seen="10:00:00.00")
+        result = route_service._evaluate_transition(from_m, to_m, {})
+        assert result["vetoed"] is True
+        assert result["veto_reason"] == "backward_in_time"
+        assert result["step"] is None
 
     def test_greedy_baseline_comparison(self, route_service):
         """19. Baseline greedy method and topology-aware method can both be invoked."""

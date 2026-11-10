@@ -205,6 +205,8 @@ class Sighting(Base):
     temporal_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     # Weighted fusion of above three signals
     fusion_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    # Route-transition effective score after soft penalties (penalty-free = fusion_score)
+    transition_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=0.0)
     # Identity decision: CONFIDENT_MATCH | POSSIBLE_MATCH_REVIEW |
     #                    FACE_MISMATCH | NO_CONFIDENT_MATCH | NO_USABLE_EVIDENCE
     match_status: Mapped[str] = mapped_column(
