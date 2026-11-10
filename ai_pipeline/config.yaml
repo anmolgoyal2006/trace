@@ -82,6 +82,5 @@ face:
     # The values below are stale and kept only for historical reference.
     # body_weight: 0.70   # stale — predates KPR and five-component route fusion
     # face_weight: 0.30   # stale — predates KPR and five-component route fusion
-    min_face_coverage: 0.30   # still used by embed_kpr.py / target_search.py if applicable
-    min_face_coverage: 0.30     # minimum fraction of track crops with detected face
-                                # to trust the face signal; below this, face_weight=0
+    min_face_coverage: 0.30   # minimum fraction of track crops with detected face
+                              # to trust the face signal; below this, face is excluded from fusion

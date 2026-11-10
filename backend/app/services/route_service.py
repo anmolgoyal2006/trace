@@ -572,6 +572,7 @@ class RouteService:
         if len(valid) == 1:
             cam_id, matches = next(iter(valid.items()))
             best = matches[0]
+            _anchor_fuse = self._fuse_route(best, 1.0, 1.0)
             explanation = self._generate_step_explanation(
                 dest_match=best,
                 prev_match=None,
@@ -584,18 +585,24 @@ class RouteService:
                 temporal_score_val=1.0,
                 status="SUPPORTED",
                 alternative=matches[1] if len(matches) > 1 else None,
+                face_sim=best.face_sim,
+                kpr_sim=best.kpr_sim,
+                route_fusion_score=_anchor_fuse,
+                transition_score=_anchor_fuse,
+                face_veto=False,
+                active_modalities=None,
             )
             step = FusedSighting(
                 match=best,
                 spatial=1.0,
                 temporal=1.0,
-                fusion=self._fuse_route(best, 1.0, 1.0),
+                fusion=_anchor_fuse,
                 expected_transit_sec=0,
                 observed_gap_sec=None,
                 transition_status="SUPPORTED",
                 explanation=explanation,
             )
-            step.transition_score = step.fusion  # anchor: penalty-free
+            step.transition_score = _anchor_fuse  # anchor: penalty-free
             skipped_list = self._derive_skipped_cameras([step], camera_candidates, all_camera_candidates)
             return ReconstructedRoute(
                 steps=[step],
@@ -713,6 +720,12 @@ class RouteService:
                 topology_score=1.0,
                 temporal_score_val=1.0,
                 status="SUPPORTED",
+                face_sim=match.face_sim,
+                kpr_sim=match.kpr_sim,
+                route_fusion_score=init_fuse,
+                transition_score=init_fuse,
+                face_veto=False,
+                active_modalities=None,
             )
             step = FusedSighting(
                 match=match,
