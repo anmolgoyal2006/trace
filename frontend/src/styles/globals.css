@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design Token CSS Variables (HSL for shadcn/ui compatibility) ── */
+@layer base {
+  :root {
+    /* Surfaces */
+    --background: 40 20% 96%;
+    --foreground: 214 51% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 214 51% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 51% 20%;
+
+    /* Primary — Burgundy */
+    --primary: 345 57% 35%;
+    --primary-foreground: 40 20% 96%;
+
+    /* Secondary — Warm muted */
+    --secondary: 40 18% 93%;
+    --secondary-foreground: 214 51% 20%;
+
+    --muted: 40 18% 93%;
+    --muted-foreground: 213 10% 53%;
+
+    --accent: 40 18% 93%;
+    --accent-foreground: 214 51% 20%;
+
+    /* Borders & inputs */
+    --border: 40 27% 86%;
+    --input: 40 27% 86%;
+    --ring: 345 57% 35%;
+
+    /* Semantic */
+    --destructive: 0 39% 49%;
+    --destructive-foreground: 40 20% 96%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar specific */
+    --sidebar-bg: 40 22% 95%;
+    --sidebar-border: 40 27% 84%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-ink;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(40 15% 80%);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(40 15% 70%);
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ── Utility classes ── */
+@layer components {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Focus ring */
+  .focus-ring {
+    @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
+  }
+}

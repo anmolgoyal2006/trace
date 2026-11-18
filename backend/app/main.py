@@ -158,24 +158,26 @@ uploads_dir = settings.uploads_dir
 uploads_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
-# ── Frontend static assets (JS, CSS) — mounted BEFORE the catch-all ──────
+# ── Frontend static assets (React build) ──────────────────────────────────
 _frontend_dir = settings.frontend_dir
-if _frontend_dir.exists():
-    # Serve /src/* assets (styles.css, app.js, api.js)
-    _src_dir = _frontend_dir / "src"
-    if _src_dir.exists():
-        app.mount("/src", StaticFiles(directory=str(_src_dir)), name="frontend-src")
+_dist_dir = _frontend_dir / "dist"
 
-    # SPA catch-all: serve index.html for any non-API, non-asset path
+if _dist_dir.exists():
+    # Serve built JS/CSS assets from /assets
+    _assets_dir = _dist_dir / "assets"
+    if _assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(_assets_dir)), name="frontend-assets")
+
+    # SPA catch-all: serve dist/index.html for any non-API, non-asset path
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_spa(full_path: str):
-        index = _frontend_dir / "index.html"
+        index = _dist_dir / "index.html"
         if index.exists():
             return FileResponse(str(index))
         return {"detail": "Frontend not found"}
 
 else:
-    logger.warning(f"[startup] Frontend directory not found: {_frontend_dir}")
+    logger.warning(f"[startup] Frontend build not found: {_dist_dir}. Run 'npm run build' in frontend/.")
 
 
 # ---------------------------------------------------------------------------
