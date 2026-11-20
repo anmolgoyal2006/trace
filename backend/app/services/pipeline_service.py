@@ -161,8 +161,20 @@ def _load_face_galleries(camera_ids: list[str]) -> dict[str, list[dict]]:
     for cam_id in camera_ids:
         path = settings.embeddings_dir / f"face_embeddings_{cam_id}.json"
         if not path.exists():
-            logger.debug(f"[PipelineService] No face gallery for {cam_id}")
-            continue
+            meta_path = settings.embeddings_dir / f"crops_metadata_{cam_id}.json"
+            crop_dir = settings.data_dir / "crops"
+            face_det = settings.face_det_model_path if settings.face_det_model else None
+            face_rec = settings.face_rec_model_path if settings.face_rec_model else None
+            if meta_path.exists() and face_det and face_rec and face_det.exists() and face_rec.exists():
+                logger.info(f"[PipelineService] Face gallery for {cam_id} missing — auto-generating via SCRFD+ArcFace...")
+                try:
+                    from backend.app.routers.upload import _run_face_embed
+                    _run_face_embed(meta_path, crop_dir, path, face_det, face_rec)
+                except Exception as e:
+                    logger.warning(f"[PipelineService] Auto face embedding failed for {cam_id}: {e}")
+            if not path.exists():
+                logger.debug(f"[PipelineService] No face gallery for {cam_id}")
+                continue
         try:
             with open(path) as f:
                 galleries[cam_id] = json.load(f)
@@ -179,8 +191,20 @@ def _load_kpr_galleries(camera_ids: list[str]) -> dict[str, list[dict]]:
     for cam_id in camera_ids:
         path = settings.embeddings_dir / f"kpr_embeddings_{cam_id}.json"
         if not path.exists():
-            logger.debug(f"[PipelineService] No KPR gallery for {cam_id}")
-            continue
+            meta_path = settings.embeddings_dir / f"crops_metadata_{cam_id}.json"
+            crop_dir = settings.data_dir / "crops"
+            kpr_w = settings.kpr_weights_path_abs if settings.kpr_weights_path else None
+            kpr_c = settings.kpr_config_path_abs if settings.kpr_config_path else None
+            if meta_path.exists() and kpr_w and kpr_c and kpr_w.exists() and kpr_c.exists():
+                logger.info(f"[PipelineService] KPR gallery for {cam_id} missing — auto-generating via KPR subprocess...")
+                try:
+                    from backend.app.routers.upload import _run_kpr_embed
+                    _run_kpr_embed(meta_path, crop_dir, path, kpr_w, kpr_c)
+                except Exception as e:
+                    logger.warning(f"[PipelineService] Auto KPR embedding failed for {cam_id}: {e}")
+            if not path.exists():
+                logger.debug(f"[PipelineService] No KPR gallery for {cam_id}")
+                continue
         try:
             with open(path) as f:
                 galleries[cam_id] = json.load(f)

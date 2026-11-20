@@ -6,6 +6,8 @@
 import type {
   AnalyticsDashboard,
   AlertOut,
+  CameraLocationUpdate,
+  CameraMapsConfig,
   CameraSighting,
   CameraWithGraph,
   CameraUpdate,
@@ -113,6 +115,11 @@ export const camerasApi = {
 
   sightings: (id: string, limit = 20) =>
     get<CameraSighting[]>(`/api/cameras/${id}/sightings?limit=${limit}`),
+
+  mapsConfig: () => get<CameraMapsConfig>("/api/cameras/maps-config"),
+
+  updateLocation: (id: string, body: CameraLocationUpdate) =>
+    putJson<CameraWithGraph>(`/api/cameras/${id}/location`, body),
 };
 
 // ── Queries API ──────────────────────────────────────────────────────────────

@@ -16,7 +16,7 @@
       "mvp": true
     },
     "C02": {
-      "location": "Main Corridor",
+      "location": "Main Door",
       "description": "Mid-corridor view covering the primary internal walkway. Connects entrance to stairwell and canteen branch. Moderate occlusion from pillars.",
       "height_m": 2.8,
       "angle": "overhead-angled",

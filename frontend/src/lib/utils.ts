@@ -6,11 +6,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Format ISO datetime to time string. */
+/** Format ISO datetime or time-of-day string to display time string (HH:MM:SS). */
 export function formatTime(isoStr: string | null | undefined): string {
   if (!isoStr) return "—";
+  // Handle direct time strings like "10:05:12.57" or "10:05:12"
+  const timeMatch = isoStr.match(/^(\d{1,2}:\d{2}(?::\d{2})?)/);
+  if (timeMatch) {
+    return timeMatch[1];
+  }
   try {
-    return new Date(isoStr).toLocaleTimeString("en-GB", {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    return d.toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
@@ -18,6 +25,32 @@ export function formatTime(isoStr: string | null | undefined): string {
   } catch {
     return isoStr;
   }
+}
+
+/** Parse any timestamp (ISO string, datetime, or HH:MM:SS.ms) into seconds. */
+export function parseTimeToSeconds(timeStr: string | null | undefined): number | null {
+  if (!timeStr) return null;
+  const match = timeStr.match(/^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?$/);
+  if (match) {
+    const h = parseInt(match[1], 10);
+    const m = parseInt(match[2], 10);
+    const s = parseInt(match[3] || "0", 10);
+    const ms = match[4] ? parseFloat("0." + match[4]) : 0;
+    return h * 3600 + m * 60 + s + ms;
+  }
+  const d = new Date(timeStr);
+  if (!isNaN(d.getTime())) {
+    return d.getTime() / 1000;
+  }
+  return null;
+}
+
+/** Format seconds into HH:MM:SS wall-clock format. */
+export function formatSecondsToTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600) % 24;
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
 /** Format ISO datetime to date + time. */

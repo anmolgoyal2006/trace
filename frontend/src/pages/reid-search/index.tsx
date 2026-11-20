@@ -484,6 +484,10 @@ function CandidateCard({
 
 function WhyThisMatch({ candidate }: { candidate: CandidateTrackOut }) {
   const [expanded, setExpanded] = React.useState(true);
+  const fusion = candidate.explanation?.fusion ?? null;
+  const kprEvidence = candidate.explanation?.kpr_evidence ?? null;
+
+  const signalLabel: Record<string, string> = { body: "Body", kpr: "KPR", face: "Face" };
 
   return (
     <Card>
@@ -517,6 +521,14 @@ function WhyThisMatch({ candidate }: { candidate: CandidateTrackOut }) {
                 note="Similarity-derived, not a probability"
               />
 
+              {/* Decision reason (XAI) */}
+              {fusion?.decision_reason && (
+                <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2">
+                  <p className="text-xs font-medium text-primary">Decision Reason</p>
+                  <p className="mt-0.5 text-xs text-ink-secondary">{fusion.decision_reason}</p>
+                </div>
+              )}
+
               <Separator />
 
               {/* Body appearance */}
@@ -536,6 +548,11 @@ function WhyThisMatch({ candidate }: { candidate: CandidateTrackOut }) {
                 title="Face Similarity"
                 model="SCRFD + ArcFace"
                 available={candidate.face_sim !== null && candidate.face_sim !== undefined}
+                unavailableReason={
+                  candidate.explanation?.fusion.excluded_signals.find((s) => s.signal === "face")?.reason
+                    ? `Face signal inactive: ${candidate.explanation.fusion.excluded_signals.find((s) => s.signal === "face")?.reason}`
+                    : "No face detected in CCTV footage for this track (subject facing away or occluded)."
+                }
               >
                 <ScoreBar label="Face Similarity" value={(candidate.face_sim ?? 0) * 100} max={100} suffix="%" />
                 {candidate.face_coverage !== null && (
@@ -557,9 +574,92 @@ function WhyThisMatch({ candidate }: { candidate: CandidateTrackOut }) {
                 title="KPR Part-Aware"
                 model="KPR (ECCV 2024)"
                 available={candidate.kpr_sim !== null && candidate.kpr_sim !== undefined}
+                unavailableReason={
+                  candidate.explanation?.fusion.excluded_signals.find((s) => s.signal === "kpr")?.reason
+                    ? `KPR signal inactive: ${candidate.explanation.fusion.excluded_signals.find((s) => s.signal === "kpr")?.reason}`
+                    : "KPR part-aware matching unavailable for this track."
+                }
               >
                 <ScoreBar label="KPR Similarity" value={(candidate.kpr_sim ?? 0) * 100} max={100} suffix="%" />
+                {/* Per-part breakdown */}
+                {kprEvidence && kprEvidence.parts.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-[10px] font-medium uppercase tracking-wide text-ink-muted">Part Breakdown</p>
+                    {kprEvidence.parts.map((part) => (
+                      <div key={part.part_index} className="flex items-center gap-2 text-xs">
+                        <span className="w-14 text-ink-muted">Part {part.part_index}</span>
+                        <Badge
+                          variant={part.status === "used" ? "default" : "secondary"}
+                          className="text-[10px] px-1 py-0"
+                        >
+                          {part.status === "used" ? "used" : "low vis"}
+                        </Badge>
+                        {part.similarity !== null && (
+                          <span className="font-mono text-ink">{(part.similarity * 100).toFixed(1)}%</span>
+                        )}
+                        <span className="text-ink-muted">vis {(part.visibility * 100).toFixed(0)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </EvidenceSection>
+
+              {/* Fusion signal weights (XAI) */}
+              {fusion && fusion.signals.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Info className="h-4 w-4 text-ink-secondary" />
+                      <span className="text-sm font-medium text-ink">Fusion Breakdown</span>
+                      <Badge variant="outline" className="text-[10px]">
+                        {fusion.mode === "body_only" ? "Body Only" : "Weighted"}
+                      </Badge>
+                    </div>
+                    <div className="overflow-hidden rounded-md border border-border">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-border bg-surface-muted">
+                            <th className="px-3 py-1.5 text-left font-medium text-ink-muted">Signal</th>
+                            <th className="px-3 py-1.5 text-right font-medium text-ink-muted">Similarity</th>
+                            <th className="px-3 py-1.5 text-right font-medium text-ink-muted">Weight</th>
+                            <th className="px-3 py-1.5 text-right font-medium text-ink-muted">Contribution</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {fusion.signals.map((sig) => (
+                            <tr key={sig.signal} className="border-b border-border last:border-0">
+                              <td className="px-3 py-1.5 font-medium text-ink">{signalLabel[sig.signal] ?? sig.signal}</td>
+                              <td className="px-3 py-1.5 text-right font-mono text-ink">{(sig.similarity * 100).toFixed(1)}%</td>
+                              <td className="px-3 py-1.5 text-right font-mono text-ink-secondary">{(sig.normalized_weight * 100).toFixed(0)}%</td>
+                              <td className="px-3 py-1.5 text-right font-mono text-ink">{sig.contribution.toFixed(4)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {/* Excluded signals */}
+                    {fusion.excluded_signals.length > 0 && (
+                      <div className="space-y-1 pt-1">
+                        <p className="text-[10px] font-medium uppercase tracking-wide text-ink-muted">Excluded Signals</p>
+                        {fusion.excluded_signals.map((ex) => (
+                          <div key={ex.signal} className="flex items-start gap-1.5 text-xs text-ink-muted">
+                            <XCircle className="mt-0.5 h-3 w-3 flex-shrink-0 text-warning" />
+                            <span><span className="font-medium">{signalLabel[ex.signal] ?? ex.signal}:</span> {ex.reason}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Margin to threshold */}
+                    <div className="flex items-center gap-4 text-xs text-ink-muted">
+                      <span>Threshold: <span className="font-mono text-ink">{fusion.no_match_threshold.toFixed(3)}</span></span>
+                      <span>Margin: <span className={cn("font-mono", fusion.margin_to_threshold >= 0 ? "text-success" : "text-error")}>
+                        {fusion.margin_to_threshold >= 0 ? "+" : ""}{fusion.margin_to_threshold.toFixed(4)}
+                      </span></span>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Disclaimer */}
               <div className="flex items-start gap-2 rounded-md bg-surface-muted p-3">
@@ -582,12 +682,14 @@ function EvidenceSection({
   title,
   model,
   available,
+  unavailableReason,
   children,
 }: {
   icon: React.ReactNode;
   title: string;
   model: string;
   available: boolean;
+  unavailableReason?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -601,7 +703,7 @@ function EvidenceSection({
         )}
       </div>
       {available ? children : (
-        <p className="text-xs text-ink-muted pl-6">No evidence available for this signal.</p>
+        <p className="text-xs text-ink-muted pl-6">{unavailableReason || "No evidence available for this signal."}</p>
       )}
     </div>
   );

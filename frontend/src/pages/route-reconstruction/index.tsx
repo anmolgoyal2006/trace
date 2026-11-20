@@ -1,5 +1,6 @@
 import * as React from "react";
 import { motion } from "motion/react";
+import { useSearchParams } from "react-router-dom";
 import { Route as RouteIcon, MapPin, Clock, ArrowRight, Info, GitBranch, MapPinned, Shuffle } from "lucide-react";
 import { PageHeader, PageContainer } from "@/components/common/page-header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -22,10 +23,29 @@ const CAM_LAYOUT: Record<string, { x: number; y: number; loc: string }> = {
 };
 
 export default function RouteReconstruction() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlSessionId = searchParams.get("session_id") || searchParams.get("session") || "";
+
   const { data: sessions } = useApi<QueryStatusOut[]>(() => queriesApi.list(30));
   const doneSessions = sessions?.filter((s) => s.status === "done") ?? [];
 
-  const [selectedSessionId, setSelectedSessionId] = React.useState<string>("");
+  const [selectedSessionId, setSelectedSessionId] = React.useState<string>(urlSessionId);
+
+  // Auto-select session 11 (or latest completed session) if none selected
+  React.useEffect(() => {
+    if (!selectedSessionId && doneSessions.length > 0) {
+      const has11 = doneSessions.some((s) => s.id === 11);
+      const targetId = has11 ? "11" : String(doneSessions[0].id);
+      setSelectedSessionId(targetId);
+      setSearchParams({ session_id: targetId }, { replace: true });
+    }
+  }, [doneSessions, selectedSessionId, setSearchParams]);
+
+  const handleSessionChange = (id: string) => {
+    setSelectedSessionId(id);
+    setSearchParams(id ? { session_id: id } : {});
+  };
+
   const { data: route, loading } = useApi<QueryRouteOut | null>(
     () => selectedSessionId ? queriesApi.route(Number(selectedSessionId)) : Promise.resolve(null),
     [selectedSessionId],
@@ -34,7 +54,7 @@ export default function RouteReconstruction() {
   return (
     <PageContainer>
       <PageHeader title="Route Reconstruction" description="Spatial-temporal trajectory analysis across camera network">
-        <Select value={selectedSessionId} onValueChange={setSelectedSessionId}>
+        <Select value={selectedSessionId} onValueChange={handleSessionChange}>
           <SelectTrigger className="w-[260px]">
             <SelectValue placeholder="Select a session…" />
           </SelectTrigger>

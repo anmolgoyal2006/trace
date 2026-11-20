@@ -44,6 +44,9 @@ export interface CameraWithGraph {
   description: string | null;
   start_time: string | null;
   is_active: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  google_place_id?: string | null;
   connects_to: CameraGraphEdge[];
 }
 
@@ -51,6 +54,21 @@ export interface CameraUpdate {
   location?: string;
   start_time?: string;
   transit_updates?: Record<string, number>;
+  latitude?: number | null;
+  longitude?: number | null;
+  google_place_id?: string | null;
+}
+
+export interface CameraLocationUpdate {
+  latitude: number;
+  longitude: number;
+  google_place_id?: string | null;
+  location?: string | null;
+}
+
+export interface CameraMapsConfig {
+  google_maps_api_key: string;
+  configured: boolean;
 }
 
 export interface CameraSighting {
@@ -97,6 +115,47 @@ export interface SightingOut {
   embedding_dim: number;
 }
 
+// ── Explainable AI ───────────────────────────────────────────────────────────
+
+export interface FusionSignal {
+  signal: "body" | "kpr" | "face";
+  similarity: number;
+  weight: number;
+  normalized_weight: number;
+  contribution: number;
+}
+
+export interface FusionExplanation {
+  mode: "body_only" | "weighted";
+  signals: FusionSignal[];
+  excluded_signals: { signal: string; reason: string }[];
+  fused_score: number;
+  no_match_threshold: number;
+  soft_floor: number;
+  margin_to_threshold: number;
+  face_veto_applied: boolean;
+  decision_reason: string;
+}
+
+export interface KprPartEvidence {
+  part_index: number;
+  status: "used" | "below_threshold";
+  similarity: number | null;
+  visibility: number;
+}
+
+export interface KprEvidence {
+  crop_path: string;
+  parts: KprPartEvidence[];
+}
+
+export interface CandidateExplanation {
+  fusion: FusionExplanation;
+  kpr_evidence: KprEvidence | null;
+}
+
+// ── Candidate ────────────────────────────────────────────────────────────────
+
 export interface CandidateTrackOut {
   camera_id: string;
   track_id: number;
@@ -111,6 +170,7 @@ export interface CandidateTrackOut {
   first_seen: string | null;
   crop_path: string | null;
   active_backbone: string;
+  explanation: CandidateExplanation | null;
 }
 
 // ── Route Step ───────────────────────────────────────────────────────────────
